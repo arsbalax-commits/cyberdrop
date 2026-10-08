@@ -887,7 +887,7 @@ const LEGACY_MAP={
 };
 function normalizeUser(u){if(!u||!u.inventory)return u;const inv={};for(const [id,n] of Object.entries(u.inventory)){const nid=LEGACY_MAP[id]||id;if(ITEM_MAP[nid])inv[nid]=(inv[nid]||0)+n}u.inventory=inv;for(const slot of ['cpu','mb','ram','gpu','ssd','psu','cool']){if(u.build && u.build[slot]){const nid=LEGACY_MAP[u.build[slot]]||u.build[slot];if(ITEM_MAP[nid])u.build[slot]=nid;else delete u.build[slot]}}return u}
 function loadDB(){try{const d=JSON.parse(SAFE_STORE.get(DBKEY)||'');if(d&&d.users){for(const k of Object.keys(d.users))d.users[k]=normalizeUser(d.users[k]);return d}}catch{}return{users:{},current:null}}
-function saveDB(syncCloud=true){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));if(syncCloud){try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){}}}
+function saveDB(syncCloud=true){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));if(syncCloud){try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){} }}
 function user(){return currentUser?db.users[currentUser]:null}
 function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now()}}
 function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
@@ -1078,7 +1078,6 @@ async function startCase(id){
  const c=CASES.find(x=>x.id===id),u=user();
  if(!c||!u)return;
  if(u.credits<c.price){toast('Недостаточно кредитов','err');return}
- 
  const cloud=window.CYBERDROP_CLOUD;
  if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){
    const balance=await cloud.changeCredits(-c.price).catch(err=>{console.warn('CYBERDROP case debit:',err);toast('Не удалось списать кредиты в облаке','err');return null});
@@ -1120,10 +1119,24 @@ async function startCase(id){
    target=g.target;
    strip.style.transition=`transform ${transitionMs}ms cubic-bezier(.10,.72,.08,1)`;
    strip.style.transform=`translate3d(${-target}px,0,0)`;
-   setTimeout(finalize,totalMs-transitionMs+80);
+   setTimeout(()=>{requestAnimationFrame(finalize)},transitionMs+40);
  }));
-} 
+ setTimeout(finalize,totalMs+160);
+}
+/* ==================== INVENTORY ==================== */
+function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inventory).filter(([,n])=>n>0).map(([id,n])=>[ITEM_MAP[id],n]).filter(([it])=>it)}
+function renderInventory(){
+ const u=user();if(!u){$('#invCount').textContent='0';$('#invValue').textContent='0';$('#invGrid').innerHTML='<div class="inv-empty"><span class="big">🔒</span>Войдите, чтобы увидеть инвентарь.</div>';return}
+ const e=invEntries(),count=e.reduce((s,[,n])=>s+n,0),value=e.reduce((s,[it,n])=>s+it.price*n,0);$('#invCount').textContent=count;$('#invValue').textContent=fmt(value);
+ $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}">Продать</button></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
+ $$('[data-sell]').forEach(b=>b.onclick=()=>{const it=ITEM_MAP[b.dataset.sell];if(takeItem(it.id)){addCredits(it.price);renderInventory();renderBadges();toast(`Продано: ${it.name}`,'ok')}});
+}
+$('#sellAllBtn').addEventListener('click',()=>{if(!requireAuth())return;const e=invEntries();if(!e.length)return toast('Инвентарь пуст');const sum=e.reduce((s,[it,n])=>s+it.price*n,0);user().inventory={};addCredits(sum);saveDB();renderInventory();renderBadges();toast(`Продано на ${fmt(sum)} кр.`,'ok')});
 
+/* ==================== BUILD ==================== */
+function socketLabel(s){return ({lga1155:'LGA 1155',lga1200:'LGA 1200',lga1700:'LGA 1700',am3plus:'AM3+',am4:'AM4',am5:'AM5'})[s]||String(s||'').toUpperCase()}
+function buildIssues(){const u=user();if(!u)return[];const b=u.build,issues=[],cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],psu=ITEM_MAP[b.psu];if(cpu&&mb&&cpu.socket!==mb.socket)issues.push(`Сокет процессора ${socketLabel(cpu.socket)} не совместим с платой ${socketLabel(mb.socket)}.`);if(ram&&mb&&ram.type!==mb.mem)issues.push(`Память ${ram.type.toUpperCase()} не совместима с платой ${mb.mem.toUpperCase()}.`);if(psu){const draw=((cpu&&cpu.tdp)||0)+((gpu&&gpu.tdp)||0)+120;if(psu.watts<draw)issues.push(`БП ${psu.watts}W слабее рекомендуемой мощности ${draw}W.`)}return issues}
+function buildIncome(){const u=user();if(!u)return 0;const ids=SLOTS.map(([s])=>u.build[s]);if(ids.some(x=>!x)||buildIssues().length)return 0;const value=ids.reduce((s,id)=>s+(ITEM_MAP[id] ? ITEM_MAP[id].price : undefined||0),0);return Math.max(20,Math.floor(value/1500))}
 function renderBuild(){
  const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML='<div class="item">Статус<b class="err">Нужен вход</b></div>';$('#buildGrid').innerHTML='';$('#buildIncome').innerHTML='';return}
  const issues=buildIssues(),filled=SLOTS.filter(([s])=>u.build[s]).length,income=buildIncome();$('#buildIncompat').innerHTML=issues.length?`<div class="incompat"><b>Есть проблемы совместимости:</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
