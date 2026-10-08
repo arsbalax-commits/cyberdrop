@@ -389,9 +389,9 @@ button,.btn,input{touch-action:manipulation}
   .auth-tabs{margin-bottom:15px}
   .auth-tab{min-height:44px}
   .modal-close{top:10px;right:10px}
-  .roulette{height:144px;border-radius:15px}
+  .roulette{height:144px;border-radius:15px;overflow:hidden;isolation:isolate}
   .roulette::before,.roulette::after{width:48px}
-  .roulette-strip{gap:6px;padding:0 6px}
+  .roulette-strip{gap:6px;padding:0 6px;left:0;right:auto;width:max-content;min-width:max-content;display:flex;align-items:center;contain:layout paint;transform-origin:left center}
   .rou-item{flex-basis:104px;height:122px;border-radius:12px;padding:7px}
   .rou-item .item-visual{width:54px;height:54px;flex-basis:54px}
   .rou-item .ri-nm{font-size:9px}
@@ -1002,7 +1002,7 @@ function startCase(id){
  const strip=$('#strip');strip.style.transition='none';strip.style.transform='translateX(0)';strip.innerHTML=items.map(rouHTML).join('');
  const totalMs=6400,started=performance.now();
  caseTimer=setInterval(()=>{const elapsed=performance.now()-started,p=Math.min(100,elapsed/totalMs*100),left=Math.max(0,(totalMs-elapsed)/1000);$('#caseProgressBar').style.width=p.toFixed(1)+'%';$('#caseLiveTimer').textContent=left.toFixed(1)+'s';if(left<4.7)$('#caseLiveText').textContent='СИНХРОНИЗАЦИЯ…';if(left<2.2)$('#caseLiveText').textContent='ФИКСАЦИЯ РЕЗУЛЬТАТА'},100);
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const rw=$('.roulette').clientWidth,card=142,gap=8,target=24*(card+gap)+card/2-rw/2;strip.style.transition='transform 6.05s cubic-bezier(.10,.72,.08,1)';strip.style.transform=`translateX(${-target}px)`;}));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const rw=$('.roulette').clientWidth;const first=strip.querySelector('.rou-item');const cs=getComputedStyle(strip);const card=first?first.getBoundingClientRect().width:142;const gap=parseFloat(cs.columnGap||cs.gap)||0;const pad=parseFloat(cs.paddingLeft)||0;const target=pad+24*(card+gap)+card/2-rw/2;strip.style.transition='transform 6.05s cubic-bezier(.10,.72,.08,1)';strip.style.transform=`translate3d(${-target}px,0,0)`;}));
  setTimeout(()=>{
    if(caseTimer){clearInterval(caseTimer);caseTimer=null}
    addItem(win.id);const nodes=$$('#strip .rou-item');if(nodes[24])nodes[24].classList.add('win');$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
