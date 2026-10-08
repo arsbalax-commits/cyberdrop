@@ -523,6 +523,38 @@ button,.btn,input{touch-action:manipulation}
 @media(max-width:620px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.shop-card{padding:10px}.shop-card .item-visual{height:95px}.shop-name{font-size:11px}.shop-price b{font-size:15px}.shop-tab{padding:9px 11px}}
 @media(max-width:390px){.shop-grid{grid-template-columns:1fr}}
 
+
+/* ===== COMPONENT POWER + DETAIL CARDS ===== */
+.component-card{position:relative}
+.component-info-btn{position:absolute;top:8px;right:8px;z-index:15;width:23px;height:23px;border-radius:50%;display:grid;place-items:center;background:#737b89;border:1px solid #929baa;color:#f7f9fc;font-size:13px;font-weight:900;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:background .15s,transform .15s}
+.component-info-btn:hover{background:#929baa;transform:scale(1.06)}
+.component-front{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0;width:100%}
+.component-front.preview-front{align-items:center}
+.component-details{display:none;flex-direction:column;gap:9px;align-self:stretch;min-width:0;width:100%;padding-top:5px}
+.component-card.show-details .component-front{display:none}
+.component-card.show-details .component-details{display:flex}
+.component-details-title{font-size:13px;font-weight:900;line-height:1.35;padding-right:25px;overflow-wrap:anywhere}
+.component-details-sub{font-size:10px;color:var(--muted);line-height:1.45}
+.component-detail-list{display:grid;gap:6px}
+.component-detail-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:7px;align-items:start;padding:7px 8px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:9px;font-size:10px;line-height:1.35}
+.component-detail-row span{color:var(--muted)}
+.component-detail-row b{text-align:right;overflow-wrap:anywhere;font-size:10px}
+.component-power{font-size:10.5px;color:var(--muted);font-weight:700;line-height:1.4}
+.component-power b{color:var(--acc);font-weight:900}
+.component-card .inv-count{right:auto;left:12px}
+.component-card.show-details .component-info-btn{font-size:14px}
+.shop-card .component-details{min-height:100%}
+.case-preview-card .component-front{gap:7px}
+.case-preview-card .component-details{align-items:stretch;text-align:left}
+.build-power{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:-4px 0 16px}
+.build-power-item{padding:12px 14px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.025)}
+.build-power-item span{display:block;color:var(--muted);font-size:10.5px;line-height:1.35;margin-bottom:4px}
+.build-power-item b{font-size:17px;font-weight:900;color:var(--txt)}
+.build-power-item b.ok{color:var(--lime)}
+.build-power-item b.err{color:#ff7676}
+.slot .component-power{text-align:center}
+@media(max-width:620px){.build-power{grid-template-columns:1fr}.component-detail-row{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}.component-details-title{font-size:12px}}
+
 #bootError{display:none;position:fixed;inset:0;z-index:9999;background:#08090e;color:#e9edf7;place-items:center;padding:24px;text-align:center;font-family:system-ui,sans-serif}body[data-app-error='1'] #bootError{display:grid}
 </style>
 </head>
@@ -583,10 +615,11 @@ button,.btn,input{touch-action:manipulation}
   <section id="tab-build">
     <div class="page-head">
       <h1>Собери свой <em>компьютер</em></h1>
-      <p>Устанавливай комплектующие из инвентаря. Совместимая сборка приносит пассивный доход каждую минуту. Следи за сокетом, памятью, БП, температурами CPU/GPU и продуваемостью корпуса.</p>
+      <p>Устанавливай комплектующие из инвентаря. Совместимая сборка приносит пассивный доход каждую минуту. Следи за сокетом, памятью, потреблением в ваттах, запасом блока питания, температурами CPU/GPU и продуваемостью корпуса.</p>
     </div>
     <div id="buildIncompat"></div>
     <div class="build-status" id="buildStatus"></div>
+    <div class="build-power" id="buildPower"></div>
     <div class="build-grid" id="buildGrid"></div>
     <div id="buildIncome"></div>
   </section>
@@ -961,6 +994,81 @@ const ITEMS=[
 ];
 
 const ITEM_MAP={};ITEMS.forEach(x=>{ITEM_MAP[x.id]=x});
+function componentPowerDraw(it){
+ if(!it)return 0;
+ if(it.cat==='gpu'||it.cat==='cpu')return Math.max(0,Math.round(Number(it.tdp)||0));
+ if(it.cat==='mb'){
+  const name=String(it.name||'');
+  if(/\b(Z490|Z690|Z790|X670|X870|990FX)\b/i.test(name))return 55;
+  if(/\b(B460|B660|B550|B650|B450|B75|970)\b/i.test(name))return 40;
+  return 30;
+ }
+ if(it.cat==='ram'){
+  const cap=Math.max(2,Number(it.capacity)||8);
+  return Math.min(12,Math.max(2,Math.ceil(cap/32)*2+(it.type==='ddr5'?1:0)));
+ }
+ if(it.cat==='ssd'){
+  const cap=storageCapacity(it)||128;
+  return it.form==='nvme'?(cap>=2000?8:cap>=1000?6:4):(cap>=2000?6:cap>=1000?4:3);
+ }
+ if(it.cat==='cool'){
+  const map={cool_stock:5,fan_120:3,cool_lowprofile:4,cool_air_basic:6,cool_air_4pipe:7,cool_dual:9,cool_aio120:8,cool_aio240:12,cool_aio280:14,cool_aio360:18,cool_custom:25};
+  return map[it.id]||6;
+ }
+ if(it.cat==='pc_case')return 0;
+ if(it.cat==='psu')return 0;
+ return 0;
+}
+function componentPowerLabel(it){
+ if(it&&it.cat==='psu')return `Выходная мощность: ${Math.round(Number(it.watts)||0)} Вт`;
+ return `Потребление: ${componentPowerDraw(it)} Вт`;
+}
+function motherboardChipset(it){
+ if(!it)return '—';
+ const match=String(it.name||'').match(/\b(H61|B75|H410|B460|Z490|H610|B660|Z690|Z790|970|990FX|A320|B450|B550|B650|X670|X870)\b/i);
+ return match?match[0].toUpperCase():'Не указан';
+}
+function componentCategoryLabel(it){return ({gpu:'Видеокарта',cpu:'Процессор',mb:'Материнская плата',ram:'Оперативная память',ssd:'Накопитель',psu:'Блок питания',cool:'Система охлаждения',pc_case:'Корпус'})[it&&it.cat]||'Комплектующее'}
+function componentDetailRows(it){
+ const rows=[['Категория',componentCategoryLabel(it)]];
+ if(it.cat==='gpu'){
+  const vramMatch=String(it.name||'').match(/(\d+)\s*GB/i);const vram=vramMatch?vramMatch[1]+' ГБ':({rtx4070tis:'16 ГБ',rtx3090:'24 ГБ',rtx4080s:'16 ГБ',rtx4090:'24 ГБ'}[it.id]||'Не указана');
+  rows.push(['Производитель',/Radeon|RX\s?\d/i.test(it.name)?'AMD Radeon':'NVIDIA GeForce'],['Видеопамять',vram],['Вентиляторы',`${Number(it.fans)||1} шт.`],['Теплопакет (TDP)',`${Number(it.tdp)||0} Вт`]);
+ }else if(it.cat==='cpu'){
+  rows.push(['Производитель',it.brand==='intel'?'Intel':'AMD'],['Сокет',socketLabel(it.socket)],['Теплопакет (TDP)',`${Number(it.tdp)||0} Вт`],['Серия',String(it.name||'').replace(/^Intel\s+|^AMD\s+/,'').split(/\s+/).slice(0,3).join(' ')]);
+ }else if(it.cat==='mb'){
+  rows.push(['Платформа',it.platform==='intel'?'Intel':'AMD'],['Сокет',socketLabel(it.socket)],['Чипсет',motherboardChipset(it)],['Формат ОЗУ',String(it.mem||'').toUpperCase()],['Поддержка M.2 NVMe',mbSupportsNvme(it)?'Да':'Нет']);
+ }else if(it.cat==='ram'){
+  rows.push(['Поколение',String(it.type||'').toUpperCase()],['Объём',`${Number(it.capacity)||0} ГБ`],['Форм-фактор','DIMM для настольного ПК']);
+ }else if(it.cat==='ssd'){
+  rows.push(['Интерфейс',it.form==='nvme'?'M.2 NVMe':'SATA'],['Ёмкость',`${storageCapacity(it)} ГБ`],['Подключение',it.form==='nvme'?'M.2, PCIe/NVMe':'SATA III']);
+ }else if(it.cat==='psu'){
+  const tier=String(it.name||'').match(/(Bronze|Gold|Platinum)/i);
+  rows.push(['Номинальная выходная мощность',`${Number(it.watts)||0} Вт`],['Класс эффективности',tier?tier[1]:'Не указан'],['Расчёт мощности','Оставляй запас не менее 20%']);
+ }else if(it.cat==='cool'){
+  rows.push(['Тип',it.coolType==='water'?'Жидкостное охлаждение':'Воздушное охлаждение'],['Охлаждающая способность',`${coolingCapacity(it)} Вт`],['Совместимость','Подбирается с учётом TDP процессора']);
+ }else if(it.cat==='pc_case'){
+  rows.push(['Тип корпуса',/Mini Tower/i.test(it.name)?'Mini Tower':/Full Tower/i.test(it.name)?'Full Tower':'Mid Tower'],['Воздушный поток',`${Number(it.airflow)||0} усл. ед.`],['Потребление корпуса','0 Вт (без учёта отдельных вентиляторов)']);
+ }
+ if(it.cat!=='psu'&&it.cat!=='pc_case')rows.push(['Энергопотребление',`${componentPowerDraw(it)} Вт`]);
+ else if(it.cat==='psu')rows.push(['Собственное потребление','Не учитывается отдельно; считается выходная нагрузка']);
+ return rows;
+}
+function componentDetailsMarkup(it){
+ const rows=componentDetailRows(it);
+ return `<div class="component-details-title">${esc(it.name)}</div><div class="component-details-sub">${esc(RARITIES[it.rar]?RARITIES[it.rar].name:'Комплектующее')} · характеристики по данным игрового каталога</div><div class="component-detail-list">${rows.map(([k,v])=>`<div class="component-detail-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div><div class="component-details-sub">Значения энергопотребления — игровые оценки для расчёта сборки, а не замеры реального устройства.</div>`;
+}
+function componentInfoButton(it){return `<button class="component-info-btn" type="button" data-info-toggle="${esc(it.id)}" aria-label="Подробная информация о ${esc(it.name)}" title="Характеристики">!</button>`;}
+document.addEventListener('click',function(e){
+ const btn=e.target.closest&&e.target.closest('[data-info-toggle]');
+ if(!btn)return;
+ e.preventDefault();e.stopPropagation();
+ const card=btn.closest('.component-card');if(!card)return;
+ const showing=card.classList.toggle('show-details');
+ btn.textContent=showing?'↩':'!';
+ btn.setAttribute('aria-label',showing?'Вернуться к карточке':'Подробные характеристики');
+ btn.title=showing?'Вернуться к карточке':'Характеристики';
+});
 const CASES=[
 {id:'starter',name:'Бюджетный старт',icon:'⚡',tag:'Для новичка',price:1500,color:'#00e5ff',pool:['cool_stock','fan_120','ram2_4','ram4_3','sata128','athlon2','fx','celeron','pentium','mb_h61','mb_am3_970','psu_450','gt1030','case_oem','case_office']},
 {id:'pc_case_case',name:'Корпуса',icon:'🖥️',tag:'Охлаждение корпуса',price:5000,color:'#7dffb0',pool:['case_oem','case_office','case_mesh_budget','case_gaming_mesh','case_airflow_pro','case_high_airflow']},
@@ -1162,7 +1270,7 @@ function openCasePreview(id){
  $('#previewJackpots').textContent=above;
  $('#casePreviewGrid').innerHTML=arr.map(it=>{
    const chance=(RARITIES[it.rar].weight/total*100);
-   return `<div class="case-preview-card" style="--rc:${RARITIES[it.rar].color}"><div class="item-visual">${itemArt(it)}</div><div class="cp-name">${esc(it.name)}</div><div class="cp-rar" style="color:${RARITIES[it.rar].color}">${RARITIES[it.rar].name}</div><div class="cp-price">${fmt(it.price)} кр.</div><div class="cp-chance">Шанс предмета: ${chance<1?chance.toFixed(2):chance.toFixed(1)}%</div></div>`;
+   return `<div class="case-preview-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}<div class="component-front preview-front"><div class="item-visual">${itemArt(it)}</div><div class="cp-name">${esc(it.name)}</div><div class="cp-rar" style="color:${RARITIES[it.rar].color}">${RARITIES[it.rar].name}</div><div class="cp-price">${fmt(it.price)} кр.</div><div class="cp-chance">Шанс предмета: ${chance<1?chance.toFixed(2):chance.toFixed(1)}%</div><div class="component-power">${esc(componentPowerLabel(it))}</div></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`;
  }).join('');
  $('#previewOpenBtn').onclick=()=>{closeModal('casePreviewModal');setTimeout(()=>startCase(c.id),120)};
  openModal('casePreviewModal');
@@ -1311,7 +1419,7 @@ function renderShop(){
   if(!$('#shopGrid'))return;
   renderShopTabs();
   const list=shopItems();
-  $('#shopGrid').innerHTML=list.map(it=>{const price=shopPrice(it),locked=shopLocks.has(it.id);return `<div class="shop-card" style="--rc:${RARITIES[it.rar].color}"><div class="item-visual">${itemArt(it)}</div><div class="shop-rar">${RARITIES[it.rar].name}</div><div class="shop-name">${esc(it.name)}</div><div class="shop-price"><b>${fmt(price)} кр.</b><span class="shop-case-price">(Цена в кейсе: ${fmt(it.price)} кр.)</span></div><button class="btn primary sm shop-buy" data-shop-buy="${it.id}" ${locked?'disabled':''}>${locked?'Покупка…':'Купить'}</button></div>`}).join('');
+  $('#shopGrid').innerHTML=list.map(it=>{const price=shopPrice(it),locked=shopLocks.has(it.id);return `<div class="shop-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="shop-rar">${RARITIES[it.rar].name}</div><div class="shop-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="shop-price"><b>${fmt(price)} кр.</b><span class="shop-case-price">(Цена в кейсе: ${fmt(it.price)} кр.)</span></div><button class="btn primary sm shop-buy" data-shop-buy="${it.id}" ${locked?'disabled':''}>${locked?'Покупка…':'Купить'}</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`}).join('');
   $$('[data-shop-buy]').forEach(b=>b.onclick=()=>buyShopItem(b.dataset.shopBuy));
 }
 async function buyShopItem(id){
@@ -1350,7 +1458,7 @@ function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inve
 function renderInventory(){
  const u=user();if(!u){$('#invCount').textContent='0';$('#invValue').textContent='0';$('#invGrid').innerHTML='<div class="inv-empty"><span class="big">🔒</span>Войдите, чтобы увидеть инвентарь.</div>';return}
  const e=invEntries(),count=e.reduce((s,[,n])=>s+n,0),value=e.reduce((s,[it,n])=>s+it.price*n,0);$('#invCount').textContent=count;$('#invValue').textContent=fmt(value);
- $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}" ${sellLocks.has(it.id)?'disabled':''}>${sellLocks.has(it.id)?'Продажа…':'Продать'}</button></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
+ $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}" ${sellLocks.has(it.id)?'disabled':''}>${sellLocks.has(it.id)?'Продажа…':'Продать'}</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
  $$('[data-sell]').forEach(b=>b.onclick=async()=>{
    const id=b.dataset.sell,it=ITEM_MAP[id];
    if(!it||sellLocks.has(id))return;
@@ -1414,20 +1522,23 @@ function thermalPercent(f){return Math.round(clampNum(f*100,0,100))}
 function thermalLabel(f){return thermalPercent(f)+'%'}
 const NO_M2_MB=new Set(['mb_h61','mb_b75','mb_h410','mb_b460']);
 function mbSupportsNvme(mb){return !!mb&&!NO_M2_MB.has(mb.id)}
-function buildIssues(){const u=user();if(!u)return[];const b=u.build,issues=[],cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],psu=ITEM_MAP[b.psu],ssd=ITEM_MAP[b.ssd];if(cpu&&mb&&cpu.socket!==mb.socket)issues.push(`Сокет процессора ${socketLabel(cpu.socket)} не совместим с платой ${socketLabel(mb.socket)}.`);if(ram&&mb&&ram.type!==mb.mem)issues.push(`Память ${ram.type.toUpperCase()} не совместима с платой ${mb.mem.toUpperCase()}.`);if(psu){const draw=((cpu&&cpu.tdp)||0)+((gpu&&gpu.tdp)||0)+120;if(psu.watts<draw)issues.push(`БП ${psu.watts}W слабее рекомендуемой мощности ${draw}W.`)}if(ssd&&mb&&ssd.form==='nvme'&&!mbSupportsNvme(mb))issues.push('Материнская плата не поддерживает M.2 NVMe для выбранного накопителя.');return issues}
+function buildPowerStats(){const u=user();if(!u)return{draw:0,recommended:0,psu:null,psuWatts:0,enough:false};const b=u.build||{};const consumers=['cpu','mb','ram','gpu','ssd','cool','pc_case'].map(slot=>ITEM_MAP[b[slot]]).filter(Boolean);const draw=consumers.reduce((sum,it)=>sum+componentPowerDraw(it),0);const recommended=draw?Math.max(450,Math.ceil(draw*1.2/50)*50):0;const psu=ITEM_MAP[b.psu]||null;return{draw,recommended,psu,psuWatts:psu?Number(psu.watts)||0:0,enough:!psu||!recommended||Number(psu.watts)>=recommended}}
+function buildIssues(){const u=user();if(!u)return[];const b=u.build,issues=[],cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],psu=ITEM_MAP[b.psu],ssd=ITEM_MAP[b.ssd];if(cpu&&mb&&cpu.socket!==mb.socket)issues.push(`Сокет процессора ${socketLabel(cpu.socket)} не совместим с платой ${socketLabel(mb.socket)}.`);if(ram&&mb&&ram.type!==mb.mem)issues.push(`Память ${ram.type.toUpperCase()} не совместима с платой ${mb.mem.toUpperCase()}.`);const power=buildPowerStats();if(psu&&power.recommended&&psu.watts<power.recommended)issues.push(`БП ${psu.watts} Вт слабее рекомендуемых ${power.recommended} Вт: потребление комплектующих ${power.draw} Вт с запасом 20%.`);if(ssd&&mb&&ssd.form==='nvme'&&!mbSupportsNvme(mb))issues.push('Материнская плата не поддерживает M.2 NVMe для выбранного накопителя.');return issues}
 function buildStats(){const u=user();if(!u)return null;const b=u.build,cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],ssd=ITEM_MAP[b.ssd],psu=ITEM_MAP[b.psu],cool=ITEM_MAP[b.cool],pcCase=ITEM_MAP[b.pc_case];const cpuTemp=cpuTemperature(cpu,cool),gpuTemp=gpuTemperature(gpu,pcCase),cpuFactor=thermalFactor(cpuTemp,'cpu'),gpuFactor=thermalFactor(gpuTemp,'gpu');const cpuPts=cpu?logScore(cpu.price,650,92000,4,28):0;const gpuPts=gpu?logScore(gpu.price,2200,195000,5,42):0;const mbPts=mb?logScore(mb.price,700,30000,2,10)+(mb.mem==='ddr5'?.8:0)+(mbSupportsNvme(mb)?.5:0):0;const ramEff=ram?Math.max(2,(Number(ram.capacity)||2)*(ram.type==='ddr5'?1.25:ram.type==='ddr4'?1:.8)):0;const ramPts=ram?logScore(ramEff,2,320,1.5,9):0;const ssdEff=ssd?storageCapacity(ssd)*(ssd.form==='nvme'?1.18:1):0;const ssdPts=ssd?logScore(ssdEff,128,2400,1.5,8):0;const complete=!!(cpu&&mb&&ram&&gpu&&ssd&&cool&&pcCase&&psu),compatible=!buildIssues().length;const raw=cpuPts+gpuPts+mbPts+ramPts+ssdPts;const multiplier=cpuFactor*gpuFactor;const income=complete&&compatible?Math.max(10,Math.floor(raw*1.35*multiplier)):0;return{cpu,gpu,mb,ram,ssd,psu,cool,pcCase,cpuTemp,gpuTemp,cpuFactor,gpuFactor,multiplier,income,cpuPts,gpuPts,mbPts,ramPts,ssdPts,complete,compatible,raw}}
 function buildIncome(){const stats=buildStats();return stats?stats.income:0}
 function renderBuild(){
- const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML=`<div class="item">Статус<b class="${cloudAuthReady?'err':'ok'}">${cloudAuthReady?'Нужен вход':'Синхронизация…'}</b></div>`;$('#buildGrid').innerHTML='';$('#buildIncome').innerHTML='';return}
+ const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML=`<div class="item">Статус<b class="${cloudAuthReady?'err':'ok'}">${cloudAuthReady?'Нужен вход':'Синхронизация…'}</b></div>`;$('#buildGrid').innerHTML='';$('#buildPower').innerHTML='';$('#buildIncome').innerHTML='';return}
  const issues=buildIssues(),filled=SLOTS.filter(([s])=>u.build[s]).length,income=buildIncome(),st=buildStats();
  $('#buildIncompat').innerHTML=issues.length?`<div class="incompat"><b>Есть проблемы совместимости:</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
+ const power=buildPowerStats();
  $('#buildStatus').innerHTML=`<div class="item">Компонентов<b>${filled}/${SLOTS.length}</b></div><div class="item">Совместимость<b class="${issues.length?'err':'ok'}">${issues.length?'Ошибка':'ОК'}</b></div><div class="item">Доход/мин<b class="${income?'ok':''}">${fmt(income)} кр.</b></div>`;
- $('#buildGrid').innerHTML=SLOTS.map(([slot,label])=>{const it=ITEM_MAP[u.build[slot]];return `<div class="slot ${it?'filled':''}" style="--rc:${it?RARITIES[it.rar].color:'#242b3d'}"><div class="slot-label">${label}</div>${it?`<div class="slot-visual"><div class="item-visual">${itemArt(it)}</div></div><div class="slot-name">${esc(it.name)}</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Заменить</button><button class="btn ghost" data-remove="${slot}">Снять</button></div>`:`<div class="slot-empty">＋</div><div class="slot-name">Пусто</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Установить</button></div>`}</div>`}).join('');
+ $('#buildPower').innerHTML=`<div class="build-power-item"><span>Потребление комплектующих</span><b>${power.draw} Вт</b></div><div class="build-power-item"><span>Рекомендуемый блок питания (+20% запаса)</span><b>${power.recommended?power.recommended+' Вт':'—'}</b></div><div class="build-power-item"><span>Установленный блок питания</span><b class="${power.psu?(power.enough?'ok':'err'):''}">${power.psu?power.psuWatts+' Вт':'Не установлен'}</b></div>`;
+ $('#buildGrid').innerHTML=SLOTS.map(([slot,label])=>{const it=ITEM_MAP[u.build[slot]];return `<div class="slot ${it?'filled component-card':''}" style="--rc:${it?RARITIES[it.rar].color:'#242b3d'}">${it?componentInfoButton(it):''}<div class="component-front"><div class="slot-label">${label}</div>${it?`<div class="slot-visual"><div class="item-visual">${itemArt(it)}</div></div><div class="slot-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Заменить</button><button class="btn ghost" data-remove="${slot}">Снять</button></div>`:`<div class="slot-empty">＋</div><div class="slot-name">Пусто</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Установить</button></div>`}</div>${it?`<div class="component-details">${componentDetailsMarkup(it)}</div>`:''}</div>`}).join('');
  const cpuTemp=st&&st.cpuTemp!=null?st.cpuTemp:null,gpuTemp=st&&st.gpuTemp!=null?st.gpuTemp:null,cpuClass=thermalClass(cpuTemp),gpuClass=thermalClass(gpuTemp);
  $('#buildIncome').innerHTML=`<div class="build-thermals"><div class="thermal-card" style="--tc:#00e5ff"><div class="thermal-head"><span>CPU</span><span>${st&&st.cpu?esc(st.cpu.name):'Не установлен'}</span></div><div class="thermal-temp ${cpuClass}">${cpuTemp==null?'—':cpuTemp+'°C'}</div><div class="thermal-sub">Теплопакет: ${st&&st.cpu?((st.cpu.tdp||0)+'W'):'—'} · Охлаждение: ${st&&st.cool?(coolingCapacity(st.cool)+'W'):'—'}</div><div class="thermal-factor"><span>Производительность CPU</span><b>${st&&st.cpuTemp!=null?thermalLabel(st.cpuFactor):'—'}</b></div></div><div class="thermal-card" style="--tc:#b14aff"><div class="thermal-head"><span>GPU</span><span>${st&&st.gpu?esc(st.gpu.name):'Не установлена'}</span></div><div class="thermal-temp ${gpuClass}">${gpuTemp==null?'—':gpuTemp+'°C'}</div><div class="thermal-sub">Теплопакет: ${st&&st.gpu?((st.gpu.tdp||0)+'W'):'—'} · Поток корпуса: ${st&&st.pcCase?((st.pcCase.airflow||0)+'W'):'—'}</div><div class="thermal-factor"><span>Производительность GPU</span><b>${st&&st.gpuTemp!=null?thermalLabel(st.gpuFactor):'—'}</b></div></div></div><div class="income-box"><div><div class="lbl">Пассивный доход</div><div class="val">${fmt(income)} кр./мин</div></div><div class="sub">CPU, GPU, материнская плата, RAM и накопитель дают разные вклады в доход.<br>Перегрев CPU/GPU уменьшает итоговую прибыль.</div></div>${st?`<div class="income-breakdown"><div class="income-part"><span>CPU</span><b>+${st.cpuPts.toFixed(1)}</b></div><div class="income-part"><span>GPU</span><b>+${st.gpuPts.toFixed(1)}</b></div><div class="income-part"><span>Плата</span><b>+${st.mbPts.toFixed(1)}</b></div><div class="income-part"><span>RAM</span><b>+${st.ramPts.toFixed(1)}</b></div><div class="income-part"><span>Накопитель</span><b>+${st.ssdPts.toFixed(1)}</b></div></div><div class="income-note">Тепловой множитель: ${st.complete&&st.compatible?Math.round(st.multiplier*100)+'%':'—'}. Хорошее охлаждение снижает температуру CPU, а хороший корпус помогает видеокарте работать холоднее.</div>`:''}`;
  $$('[data-pick]').forEach(b=>b.onclick=()=>openPicker(b.dataset.pick));$$('[data-remove]').forEach(b=>b.onclick=()=>removeFromBuild(b.dataset.remove));renderBadges();
 }
-function openPicker(slot){if(!requireAuth())return;const foundSlot=SLOTS.find(x=>x[0]===slot);const label=(foundSlot?foundSlot[1]:slot);$('#pickTitle').textContent='Выбери: '+label;const list=invEntries().filter(([it])=>it.cat===slot);$('#pickSub').textContent=list.length?'Выбери предмет из инвентаря.':'Подходящих предметов в инвентаре нет.';$('#pickList').innerHTML=list.length?list.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn primary sm" data-install="${it.id}" data-slot="${slot}">Установить</button></div>`).join(''):'<div class="inv-empty">Нет подходящих компонентов.</div>';$$('[data-install]').forEach(b=>b.onclick=()=>installToBuild(b.dataset.slot,b.dataset.install));openModal('pickModal')}
+function openPicker(slot){if(!requireAuth())return;const foundSlot=SLOTS.find(x=>x[0]===slot);const label=(foundSlot?foundSlot[1]:slot);$('#pickTitle').textContent='Выбери: '+label;const list=invEntries().filter(([it])=>it.cat===slot);$('#pickSub').textContent=list.length?'Выбери предмет из инвентаря.':'Подходящих предметов в инвентаре нет.';$('#pickList').innerHTML=list.length?list.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn primary sm" data-install="${it.id}" data-slot="${slot}">Установить</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty">Нет подходящих компонентов.</div>';$$('[data-install]').forEach(b=>b.onclick=()=>installToBuild(b.dataset.slot,b.dataset.install));openModal('pickModal')}
 function installToBuild(slot,id){const u=user(),old=u.build[slot];if(!takeItem(id))return toast('Предмет уже недоступен','err');if(old)addItem(old);u.build[slot]=id;saveDB();closeModal('pickModal');renderBuild();renderInventory();toast('Компонент установлен','ok')}
 function removeFromBuild(slot){const u=user(),id=u.build[slot];if(!id)return;addItem(id);delete u.build[slot];saveDB();renderBuild();renderInventory();toast('Компонент возвращён в инвентарь')}
 let incomeSyncing=false;
