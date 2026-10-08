@@ -515,7 +515,6 @@ button,.btn,input{touch-action:manipulation}
       <button class="nav-btn" data-tab="inventory">Инвентарь <span class="badge" id="invBadge" style="display:none">0</span></button>
       <button class="nav-btn" data-tab="build">Сборка <span class="badge" id="buildBadge" style="display:none">!</span></button>
       <button class="nav-btn" data-tab="earn">Заработать</button>
-      <button class="nav-btn" data-tab="profile">Профиль</button>
     </nav>
     <div class="header-right">
       <button class="icon-btn theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">☼</button>
@@ -999,7 +998,12 @@ const LEGACY_MAP={
 function normalizeUser(u){if(!u||!u.inventory)return u;const inv={};for(const [id,n] of Object.entries(u.inventory)){const nid=LEGACY_MAP[id]||id;if(ITEM_MAP[nid])inv[nid]=(inv[nid]||0)+n}u.inventory=inv;for(const slot of ['cpu','mb','ram','gpu','ssd','psu','cool','pc_case']){if(u.build && u.build[slot]){const nid=LEGACY_MAP[u.build[slot]]||u.build[slot];if(ITEM_MAP[nid])u.build[slot]=nid;else delete u.build[slot]}}return u}
 function loadDB(){try{const d=JSON.parse(SAFE_STORE.get(DBKEY)||'');if(d&&d.users){for(const k of Object.keys(d.users))d.users[k]=normalizeUser(d.users[k]);return d}}catch{}return{users:{},current:null}}
 function saveDB(syncCloud=true){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));if(syncCloud){try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){} }}
-function user(){return currentUser?db.users[currentUser]:null}
+function user(){
+ if(currentUser&&db.users[currentUser])return db.users[currentUser];
+ if(db.current&&db.users[db.current]){currentUser=db.current;return db.users[currentUser]}
+ try{const uid=window.CYBERDROP_CLOUD&&window.CYBERDROP_CLOUD.userId;if(uid){const name=Object.keys(db.users||{}).find(n=>db.users[n]&&db.users[n].cloudId===uid);if(name){currentUser=name;db.current=name;return db.users[name]}}}catch(_){}
+ return null
+}
 function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now()}}
 function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
 function addItem(id,n=1){const u=user();if(!u)return;u.inventory[id]=(u.inventory[id]||0)+n;saveDB()}
@@ -1032,8 +1036,16 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function toast(msg,type='info'){const x=document.createElement('div');x.className=`toast ${type}`;x.textContent=msg;$('#toasts').appendChild(x);requestAnimationFrame(()=>x.classList.add('show'));setTimeout(()=>{x.classList.remove('show');setTimeout(()=>x.remove(),300)},2600)}
 function openModal(id){$('#'+id).classList.add('open');document.body.classList.add('modal-open');setTimeout(()=>{const el=$('#'+id);if(!el)return;const f=el.querySelector('input,button');if(f&&f.focus)f.focus({preventScroll:true})},0)}
 function closeModal(id){const el=$('#'+id);if(el)el.classList.remove('open');if(!$$('.modal.open').length)document.body.classList.remove('modal-open')}
-function requireAuth(){if(user())return true;openModal('authModal');return false}
-function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip profile-trigger" id="profileTrigger" title="Открыть профиль" role="button" tabindex="0"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#profileTrigger')){const openProfile=()=>showTab('profile');$('#profileTrigger').addEventListener('click',(e)=>{if(e.target.closest&&e.target.closest('#logoutBtn'))return;openProfile()});$('#profileTrigger').addEventListener('keydown',(e)=>{if((e.key==='Enter'||e.key===' ')&&!(e.target.closest&&e.target.closest('#logoutBtn'))){e.preventDefault();openProfile()}})}if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();currentUser=null;saveDB();renderAll();toast('Вы вышли из аккаунта')})}
+function requireAuth(){
+ const u=user();
+ if(u)return true;
+ try{
+   const cloudUid=window.CYBERDROP_CLOUD&&window.CYBERDROP_CLOUD.userId;
+   if(cloudUid){const name=Object.keys(db.users||{}).find(n=>db.users[n]&&db.users[n].cloudId===cloudUid);if(name){currentUser=name;db.current=name;return !!user()}}
+ }catch(_){}
+ openModal('authModal');return false
+}
+function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();currentUser=null;db.current=null;saveDB();renderAll();toast('Вы вышли из аккаунта')})}
 function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));const target=$('#tab-'+tab);if(!target)return;target.classList.add('active');if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn();if(tab==='profile')renderProfile()}
 $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
@@ -1379,10 +1391,10 @@ function socketResetRound(){
 function socketStart(){
   if(!requireAuth())return;
   if(socketGame)return;
-  socketGame={round:1,total:10,score:0,streak:0,cpu:null,options:[],deadline:performance.now()+25000};
+  socketGame={round:1,total:10,score:0,streak:0,cpu:null,options:[],deadline:performance.now()+30000};
   $('#socketBtn').disabled=true;
   $('#socketBtn').textContent='Идёт охота…';
-  $('#socketTime').textContent='25';
+  $('#socketTime').textContent='30';
   $('#socketScore').textContent='0';
   $('#socketProgressBar').style.width='0%';
   socketResetRound();
