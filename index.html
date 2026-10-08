@@ -1224,6 +1224,9 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
 
   function cloudUser() { return window.CYBERDROP_CLOUD.userId; }
   function copy(obj) { return JSON.parse(JSON.stringify(obj)); }
+  function localUsername(fallback) {
+    return (typeof currentUser !== 'undefined' && currentUser) || fallback || 'player';
+  }
 
   function snapshotUser(u) {
     if (!u) return null;
@@ -1252,13 +1255,34 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
 
   function sameBuild(a, b) {
     var keys = ['cpu','mb','ram','gpu','ssd','psu','cool'];
-    return keys.every(function(k){ return (a && a[k] || '') === (b && b[k] || ''); });
+    return keys.every(function (k) { return (a && a[k] || '') === (b && b[k] || ''); });
+  }
+
+  function sameSnapshot(a, b) {
+    if (!a || !b) return false;
+    if (Math.floor(Number(a.credits)||0) !== Math.floor(Number(b.credits)||0)) return false;
+    if (!sameBuild(a.build, b.build)) return false;
+    if ((a.refCode||null) !== (b.refCode||null)) return false;
+    if ((Number(a.refCount)||0) !== (Number(b.refCount)||0)) return false;
+    if ((Math.floor(Number(a.refEarned)||0)) !== (Math.floor(Number(b.refEarned)||0))) return false;
+    if (!!a.usedRef !== !!b.usedRef) return false;
+    if ((Number(a.lastAd)||0) !== (Number(b.lastAd)||0)) return false;
+    if ((Number(a.lastIncome)||0) !== (Number(b.lastIncome)||0)) return false;
+    var ids = {};
+    Object.keys(a.inventory||{}).forEach(function(id){ids[id]=true;});
+    Object.keys(b.inventory||{}).forEach(function(id){ids[id]=true;});
+    return Object.keys(ids).every(function(id){
+      return (Number(a.inventory[id])||0) === (Number(b.inventory[id])||0);
+    });
   }
 
   function mergeSnapshots(remote, local, base) {
     if (!base) return copy(local);
     var merged = copy(remote);
-    merged.credits = Math.max(0, Math.floor(Number(remote.credits) || 0) + (Math.floor(Number(local.credits) || 0) - Math.floor(Number(base.credits) || 0)));
+    merged.credits = Math.max(0,
+      Math.floor(Number(remote.credits) || 0) +
+      (Math.floor(Number(local.credits) || 0) - Math.floor(Number(base.credits) || 0))
+    );
 
     var ids = {};
     Object.keys(remote.inventory || {}).forEach(function(id){ ids[id] = true; });
@@ -1291,6 +1315,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     if (pr.error) throw pr.error;
     if (ir.error) throw ir.error;
     if (br.error) throw br.error;
+
     var p = pr.data;
     var snap = {
       credits: Number(p.credits)||0,
@@ -1306,7 +1331,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       refEarned: Number(p.ref_earned)||0,
       usedRef: !!p.used_ref,
       lastAd: p.last_ad ? new Date(p.last_ad).getTime() : 0,
-      lastIncome: p.last_income ? new Date(p.last_income).getTime() : Date.now()
+      lastIncome: p.last_income ? new Date(p.last_income).getTime() : 0
     };
     (ir.data||[]).forEach(function(row){
       var q = Math.floor(Number(row.quantity)||0);
@@ -1316,7 +1341,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   }
 
   function applySnapshotToLocal(snap, authUser, username) {
-    var uname = username || (typeof currentUser !== 'undefined' && currentUser) || ((authUser && authUser.email) ? authUser.email.split('@')[0] : 'player');
+    var uname = localUsername(username || ((authUser && authUser.email) ? authUser.email.split('@')[0] : 'player'));
     var u = copy(snap);
     u.pass = '';
     u.cloudId = authUser && authUser.id ? authUser.id : cloudUser();
@@ -1337,29 +1362,32 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       pushTimer = null;
       pushState().catch(function (err) {
         dirty = true;
+        window.CYBERDROP_CLOUD.status = 'sync-error';
         console.warn('CYBERDROP cloud sync:', err);
       });
-    }, 250);
+    }, 200);
   }
 
   async function writeCloudState(uid, snap, remoteProfile) {
     var profile = {
       id: uid,
-      username: (typeof currentUser !== 'undefined' && currentUser) || remoteProfile.username || uid.slice(0, 8),
+      username: localUsername(remoteProfile && remoteProfile.username) || uid.slice(0,8),
       credits: Math.floor(Number(snap.credits)||0),
       ref_code: snap.refCode || remoteProfile.ref_code || null,
       ref_count: Number(snap.refCount)||0,
       ref_earned: Math.floor(Number(snap.refEarned)||0),
       used_ref: !!snap.usedRef,
       last_ad: snap.lastAd ? new Date(snap.lastAd).toISOString() : null,
-      last_income: snap.lastIncome ? new Date(snap.lastIncome).toISOString() : new Date().toISOString()
+      last_income: snap.lastIncome ? new Date(snap.lastIncome).toISOString() : null
     };
 
-    // Optimistic concurrency on the profile row: do not overwrite a newer device state.
+    // Important: the previous version used an exact updated_at condition here.
+    // On some Supabase/RLS configurations that can return 0 rows and silently
+    // leave the reward only in local storage. We now merge from a fresh server
+    // snapshot before every write and verify the result afterwards.
     var pu = await client.from('profiles')
       .update(profile)
       .eq('id', uid)
-      .eq('updated_at', remoteProfile.updated_at)
       .select('updated_at')
       .single();
     if (pu.error) throw pu.error;
@@ -1376,7 +1404,9 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       var ins = await client.from('inventory').upsert(rows, {onConflict:'user_id,item_id'});
       if (ins.error) throw ins.error;
     }
-    var toDelete = Object.keys(remoteIds).filter(function(id){ return !Object.prototype.hasOwnProperty.call(snap.inventory || {}, id); });
+    var toDelete = Object.keys(remoteIds).filter(function(id){
+      return !Object.prototype.hasOwnProperty.call(snap.inventory || {}, id);
+    });
     if (toDelete.length) {
       var del = await client.from('inventory').delete().eq('user_id',uid).in('item_id',toDelete);
       if (del.error) throw del.error;
@@ -1388,8 +1418,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       gpu: b.gpu || null, ssd: b.ssd || null, psu: b.psu || null, cool: b.cool || null
     }, { onConflict: 'user_id' });
     if (br.error) throw br.error;
-
-    return pu.data && pu.data.updated_at ? pu.data.updated_at : remoteProfile.updated_at;
+    return pu.data && pu.data.updated_at ? pu.data.updated_at : null;
   }
 
   async function pushState() {
@@ -1400,23 +1429,31 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     try {
       var uid = cloudUser();
       var localSnap = snapshotUser(u);
-      var remote = await readCloudState(uid);
-      var remoteChanged = !!lastServerUpdatedAt && String(remote.profile.updated_at) !== String(lastServerUpdatedAt);
-      var merged = remoteChanged ? mergeSnapshots(remote.snapshot, localSnap, lastSyncedSnapshot) : copy(localSnap);
-      var newUpdatedAt;
-      try {
-        newUpdatedAt = await writeCloudState(uid, merged, remote.profile);
-      } catch (err) {
-        // Another device may have written between our read and update. Re-read once and merge again.
-        var latest = await readCloudState(uid);
-        var latestMerged = mergeSnapshots(latest.snapshot, merged, remoteChanged ? remote.snapshot : (lastSyncedSnapshot || remote.snapshot));
-        newUpdatedAt = await writeCloudState(uid, latestMerged, latest.profile);
-        merged = latestMerged;
+      var base = lastSyncedSnapshot ? copy(lastSyncedSnapshot) : copy(localSnap);
+      var merged = null;
+      var saved = null;
+
+      for (var attempt = 0; attempt < 4; attempt++) {
+        var remote = await readCloudState(uid);
+        merged = mergeSnapshots(remote.snapshot, localSnap, base);
+        saved = await writeCloudState(uid, merged, remote.profile);
+
+        // Verify what is actually in Supabase. This also makes two open devices
+        // converge without relying on the fragile updated_at equality check.
+        var verify = await readCloudState(uid);
+        if (sameSnapshot(verify.snapshot, merged)) {
+          merged = verify.snapshot;
+          saved = verify.profile.updated_at || saved;
+          break;
+        }
+        if (attempt === 3) {
+          throw new Error('Не удалось подтвердить запись данных в облако.');
+        }
       }
 
-      applySnapshotToLocal(merged, {id:uid,email:u.email}, window.currentUser || u.username || uid.slice(0,8));
+      applySnapshotToLocal(merged, {id:uid,email:u.email}, localUsername(merged.username || null));
       lastSyncedSnapshot = snapshotUser(user());
-      lastServerUpdatedAt = newUpdatedAt;
+      lastServerUpdatedAt = saved || null;
       dirty = false;
       window.CYBERDROP_CLOUD.status = 'synced';
       window.renderAll();
@@ -1430,7 +1467,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     try {
       window.CYBERDROP_CLOUD.userId = authUser.id;
       var cloud = await readCloudState(authUser.id);
-      var uname = cloud.profile.username;
+      var uname = cloud.profile.username || ((authUser.email||'player').split('@')[0]);
       var u = applySnapshotToLocal(cloud.snapshot, authUser, uname);
       lastSyncedSnapshot = snapshotUser(u);
       lastServerUpdatedAt = cloud.profile.updated_at || null;
@@ -1518,8 +1555,6 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
 
   window.CYBERDROP_CLOUD.schedulePush = schedulePush;
 
-  // Do not overwrite the previous local session with starter data. The cloud session is authoritative,
-  // but the UI is kept out of the authenticated state until Supabase returns it.
   currentUser = null;
   if (db && db.current) { db.current = null; SAFE_STORE.set(DBKEY, JSON.stringify(db)); }
   window.renderAll();
@@ -1559,7 +1594,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       console.warn('CYBERDROP remote sync:', err);
     }
   }
-  pollingTimer = setInterval(pollRemoteState, 4000);
+  pollingTimer = setInterval(pollRemoteState, 2000);
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') pollRemoteState(); });
 
   document.addEventListener('click', function (e) {
