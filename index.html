@@ -1374,7 +1374,7 @@ async function startCase(id){
      addItem(win.id);$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
      $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
      $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
-     $('#sellWinBtn').onclick=async()=>{if(sellLocks.has(win.id))return;sellLocks.add(win.id);const btn=$('#sellWinBtn');if(btn){btn.disabled=true;btn.textContent='Продажа…'}if(takeItem(win.id)){renderInventory();renderBadges();const ok=await addCredits(win.price);if(ok){closeModal('caseModal');toast('Предмет продан','ok')}else{addItem(win.id,1);toast('Продажа отменена: не удалось изменить баланс','err')}}sellLocks.delete(win.id)};
+     $('#sellWinBtn').onclick=async()=>{if(sellAllBusy||sellLocks.has(win.id))return;sellLocks.add(win.id);const btn=$('#sellWinBtn');if(btn){btn.disabled=true;btn.textContent='Продажа…'}try{await performSale([{item_id:win.id,quantity:1,unit_price:win.price}]);closeModal('caseModal');toast('Предмет продан','ok')}catch(err){console.warn('CYBERDROP case prize sale:',err);toast(err&&err.message?err.message:'Продажа не выполнена. Предмет сохранён.','err')}finally{sellLocks.delete(win.id);renderInventory();renderBadges()}};
      spinning=false;renderBadges();
    }));
  };
@@ -1452,6 +1452,21 @@ async function buyShopItem(id){
 }
 
 /* ==================== INVENTORY ==================== */
+async function performSale(items){
+ const u=user();if(!u)throw new Error('Войди в аккаунт, чтобы продавать предметы.');
+ const list=items.map(x=>({item_id:String(x.item_id||x.id||''),quantity:Math.floor(Number(x.quantity)||0),unit_price:Math.floor(Number(x.unit_price??x.price)||0)}));
+ if(!list.length||list.some(x=>!x.item_id||x.quantity<1||x.unit_price<0))throw new Error('Некорректные данные продажи.');
+ const cloud=window.CYBERDROP_CLOUD;
+ if(cloud&&cloud.enabled){
+   if(!cloud.userId)throw new Error('Облачная сессия не активна. Войди в аккаунт и повтори продажу.');
+   if(typeof cloud.sellInventory!=='function')throw new Error('Не загружена атомарная продажа. Обнови страницу после установки SQL-миграции.');
+   return await cloud.sellInventory(list);
+ }
+ const grouped={};list.forEach(x=>{if(!grouped[x.item_id])grouped[x.item_id]={quantity:0,unit_price:x.unit_price};grouped[x.item_id].quantity+=x.quantity;if(grouped[x.item_id].unit_price!==x.unit_price)throw new Error('Цена предмета указана неоднозначно.');});
+ for(const [id,x] of Object.entries(grouped)){if((Number(u.inventory[id])||0)<x.quantity)throw new Error('Предмет уже продан или его количество изменилось.');}
+ let total=0;for(const [id,x] of Object.entries(grouped)){u.inventory[id]-=x.quantity;if(u.inventory[id]<=0)delete u.inventory[id];total+=x.quantity*x.unit_price;}
+ u.credits=Math.max(0,Math.floor(Number(u.credits||0)+total));saveDB();renderAll();return {credits:u.credits,total};
+}
 const sellLocks=new Set();
 let sellAllBusy=false;
 function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inventory).filter(([,n])=>n>0).map(([id,n])=>[ITEM_MAP[id],n]).filter(([it])=>it)}
@@ -1461,50 +1476,39 @@ function renderInventory(){
  $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}" ${sellLocks.has(it.id)?'disabled':''}>${sellLocks.has(it.id)?'Продажа…':'Продать'}</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
  $$('[data-sell]').forEach(b=>b.onclick=async()=>{
    const id=b.dataset.sell,it=ITEM_MAP[id];
-   if(!it||sellLocks.has(id))return;
-   sellLocks.add(id);
-   b.disabled=true;b.textContent='Продажа…';
-   if(!takeItem(id)){
-     sellLocks.delete(id);
-     renderInventory();
-     return;
-   }
-   // Убираем предмет из интерфейса сразу, до завершения сетевого запроса.
-   renderInventory();renderBadges();
-   const ok=await addCredits(it.price);
-   if(ok){
+   if(!it||sellAllBusy||sellLocks.has(id))return;
+   sellLocks.add(id);b.disabled=true;b.textContent='Продажа…';
+   try{
+     await performSale([{item_id:id,quantity:1,unit_price:it.price}]);
      toast(`Продано: ${it.name}`,'ok');
-   }else{
-     // Транзакция не прошла — возвращаем ровно одну проданную единицу.
-     addItem(id,1);
-     toast(`Продажа отменена: ${it.name}`,'err');
+   }catch(err){
+     console.warn('CYBERDROP inventory sale:',err);
+     toast(err&&err.message?err.message:`Продажа отменена: ${it.name}`,'err');
+   }finally{
+     sellLocks.delete(id);renderInventory();renderBadges();
    }
-   sellLocks.delete(id);
-   renderInventory();renderBadges();
  });
 }
 $('#sellAllBtn').addEventListener('click',async()=>{
  if(sellAllBusy)return;
  if(!requireAuth())return;
- const u=user(),e=invEntries();
- if(!u||!e.length)return toast('Инвентарь пуст');
- const sum=e.reduce((s,[it,n])=>s+it.price*n,0);
- const backup={...u.inventory};
+ const e=invEntries();
+ if(!e.length)return toast('Инвентарь пуст');
+ const items=e.map(([it,n])=>({item_id:it.id,quantity:n,unit_price:it.price}));
  sellAllBusy=true;
  $('#sellAllBtn').disabled=true;$('#sellAllBtn').textContent='Продажа…';
- // Очищаем инвентарь немедленно, чтобы повторное нажатие не запустило вторую продажу.
- u.inventory={};
- saveDB();renderInventory();renderBadges();
- const ok=await addCredits(sum);
- if(ok){
-   toast(`Продано на ${fmt(sum)} кр.`,'ok');
- }else{
-   u.inventory=backup;
-   saveDB();renderInventory();renderBadges();
-   toast('Продажа отменена: не удалось изменить баланс','err');
+ $$('[data-sell]').forEach(b=>b.disabled=true);
+ try{
+   const result=await performSale(items);
+   toast(`Продано на ${fmt(result.total)} кр.`,'ok');
+ }catch(err){
+   console.warn('CYBERDROP sell all:',err);
+   toast(err&&err.message?err.message:'Продажа отменена; инвентарь не изменён.','err');
+ }finally{
+   sellAllBusy=false;
+   $('#sellAllBtn').disabled=false;$('#sellAllBtn').textContent='Продать всё';
+   renderInventory();renderBadges();
  }
- sellAllBusy=false;
- $('#sellAllBtn').disabled=false;$('#sellAllBtn').textContent='Продать всё';
 });
 
 /* ==================== BUILD ==================== */
@@ -1796,6 +1800,8 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   var suppressPush = false;
   var pushTimer = null;
   var dirty = false;
+  var dirtyVersion = 0;
+  var atomicSaleBusy = false;
   var lastServerUpdatedAt = null;
   var lastSyncedSnapshot = null;
   var pollingTimer = null;
@@ -1998,6 +2004,8 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   function schedulePush() {
     if (suppressPush || !cloudUser()) return;
     dirty = true;
+    dirtyVersion++;
+    if (atomicSaleBusy) return;
     if (pushTimer) return;
     pushTimer = setTimeout(function () {
       pushTimer = null;
@@ -2049,9 +2057,10 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   }
 
   async function pushState() {
-    if (syncing || suppressPush || !cloudUser()) return;
+    if (syncing || suppressPush || !cloudUser() || atomicSaleBusy) return;
     var u = user && user();
     if (!u) return;
+    var revisionAtStart = dirtyVersion;
     syncing = true;
     try {
       var uid = cloudUser();
@@ -2062,6 +2071,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       for (var attempt = 0; attempt < 4; attempt++) {
         var remote = await readCloudState(uid, {id:uid,email:u.email});
         merged = mergeSnapshots(remote.snapshot, localSnap, base);
+        // Credits are changed only with atomic RPCs, never by snapshot uploads.
         merged.credits = remote.snapshot.credits;
         saved = await writeCloudState(uid, merged, remote.profile);
         var verify = await readCloudState(uid, {id:uid,email:u.email});
@@ -2072,20 +2082,113 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
         }
         if (attempt === 3) throw new Error('Не удалось подтвердить запись данных в облако.');
       }
-      applySnapshotToLocal(merged, {id:uid,email:u.email}, localUsername((merged.username || null)));
-      lastSyncedSnapshot = snapshotUser(user());
+
       lastServerUpdatedAt = saved || null;
-      dirty = false;
       window.CYBERDROP_CLOUD.status = 'synced';
+      if (dirtyVersion === revisionAtStart) {
+        // No local change happened during the request; use the authoritative snapshot.
+        applySnapshotToLocal(merged, {id:uid,email:u.email}, localUsername(merged.username || null));
+        lastSyncedSnapshot = snapshotUser(user());
+        dirty = false;
+      } else {
+        // Do not overwrite changes made while the network request was in flight.
+        // The written snapshot becomes the new merge base and another push will
+        // upload the intervening local delta.
+        lastSyncedSnapshot = copy(merged);
+        dirty = true;
+      }
       window.renderAll();
     } finally {
       syncing = false;
-      // Если локальное изменение произошло во время предыдущей синхронизации,
-      // обязательно запускаем ещё один push после её завершения. Это важно для
-      // продажи предмета: старый push не должен вернуть уже проданный предмет.
-      if (dirty && !suppressPush && cloudUser()) {
-        schedulePush();
+      if (dirty && !suppressPush && cloudUser() && !atomicSaleBusy) schedulePush();
+    }
+  }
+
+  function waitMs(ms) { return new Promise(function(resolve){ setTimeout(resolve, ms); }); }
+
+  async function flushPendingCloudChanges() {
+    for (var attempt = 0; attempt < 150; attempt++) {
+      if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+      if (syncing) { await waitMs(20); continue; }
+      if (dirty) {
+        await pushState();
+        if (syncing || dirty || pushTimer) { await waitMs(20); continue; }
       }
+      if (!syncing && !dirty && !pushTimer) return;
+    }
+    throw new Error('Не удалось дождаться синхронизации инвентаря. Повтори продажу через несколько секунд.');
+  }
+
+  async function sellInventory(items) {
+    if (!Array.isArray(items) || !items.length) throw new Error('Нет предметов для продажи.');
+    if (atomicSaleBusy) throw new Error('Другая продажа уже выполняется. Подожди завершения.');
+    if (!cloudUser()) throw new Error('Облачная сессия не активна. Войди в аккаунт и повтори продажу.');
+    await flushPendingCloudChanges();
+    if (atomicSaleBusy) throw new Error('Другая продажа уже выполняется. Подожди завершения.');
+
+    var startUser = user && user();
+    if (!startUser) throw new Error('Не найден активный аккаунт.');
+    var before = snapshotUser(startUser);
+    var payload = items.map(function (item) {
+      return {
+        item_id: String(item.item_id || item.id || ''),
+        quantity: Math.floor(Number(item.quantity) || 0),
+        unit_price: Math.floor(Number(item.unit_price ?? item.price) || 0)
+      };
+    });
+    if (payload.some(function(x){ return !x.item_id || x.quantity < 1 || x.unit_price < 0; })) {
+      throw new Error('Некорректные данные продажи.');
+    }
+
+    atomicSaleBusy = true;
+    try {
+      var res = await client.rpc('sell_inventory_batch', { p_items: payload });
+      if (res.error) throw res.error;
+      var data = Array.isArray(res.data) ? res.data[0] : res.data;
+      var balance = Math.floor(Number(data && data.credits));
+      var total = Math.floor(Number(data && data.total));
+      var remaining = data && data.inventory;
+      if (!Number.isFinite(balance) || !Number.isFinite(total) || !remaining || typeof remaining !== 'object') {
+        throw new Error('Сервер вернул некорректный результат продажи.');
+      }
+
+      // The RPC removes items and credits the balance in one database transaction.
+      // Mirror its remaining counts locally without scheduling a stale inventory push.
+      var currentUser = user && user();
+      if (currentUser) {
+        var grouped = {};
+        payload.forEach(function(item){ grouped[item.item_id] = (grouped[item.item_id] || 0) + item.quantity; });
+        Object.keys(grouped).forEach(function(id){
+          var baseQty = Number(before.inventory[id]) || 0;
+          var currentQty = Number(currentUser.inventory[id]) || 0;
+          var concurrentDelta = currentQty - baseQty;
+          var serverQty = Math.max(0, Math.floor(Number(remaining[id]) || 0));
+          var nextQty = Math.max(0, serverQty + concurrentDelta);
+          if (nextQty > 0) currentUser.inventory[id] = nextQty;
+          else delete currentUser.inventory[id];
+        });
+        currentUser.credits = balance;
+        saveDB(false);
+      }
+
+      var baseline = copy(before);
+      baseline.credits = balance;
+      var groupedForBase = {};
+      payload.forEach(function(item){ groupedForBase[item.item_id] = true; });
+      Object.keys(groupedForBase).forEach(function(id){
+        var q = Math.max(0, Math.floor(Number(remaining[id]) || 0));
+        if (q > 0) baseline.inventory[id] = q;
+        else delete baseline.inventory[id];
+      });
+      lastSyncedSnapshot = baseline;
+      lastServerUpdatedAt = data.updated_at || lastServerUpdatedAt;
+      dirty = currentUser ? !sameSnapshot(snapshotUser(currentUser), baseline) : false;
+      window.CYBERDROP_CLOUD.status = 'synced';
+      window.renderAll();
+      return { credits: balance, total: total, inventory: remaining };
+    } finally {
+      atomicSaleBusy = false;
+      if (dirty && !suppressPush && cloudUser()) schedulePush();
     }
   }
 
@@ -2162,6 +2265,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
 
   window.CYBERDROP_CLOUD.changeCredits = changeCredits;
   window.CYBERDROP_CLOUD.schedulePush = schedulePush;
+  window.CYBERDROP_CLOUD.sellInventory = sellInventory;
   window.CYBERDROP_CLOUD.authSubmit = cloudAuthSubmit;
 
   window.logoutAccount = async function(){
