@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CYBERDROP — выигрывай технику</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#08090e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CYBERDROP">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#08090e;--card:#141823;--line:#242b3d;--txt:#e9edf7;--muted:#8892a8;--acc:#00e5ff;--acc2:#b14aff;--lime:#c6ff3d}
+:root[data-theme='light']{--bg:#eef4fb;--card:#ffffff;--line:#cbd6e6;--txt:#152033;--muted:#5d6c82;--acc:#007dff;--acc2:#8a2be2;--lime:#4c8d00}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(900px 520px at 8% -12%,rgba(0,229,255,.13),transparent 62%),radial-gradient(820px 620px at 95% -5%,rgba(177,74,255,.15),transparent 62%),radial-gradient(760px 520px at 50% 115%,rgba(198,255,61,.07),transparent 62%)}
+.wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 20px 80px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+.hidden{display:none!important}
+header{position:sticky;top:0;z-index:60;backdrop-filter:blur(18px);background:rgba(8,9,14,.82);border-bottom:1px solid var(--line)}
+:root[data-theme='light'] body::before{background:radial-gradient(900px 520px at 8% -12%,rgba(0,125,255,.10),transparent 62%),radial-gradient(820px 620px at 95% -5%,rgba(138,43,226,.10),transparent 62%),radial-gradient(760px 520px at 50% 115%,rgba(76,141,0,.06),transparent 62%)}
+:root[data-theme='light'] header{background:rgba(245,248,252,.88)}
+:root[data-theme='light'] .case-card,:root[data-theme='light'] .inv-card,:root[data-theme='light'] .slot,:root[data-theme='light'] .earn-card,:root[data-theme='light'] .inv-head,:root[data-theme='light'] .build-status{background:linear-gradient(180deg,#fff,#f7f9fc)}
+:root[data-theme='light'] .credits-pill{background:linear-gradient(135deg,rgba(76,141,0,.10),rgba(0,125,255,.08));border-color:rgba(76,141,0,.28)}
+.header-in{max-width:1280px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:19px;letter-spacing:1.5px;background:linear-gradient(92deg,var(--acc),var(--acc2) 55%,var(--lime));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.logo span{opacity:.75}
+nav{display:flex;gap:4px;flex:1;min-width:200px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-btn{padding:9px 15px;border-radius:11px;font-size:14px;font-weight:600;color:var(--muted);transition:.18s;white-space:nowrap}
+.nav-btn:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+.nav-btn.active{color:#06080d;background:linear-gradient(100deg,var(--acc),#5ce1ff);box-shadow:0 0 22px rgba(0,229,255,.3)}
+.nav-btn .badge{display:inline-block;min-width:18px;padding:1px 5px;margin-left:6px;font-size:11px;font-weight:800;border-radius:9px;background:var(--acc2);color:#fff;vertical-align:1px}
+.nav-btn.active .badge{background:rgba(0,0,0,.28);color:#06080d}
+.header-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.credits-pill{display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:12px;background:linear-gradient(135deg,rgba(198,255,61,.14),rgba(0,229,255,.1));border:1px solid rgba(198,255,61,.3);font-weight:800;font-size:15px;white-space:nowrap}
+.credits-pill .diamond{color:var(--lime);font-size:14px}
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 8px 5px 5px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.avatar{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:13px;font-weight:900;color:#05070c;background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.user-chip .uname{font-size:13.5px;font-weight:700;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:var(--muted);font-size:15px;transition:.15s}
+.icon-btn:hover{background:rgba(255,80,80,.15);color:#ff6b6b}
+.btn{padding:10px 18px;border-radius:12px;font-size:14px;font-weight:700;transition:.18s;white-space:nowrap;display:inline-block;text-align:center;line-height:1.2}
+.btn.primary{background:linear-gradient(100deg,var(--acc),var(--acc2));color:#06080d;box-shadow:0 6px 22px rgba(0,229,255,.25)}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(177,74,255,.4)}
+.btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--txt)}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn.lime{background:linear-gradient(100deg,var(--lime),#7dffb0);color:#05070c;box-shadow:0 6px 22px rgba(198,255,61,.25)}
+.btn.lime:hover{transform:translateY(-2px)}
+.btn.full{width:100%}
+.btn.sm{padding:7px 11px;font-size:12px;border-radius:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+section{display:none;animation:fade .35s ease}
+section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.page-head{margin:32px 0 20px}
+.page-head h1{font-size:clamp(25px,4vw,37px);font-weight:900;letter-spacing:-.6px}
+.page-head h1 em{font-style:normal;background:linear-gradient(96deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.page-head p{color:var(--muted);margin-top:8px;font-size:14.5px;max-width:700px;line-height:1.55}
+.item-visual{display:grid;place-items:center;overflow:hidden;line-height:1}
+.item-visual svg{width:100%;height:100%;display:block}
+.cases-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
+.case-card{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--card),#0f121b);border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:.25s}
+.case-card:hover{transform:translateY(-5px);border-color:var(--cc);box-shadow:0 18px 46px -14px var(--cc)}
+.case-card::after{content:'';position:absolute;inset:-1px;border-radius:22px;pointer-events:none;background:radial-gradient(300px 130px at 50% 0%,var(--cc),transparent 70%);opacity:.16}
+.case-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.case-icon{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:25px;background:linear-gradient(150deg,rgba(255,255,255,.09),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 0 26px -8px var(--cc)}
+.case-tag{font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--cc);border:1px solid rgba(255,255,255,.08);text-align:center;max-width:100px}
+.case-name{font-size:17.5px;font-weight:800;position:relative;z-index:1}
+.case-price{font-size:13px;color:var(--muted);margin-top:-6px;position:relative;z-index:1}
+.case-price b{color:var(--lime);font-weight:800}
+.case-drops{display:flex;gap:5px;flex-wrap:wrap;position:relative;z-index:1}
+.drop-dot{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;overflow:hidden;background:rgba(255,255,255,.045);border:1px solid var(--dc);padding:3px}
+.case-card .btn{margin-top:auto;position:relative;z-index:1;width:100%}
+.inv-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;padding:15px 20px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.inv-head .stat{font-size:14px;color:var(--muted)}
+.inv-head .stat b{color:var(--lime);font-size:18px;font-weight:800;margin-left:4px}
+.inv-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.inv-card{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--card),#0f121b);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:.22s;border-top:3px solid var(--rc)}
+.inv-card:hover{transform:translateY(-4px);box-shadow:0 14px 34px -16px var(--rc)}
+.inv-card .item-visual{width:100%;aspect-ratio:1.25;border-radius:12px;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.055),transparent 72%);padding:8px}
+.inv-name{font-size:13px;font-weight:700;line-height:1.3;min-height:34px}
+.inv-rar{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--rc)}
+.inv-price{font-size:14px;font-weight:800;color:var(--lime)}
+.inv-count{position:absolute;top:12px;right:12px;min-width:26px;padding:3px 8px;border-radius:9px;font-size:12px;font-weight:900;text-align:center;background:rgba(0,229,255,.14);border:1px solid rgba(0,229,255,.35);color:var(--acc);z-index:5}
+.inv-empty{grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--muted);border:1.5px dashed var(--line);border-radius:20px}
+.inv-empty .big{font-size:50px;display:block;margin-bottom:14px;opacity:.5}
+.build-status{padding:16px 22px;border-radius:16px;background:var(--card);border:1px solid var(--line);margin-bottom:16px;display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.build-status .item{font-size:12.5px;color:var(--muted)}
+.build-status .item b{display:block;font-size:20px;font-weight:900;color:var(--txt);margin-top:2px}
+.build-status .item b.ok{color:var(--lime)}
+.build-status .item b.err{color:#ff7676}
+.build-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:18px}
+.slot{position:relative;padding:14px;border-radius:16px;background:var(--card);border:1px dashed var(--line);transition:.2s;min-height:190px;display:flex;flex-direction:column;gap:6px}
+.slot.filled{border-style:solid;border-color:var(--rc);border-top-width:3px}
+.slot-label{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.slot-visual{flex:1;display:grid;place-items:center;min-height:70px;padding:4px}
+.slot-visual .item-visual{width:70px;height:70px}
+.slot-empty{display:grid;place-items:center;color:var(--muted);font-size:30px;opacity:.3;flex:1}
+.slot-name{font-size:11.5px;font-weight:700;line-height:1.3;text-align:center;min-height:30px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.slot-actions{display:flex;gap:6px}
+.slot-actions .btn{flex:1;padding:6px 8px;font-size:11px;border-radius:9px}
+.incompat{padding:12px 18px;border-radius:14px;background:rgba(255,90,90,.09);border:1px solid rgba(255,90,90,.4);color:#ff9b9b;font-size:13px;font-weight:600;margin-bottom:14px}
+.incompat ul{margin:6px 0 0 20px;font-weight:500;line-height:1.6}
+.income-box{padding:18px 22px;border-radius:16px;background:linear-gradient(135deg,rgba(198,255,61,.1),rgba(0,229,255,.06));border:1px solid rgba(198,255,61,.35);display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.income-box .lbl{font-size:12.5px;color:var(--muted)}
+.income-box .val{font-size:22px;font-weight:900;color:var(--lime)}
+.income-box .sub{font-size:12px;color:var(--muted);margin-left:auto;text-align:right;line-height:1.4}
+.earn-grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.earn-card{background:linear-gradient(180deg,var(--card),#0f121b);border:1px solid var(--line);border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.earn-card::before{content:'';position:absolute;top:-70px;right:-70px;width:190px;height:190px;border-radius:50%;background:var(--ec);filter:blur(72px);opacity:.28;pointer-events:none}
+.earn-ico{font-size:32px;position:relative;z-index:1}
+.earn-card h3{font-size:20px;font-weight:800;position:relative;z-index:1}
+.earn-card p{font-size:14px;color:var(--muted);line-height:1.6;position:relative;z-index:1}
+.earn-card .btn{position:relative;z-index:1;margin-top:auto}
+.ref-code{display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:14px;background:#0a0c13;border:1px dashed var(--acc2);position:relative;z-index:1}
+.ref-code code{flex:1;font-size:18px;font-weight:900;letter-spacing:3px;color:var(--acc);font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.ref-stats{display:flex;gap:22px;position:relative;z-index:1}
+.ref-stats div{font-size:12.5px;color:var(--muted)}
+.ref-stats b{display:block;font-size:21px;font-weight:900;color:var(--txt);margin-top:2px}
+.ref-input{display:flex;gap:8px;position:relative;z-index:1}
+.ref-input input{flex:1}
+input[type=text],input[type=password]{width:100%;padding:12px 14px;border-radius:12px;background:#0a0c13;border:1px solid var(--line);color:var(--txt);font-size:14px;outline:none;transition:.18s}
+input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,229,255,.12)}
+input::placeholder{color:#5b6478}
+.game-area{display:none;flex-direction:column;gap:10px;position:relative;z-index:1}
+.game-area.on{display:flex}
+.game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{aspect-ratio:1;border-radius:12px;background:#0a0c13;border:1px solid var(--line);cursor:pointer;transition:.12s;display:grid;place-items:center;font-size:22px;user-select:none}
+.chip.hot{background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 0 20px rgba(0,229,255,.7);border-color:var(--acc);transform:scale(1.05)}
+.game-hud{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+.game-hud b{color:var(--txt);font-weight:800}
+.game-note{font-size:12px;color:var(--muted);text-align:center;position:relative;z-index:1}
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(4,5,9,.85);backdrop-filter:blur(9px)}
+.modal.open{display:flex;animation:fade .22s ease}
+.modal-box{position:relative;width:100%;max-width:430px;background:linear-gradient(180deg,#151924,#0d1017);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 40px 90px -25px rgba(0,0,0,.9);animation:pop .3s cubic-bezier(.2,1.3,.4,1);max-height:92vh;overflow-y:auto}
+.modal-box.wide{max-width:740px}
+@keyframes pop{from{opacity:0;transform:scale(.93) translateY(16px)}to{opacity:1;transform:none}}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:16px;transition:.15s;z-index:5}
+.modal-close:hover{background:rgba(255,255,255,.08);color:#fff}
+.modal-box h3{font-size:21px;font-weight:800;margin-bottom:6px;padding-right:34px}
+.modal-sub{font-size:13.5px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.auth-tabs{display:flex;gap:6px;background:#0a0c13;padding:5px;border-radius:14px;margin-bottom:20px}
+.auth-tab{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:700;color:var(--muted);transition:.18s}
+.auth-tab.active{background:linear-gradient(100deg,var(--acc),var(--acc2));color:#06080d}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:7px}
+.auth-err{font-size:13px;color:#ff6b6b;min-height:18px;margin-bottom:10px;font-weight:600}
+.auth-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+.auth-note b{color:var(--lime)}
+.roulette{position:relative;height:172px;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#131826,#0a0c12);border:1px solid var(--line)}
+.roulette::before,.roulette::after{content:'';position:absolute;top:0;bottom:0;width:100px;z-index:3;pointer-events:none}
+.roulette::before{left:0;background:linear-gradient(90deg,#0a0c12,transparent)}
+.roulette::after{right:0;background:linear-gradient(270deg,#0a0c12,transparent)}
+.roulette-strip{display:flex;gap:8px;align-items:center;height:100%;will-change:transform}
+.rou-item{flex:0 0 142px;height:146px;border-radius:14px;background:linear-gradient(180deg,#1a2030,#111520);border:1px solid rgba(255,255,255,.07);border-bottom:3px solid var(--rc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;text-align:center;transition:.3s}
+.rou-item .item-visual{width:70px;height:70px}
+.rou-item .ri-nm{font-size:9.5px;font-weight:700;color:#b9c2d6;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rou-item.win{box-shadow:0 0 0 2px var(--rc),0 0 34px -4px var(--rc);transform:scale(1.06)}
+.roulette-marker{position:absolute;left:50%;top:0;bottom:0;width:2px;z-index:4;transform:translateX(-50%);pointer-events:none;background:linear-gradient(180deg,transparent,var(--acc) 18%,var(--acc) 82%,transparent);box-shadow:0 0 16px 2px rgba(0,229,255,.75)}
+.roulette-marker::before,.roulette-marker::after{content:'';position:absolute;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent}
+.roulette-marker::before{top:-1px;border-top:11px solid var(--acc)}
+.roulette-marker::after{bottom:-1px;border-bottom:11px solid var(--acc)}
+.result{margin-top:20px;text-align:center}
+.result-item{display:inline-flex;flex-direction:column;align-items:center;gap:7px;padding:18px 30px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border:1px solid var(--rc);box-shadow:0 0 44px -12px var(--rc);animation:pop .4s cubic-bezier(.2,1.4,.4,1);margin-bottom:16px;min-width:230px}
+.result-item .item-visual{width:140px;height:130px;margin-bottom:2px}
+.result-item .ri-nm{font-size:15px;font-weight:800;text-align:center;line-height:1.25}
+.result-item .ri-rc{font-size:10.5px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--rc)}
+.result-item .ri-pr{font-size:19px;font-weight:900;color:var(--lime)}
+.result-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.ad-box{height:210px;border-radius:18px;margin-bottom:18px;background:linear-gradient(135deg,#1b1030,#0d1b2e,#101a12);display:grid;place-items:center;text-align:center;padding:24px;border:1px solid var(--line);position:relative;overflow:hidden}
+.ad-box::before{content:'';position:absolute;inset:-50%;background:conic-gradient(from 0deg,transparent,rgba(0,229,255,.16),transparent 35%);animation:spinbg 4s linear infinite}
+@keyframes spinbg{to{transform:rotate(360deg)}}
+.ad-inner{position:relative;z-index:1}
+.ad-inner .em{font-size:50px;display:block;margin-bottom:12px;animation:float 2.4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.ad-inner h4{font-size:19px;font-weight:800;margin-bottom:6px}
+.ad-inner p{font-size:13.5px;color:var(--muted)}
+.ad-progress{height:6px;border-radius:6px;background:#0a0c13;overflow:hidden;margin-bottom:16px}
+.ad-progress i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--acc),var(--lime));transition:width .3s linear}
+.case-live{display:flex;align-items:center;gap:8px;margin:-4px 0 12px;padding:8px 10px;border:1px solid rgba(0,229,255,.18);background:rgba(0,229,255,.045);border-radius:11px;color:var(--muted);font-size:10px;letter-spacing:1px;font-weight:800;text-transform:uppercase}
+.case-live b{margin-left:auto;color:var(--acc);font-family:ui-monospace,monospace;letter-spacing:0}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc);animation:pulseDot 1s ease-in-out infinite}
+@keyframes pulseDot{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}
+.case-progress{height:5px;margin-top:10px;border-radius:6px;overflow:hidden;background:#090c13;border:1px solid rgba(255,255,255,.04)}
+.case-progress i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--acc),var(--acc2),var(--lime));box-shadow:0 0 16px rgba(0,229,255,.45);transition:width .12s linear}
+.audio-toggle{width:34px;height:34px;border:1px solid var(--line);font-size:16px;background:var(--card);color:var(--muted)}
+.audio-toggle.on{color:var(--lime);border-color:rgba(198,255,61,.4);box-shadow:0 0 18px rgba(198,255,61,.12)}
+.hack-area{display:flex;flex-direction:column;gap:9px;position:relative;z-index:1}
+.hack-display{height:58px;border-radius:14px;background:linear-gradient(180deg,#0b1019,#080b11);border:1px solid var(--line);display:grid;place-items:center;font-family:ui-monospace,monospace;font-size:22px;font-weight:900;letter-spacing:8px;color:var(--acc);text-shadow:0 0 16px rgba(0,229,255,.6);box-shadow:inset 0 0 26px rgba(0,229,255,.04)}
+.hack-display.ready{font-size:11px;letter-spacing:2px;color:var(--muted);text-shadow:none}
+.hack-display.success{color:var(--lime);border-color:rgba(198,255,61,.45);box-shadow:0 0 22px rgba(198,255,61,.14),inset 0 0 28px rgba(198,255,61,.05)}
+.hack-display.fail{color:#ff7a7a;border-color:rgba(255,90,90,.45);box-shadow:0 0 22px rgba(255,90,90,.12)}
+.hack-hud{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.hack-hud b{color:var(--txt)}
+.hack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hack-node{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:radial-gradient(circle at 50% 35%,rgba(0,229,255,.08),transparent 60%),#0a0c13;font-family:ui-monospace,monospace;font-size:19px;font-weight:900;color:#a9b3c6;transition:.14s;user-select:none}
+.hack-node:hover{transform:translateY(-2px);border-color:var(--acc);color:var(--acc)}
+.hack-node.used{opacity:.3;transform:none}
+.hack-node.locked{cursor:default;opacity:.5}
+.hack-node.target{border-color:var(--acc);box-shadow:0 0 20px rgba(0,229,255,.3)}
+#toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:500;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+.toast{padding:12px 20px;border-radius:14px;font-size:14px;font-weight:700;background:rgba(20,24,35,.96);border:1px solid var(--line);backdrop-filter:blur(12px);box-shadow:0 16px 40px -12px rgba(0,0,0,.85);opacity:0;transform:translateY(14px);transition:.28s;text-align:center}
+.toast.show{opacity:1;transform:none}
+.toast.ok{border-color:rgba(198,255,61,.45);color:var(--lime)}
+.toast.err{border-color:rgba(255,90,90,.5);color:#ff7676}
+.toast.info{border-color:rgba(0,229,255,.45);color:var(--acc)}
+footer{text-align:center;padding:34px 20px 0;font-size:12.5px;color:#4d5568;border-top:1px solid var(--line);margin-top:60px}
+@media(max-width:600px){.wrap{padding:0 14px 60px}.cases-grid{grid-template-columns:1fr}.inv-grid{grid-template-columns:repeat(auto-fill,minmax(146px,1fr))}.modal-box{padding:22px 18px;border-radius:20px}.rou-item{flex:0 0 116px;height:126px}.rou-item .item-visual{width:54px;height:54px}.roulette{height:150px}.build-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+
+
+/* ===== CASE PREVIEW ===== */
+.case-preview-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0 16px}
+.case-preview-stat{padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025);text-align:center}
+.case-preview-stat span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.case-preview-stat b{font-size:15px;color:var(--txt)}
+.case-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:52vh;overflow:auto;padding-right:3px}
+.case-preview-card{position:relative;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+.case-preview-card .item-visual{width:88px;height:82px}
+.case-preview-card .cp-name{font-size:11.5px;font-weight:800;text-align:center;line-height:1.25;min-height:30px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.case-preview-card .cp-rar{font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}
+.case-preview-card .cp-price{font-size:13px;font-weight:900;color:var(--lime)}
+.case-preview-card .cp-chance{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace}
+.case-preview-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:600px){.case-preview-meta{grid-template-columns:1fr}.case-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:56vh}}
+
+/* ===== FINAL UI FIXES ===== */
+html{background:var(--bg)}
+body{position:relative;min-width:320px}
+body.modal-open{overflow:hidden}
+header{width:100%;}
+.header-in{width:100%;min-height:64px}
+nav{min-width:0}
+.wrap{width:100%;}
+.item-visual{width:100%;min-width:0;min-height:0}
+.item-visual svg{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
+.case-drops .item-visual{width:20px;height:20px}
+.case-drops .item-visual svg{width:20px;height:20px}
+.inv-card>.item-visual{height:150px;min-height:150px}
+.slot-visual .item-visual{width:76px;height:76px}
+.rou-item .item-visual{width:72px;height:72px;flex:0 0 72px}
+.result-item .item-visual{width:150px;height:135px}
+#casesGrid,#invGrid,#buildGrid{align-items:stretch}
+.case-card,.inv-card,.slot,.earn-card{min-width:0}
+.case-card{min-height:310px}
+.case-drops{min-height:30px}
+.btn{user-select:none}
+.modal{overflow:auto}
+.modal-box{margin:auto}
+.roulette{width:100%;}
+.roulette-strip{position:absolute;left:0;top:0;width:max-content;padding:0 10px}
+#strip{height:100%}
+.ref-input input{min-width:0}
+@media(max-width:900px){
+  .header-in{gap:10px}
+  .logo{order:1}
+  nav{order:3;flex-basis:100%;overflow-x:auto}
+  .header-right{order:2}
+  .page-head{margin-top:24px}
+  .cases-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .earn-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .header-in{padding:10px 14px}
+  .header-right{margin-left:auto}
+  .credits-pill{padding:7px 10px;font-size:13px}
+  .user-chip .uname{display:none}
+  .nav-btn{padding:8px 11px;font-size:13px}
+  .wrap{padding:0 12px 50px}
+  .cases-grid{grid-template-columns:1fr}
+  .case-card{min-height:0}
+  .inv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .inv-card>.item-visual{height:105px;min-height:105px}
+  .build-grid{grid-template-columns:1fr 1fr}
+  .build-status{gap:14px;padding:13px}
+  .income-box{padding:15px}
+  .income-box .sub{margin-left:0;text-align:left}
+  .modal{padding:10px}
+  .modal-box{max-height:calc(100vh - 20px);padding:20px 16px}
+  .modal-box.wide{max-width:100%}
+  .roulette{height:145px}
+  .rou-item{flex-basis:108px;height:120px}
+  .hack-grid{gap:6px}
+  .rou-item .item-visual{width:54px;height:54px;flex-basis:54px}
+}
+@media(max-width:390px){
+  .inv-grid{grid-template-columns:1fr}
+  .build-grid{grid-template-columns:1fr}
+  .header-right{gap:5px}
+  .credits-pill{display:none}
+}
+
+
+/* ===== MOBILE + TOUCH UX ===== */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior-x:none}
+body{overscroll-behavior-x:none;-webkit-tap-highlight-color:transparent}
+button,.btn,input{touch-action:manipulation}
+.btn,.nav-btn,.icon-btn,.modal-close{min-height:44px}
+.nav-btn{display:inline-flex;align-items:center;justify-content:center}
+.modal-close{width:44px;height:44px}
+
+@media (hover:none) and (pointer:coarse){
+  .case-card:hover,.inv-card:hover,.slot:hover,.btn.primary:hover,.btn.lime:hover,.chip.hot:hover,.hack-node:hover{transform:none;box-shadow:none}
+  .case-card:active,.inv-card:active,.slot:active{transform:scale(.995)}
+  .btn:active{transform:scale(.985)}
+}
+
+@media (max-width: 900px){
+  .wrap{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  .page-head{margin-top:22px}
+  .page-head h1{font-size:clamp(24px,6vw,32px)}
+  .header-in{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  nav{width:100%;padding-bottom:2px;gap:5px;scroll-snap-type:x proximity}
+  .nav-btn{scroll-snap-align:start;flex:0 0 auto}
+}
+
+@media (max-width: 620px){
+  header{padding-top:env(safe-area-inset-top)}
+  .header-in{padding-top:8px;padding-bottom:8px;gap:8px}
+  .logo{font-size:17px;letter-spacing:1.2px}
+  .header-right{gap:6px}
+  .audio-toggle{width:44px;height:44px;font-size:18px}
+  .theme-toggle{width:44px;height:44px;font-size:18px}
+  .credits-pill{padding:7px 10px;font-size:13px;border-radius:11px}
+  .user-chip{padding:5px 7px 5px 5px}
+  .user-chip .uname{display:none}
+  .nav-btn{padding:8px 12px;font-size:13px;border-radius:10px}
+  .wrap{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  .page-head{margin:20px 0 16px}
+  .page-head p{font-size:13.5px}
+  .cases-grid{gap:12px}
+  .case-card{padding:16px;border-radius:18px;gap:10px}
+  .case-icon{width:48px;height:48px;border-radius:14px}
+  .case-name{font-size:16px}
+  .case-price{font-size:12.5px}
+  .case-drops{gap:4px}
+  .drop-dot{width:28px;height:28px}
+  .inv-head{padding:12px 14px;margin-bottom:12px;gap:10px}
+  .inv-head .stat{font-size:12.5px}
+  .inv-head .stat b{font-size:16px}
+  .inv-head #sellAllBtn{width:100%}
+  .inv-grid{gap:10px}
+  .inv-card{padding:11px;border-radius:15px}
+  .inv-card>.item-visual{height:112px;min-height:112px}
+  .inv-name{font-size:12px;min-height:31px}
+  .inv-price{font-size:13px}
+  .build-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;margin-bottom:11px}
+  .build-status .item{font-size:10.5px;text-align:center}
+  .build-status .item b{font-size:17px}
+  .build-grid{gap:10px}
+  .slot{min-height:174px;padding:10px;border-radius:14px}
+  .slot-visual .item-visual{width:62px;height:62px}
+  .slot-label{font-size:9px}
+  .slot-name{font-size:10.5px}
+  .slot-actions{gap:5px}
+  .slot-actions .btn{min-height:38px;padding:6px 5px;font-size:10px}
+  .income-box{gap:10px;padding:13px 14px}
+  .income-box .val{font-size:20px}
+  .income-box .sub{font-size:11px}
+  .earn-grid{gap:12px}
+  .earn-card{padding:18px;border-radius:18px;gap:11px}
+  .earn-ico{font-size:28px}
+  .earn-card h3{font-size:18px}
+  .earn-card p{font-size:13px}
+  .ref-code{padding:10px 12px}
+  .ref-code code{font-size:16px;letter-spacing:2px}
+  .ref-stats{gap:18px}
+  .ref-input{flex-direction:column}
+  .ref-input .btn{width:100%}
+  input[type=text],input[type=password]{font-size:16px;padding:13px 14px;min-height:48px}
+  .game-grid,.hack-grid{gap:7px}
+  .chip,.hack-node{border-radius:11px}
+  .chip{font-size:20px}
+  .hack-node{font-size:18px}
+  .hack-display{height:58px;font-size:21px;letter-spacing:7px}
+  .hack-hud,.game-hud{font-size:12px}
+  .modal{align-items:flex-end;padding:8px max(8px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+  .modal-box{width:100%;max-width:none;max-height:min(92dvh,760px);padding:20px 15px;border-radius:22px}
+  .modal-box.wide{max-width:none}
+  .modal-box h3{font-size:19px}
+  .modal-sub{font-size:12.5px;margin-bottom:14px}
+  .auth-tabs{margin-bottom:15px}
+  .auth-tab{min-height:44px}
+  .modal-close{top:10px;right:10px}
+  .roulette{height:144px;border-radius:15px}
+  .roulette::before,.roulette::after{width:48px}
+  .roulette-strip{gap:6px;padding:0 6px}
+  .rou-item{flex-basis:104px;height:122px;border-radius:12px;padding:7px}
+  .rou-item .item-visual{width:54px;height:54px;flex-basis:54px}
+  .rou-item .ri-nm{font-size:9px}
+  .result{margin-top:14px}
+  .result-item{width:100%;min-width:0;padding:15px 18px;border-radius:16px}
+  .result-item .item-visual{width:118px;height:108px}
+  .result-item .ri-nm{font-size:14px}
+  .result-item .ri-pr{font-size:18px}
+  .result-btns{display:grid;grid-template-columns:1fr;gap:8px}
+  .result-btns .btn{width:100%}
+  .case-live{font-size:9px}
+  .case-preview-meta{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .case-preview-stat{padding:9px 6px}
+  .case-preview-stat b{font-size:12px}
+  .case-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:54dvh}
+  .case-preview-card{padding:9px;border-radius:12px}
+  .case-preview-card .item-visual{width:70px;height:66px}
+  .case-preview-card .cp-name{font-size:10.5px;min-height:27px}
+  .case-preview-card .cp-price{font-size:12px}
+  .case-preview-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  .case-preview-actions .btn{width:100%}
+  .ad-box{height:180px;margin-bottom:13px;padding:18px}
+  .ad-inner .em{font-size:44px}
+  #toasts{bottom:calc(12px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px);width:calc(100vw - 24px)}
+  .toast{width:100%;padding:12px 14px;font-size:13px}
+  footer{padding-bottom:16px}
+}
+
+@media (max-width: 390px){
+  .header-in{gap:6px}
+  .logo{font-size:16px}
+  .audio-toggle{width:42px;height:42px}
+  .theme-toggle{width:42px;height:42px}
+  .credits-pill{display:none}
+  .nav-btn{padding:8px 10px;font-size:12px}
+  .cases-grid{grid-template-columns:1fr}
+  .inv-grid,.build-grid{grid-template-columns:1fr}
+  .build-status{grid-template-columns:1fr 1fr 1fr}
+  .case-preview-grid{grid-template-columns:1fr 1fr}
+  .case-preview-meta{grid-template-columns:1fr 1fr 1fr}
+  .hack-display{letter-spacing:5px;font-size:20px}
+}
+
+@media (max-width: 340px){
+  .nav-btn{padding:7px 8px;font-size:11.5px}
+  .case-card{padding:14px}
+  .earn-card{padding:15px}
+  .modal-box{padding:18px 12px}
+}
+
+@media (orientation:landscape) and (max-height:520px) and (max-width:900px){
+  header{position:sticky}
+  .header-in{padding-top:6px;padding-bottom:5px}
+  .page-head{margin-top:14px;margin-bottom:12px}
+  .page-head p{display:none}
+  .cases-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .earn-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modal-box{max-height:96dvh}
+  .roulette{height:122px}
+  .case-preview-grid{max-height:58dvh}
+}
+
+#bootError{display:none;position:fixed;inset:0;z-index:9999;background:#08090e;color:#e9edf7;place-items:center;padding:24px;text-align:center;font-family:system-ui,sans-serif}body[data-app-error='1'] #bootError{display:grid}
+</style>
+</head>
+<body>
+<div id="bootError"><div><b style="font-size:20px">CYBERDROP не удалось запустить</b><br><span style="opacity:.7">Обновите страницу. Интерфейс будет доступен после повторной загрузки.</span></div></div>
+
+<header>
+  <div class="header-in">
+    <div class="logo">CYBER<span>DROP</span></div>
+    <nav>
+      <button class="nav-btn active" data-tab="cases">Кейсы</button>
+      <button class="nav-btn" data-tab="inventory">Инвентарь <span class="badge" id="invBadge" style="display:none">0</span></button>
+      <button class="nav-btn" data-tab="build">Сборка <span class="badge" id="buildBadge" style="display:none">!</span></button>
+      <button class="nav-btn" data-tab="earn">Заработать</button>
+    </nav>
+    <div class="header-right">
+      <button class="icon-btn theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">☼</button>
+      <button class="icon-btn audio-toggle" id="audioToggle" title="Включить атмосферу" aria-label="Включить атмосферу">♪</button>
+      <div class="credits-pill"><span class="diamond">◆</span><span id="creditsVal">0</span></div>
+      <div id="userArea"></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section id="tab-cases" class="active">
+    <div class="page-head">
+      <h1>Открывай кейсы. <em>Забирай технику.</em></h1>
+      <p>Большинство призов не окупают стоимость кейса — только редкие и легендарные предметы дают прибыль. Зато из выигранного можно собрать ПК и получать пассивный доход.</p>
+    </div>
+    <div class="cases-grid" id="casesGrid"></div>
+  </section>
+
+  <section id="tab-inventory">
+    <div class="page-head">
+      <h1>Твой <em>инвентарь</em></h1>
+      <p>Компоненты можно установить в сборку или продать по рыночной цене.</p>
+    </div>
+    <div class="inv-head">
+      <div class="stat">Предметов: <b id="invCount">0</b></div>
+      <div class="stat">Общая стоимость: <b id="invValue">0</b> кр.</div>
+      <button class="btn ghost" id="sellAllBtn">Продать всё</button>
+    </div>
+    <div class="inv-grid" id="invGrid"></div>
+  </section>
+
+  <section id="tab-build">
+    <div class="page-head">
+      <h1>Собери свой <em>компьютер</em></h1>
+      <p>Устанавливай комплектующие из инвентаря. Совместимая сборка приносит пассивный доход каждую минуту. Следи за сокетом CPU, типом памяти и мощностью БП.</p>
+    </div>
+    <div id="buildIncompat"></div>
+    <div class="build-status" id="buildStatus"></div>
+    <div class="build-grid" id="buildGrid"></div>
+    <div id="buildIncome"></div>
+  </section>
+
+  <section id="tab-earn">
+    <div class="page-head">
+      <h1>Заработай <em>кредиты</em></h1>
+      <p>Четыре способа: реклама, приглашение друзей, «Кибер-кликер» и новый «Взлом протокола».</p>
+    </div>
+    <div class="earn-grid">
+      <div class="earn-card" style="--ec:rgba(0,229,255,.55)">
+        <div class="earn-ico">📺</div>
+        <h3>Просмотр рекламы</h3>
+        <p>Смотри короткий ролик и получай от <b style="color:var(--lime)">120</b> до <b style="color:var(--lime)">300</b> кредитов. Кулдаун 45 секунд.</p>
+        <button class="btn primary" id="adBtn">Смотреть рекламу</button>
+      </div>
+      <div class="earn-card" style="--ec:rgba(198,255,61,.55)">
+        <div class="earn-ico">🎮</div>
+        <h3>Кибер-кликер</h3>
+        <p>20 секунд — успей кликнуть по подсвеченному чипу. Каждое попадание: <b style="color:var(--lime)">+15</b> кредитов.</p>
+        <div class="game-area" id="gameArea">
+          <div class="game-hud">
+            <span>⏱ <b id="gameTime">20</b> с</span>
+            <span>✦ <b id="gameScore">0</b> кр.</span>
+          </div>
+          <div class="game-grid" id="gameGrid"></div>
+        </div>
+        <button class="btn lime" id="gameBtn">Играть</button>
+        <div class="game-note" id="gameNote">Готов? Жми «Играть».</div>
+      </div>
+      <div class="earn-card" style="--ec:rgba(0,229,255,.5)">
+        <div class="earn-ico">🧬</div>
+        <h3>Взлом протокола</h3>
+        <p>Запомни <b style="color:var(--lime)">5 цифр</b> и повтори их. В поле — <b style="color:var(--lime)">9 узлов</b>. Ошибка — попытка сброшена, точный взлом — до <b style="color:var(--lime)">180 кр.</b></p>
+        <div class="hack-area" id="hackArea">
+          <div class="hack-display" id="hackDisplay">READY</div>
+          <div class="hack-hud"><span>⏱ <b id="hackTime">18</b> с</span><span>✦ <b id="hackScore">0</b> кр.</span></div>
+          <div class="hack-grid" id="hackGrid"></div>
+        </div>
+        <button class="btn primary" id="hackBtn">Начать взлом</button>
+        <div class="game-note" id="hackNote">Сначала появится код. Не моргай.</div>
+      </div>
+      <div class="earn-card" style="--ec:rgba(177,74,255,.55)">
+        <div class="earn-ico">🤝</div>
+        <h3>Пригласи друга</h3>
+        <p>Друг получает <b style="color:var(--lime)">+400</b>, а ты — <b style="color:var(--lime)">+800</b> за каждого.</p>
+        <div class="ref-code">
+          <code id="refCode">——————</code>
+          <button class="btn ghost" id="copyRef">Копировать</button>
+        </div>
+        <div class="ref-stats">
+          <div>Приглашено<b id="refCount">0</b></div>
+          <div>Заработано<b id="refEarned">0</b></div>
+        </div>
+        <div class="ref-input" id="refInputWrap">
+          <input type="text" id="refInput" placeholder="Ввести код друга" maxlength="8">
+          <button class="btn ghost" id="applyRef">Активировать</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>CYBERDROP © 2025 — демо-проект. Все призы вымышленные, кредиты тоже 🙂</footer>
+</div>
+
+<div class="modal" id="authModal">
+  <div class="modal-box">
+    <button class="modal-close" data-close="authModal">✕</button>
+    <h3 id="authTitle">Добро пожаловать</h3>
+    <p class="modal-sub">Создай аккаунт, чтобы открывать кейсы и собирать инвентарь.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth-tab="login" type="button">Вход</button>
+      <button class="auth-tab" data-auth-tab="reg" type="button">Регистрация</button>
+    </div>
+    <form id="authForm" autocomplete="off">
+      <div class="field"><label id="authNameLabel">Логин</label><input type="text" id="authName" placeholder="Минимум 3 символа" maxlength="32" autocomplete="username"></div>
+      <div class="field hidden" id="authEmailWrap"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com" maxlength="120" autocomplete="email"></div>
+      <div class="field"><label>Пароль</label><input type="password" id="authPass" placeholder="Минимум 4 символа" maxlength="72" autocomplete="current-password"></div>
+      <div class="field hidden" id="refField"><label>Код друга (необязательно)</label><input type="text" id="authRef" placeholder="Например: A1B2C3" maxlength="8"></div>
+      <div class="auth-err" id="authErr"></div>
+      <button class="btn primary full" type="submit" id="authSubmit">Войти</button>
+    </form>
+    <p class="auth-note">Новичкам — <b>2000 кредитов</b> на старт 🎁</p>
+  </div>
+</div>
+
+<div class="modal" id="caseModal">
+  <div class="modal-box wide">
+    <button class="modal-close" data-close="caseModal">✕</button>
+    <h3 id="caseTitle">Кейс</h3>
+    <p class="modal-sub" id="caseSub">Крути и забирай приз</p>
+    <div class="case-live" id="caseLive">
+      <span class="live-dot"></span><span id="caseLiveText">СИСТЕМА ГОТОВА</span><b id="caseLiveTimer">6.4s</b>
+    </div>
+    <div class="roulette">
+      <div class="roulette-marker"></div>
+      <div class="roulette-strip" id="strip"></div>
+    </div>
+    <div class="case-progress"><i id="caseProgressBar"></i></div>
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<div class="modal" id="casePreviewModal">
+  <div class="modal-box wide">
+    <button class="modal-close" data-close="casePreviewModal">✕</button>
+    <h3 id="previewTitle">Содержимое кейса</h3>
+    <p class="modal-sub" id="previewSub">Все возможные предметы и их текущие шансы.</p>
+    <div class="case-preview-meta">
+      <div class="case-preview-stat"><span>Стоимость</span><b id="previewPrice">0 кр.</b></div>
+      <div class="case-preview-stat"><span>Предметов</span><b id="previewCount">0</b></div>
+      <div class="case-preview-stat"><span>Джекпотов</span><b id="previewJackpots">0</b></div>
+    </div>
+    <div class="case-preview-grid" id="casePreviewGrid"></div>
+    <div class="case-preview-actions">
+      <button class="btn primary" id="previewOpenBtn">Открыть кейс</button>
+      <button class="btn ghost" data-close="casePreviewModal">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="adModal">
+  <div class="modal-box">
+    <h3>Реклама</h3>
+    <p class="modal-sub">Досмотри до конца, чтобы получить награду</p>
+    <div class="ad-box">
+      <div class="ad-inner">
+        <span class="em" id="adEmoji">🚀</span>
+        <h4 id="adHead">Ускорь свой ПК</h4>
+        <p id="adText">Термопаста нового поколения — минус 12°C под нагрузкой</p>
+      </div>
+    </div>
+    <div class="ad-progress"><i id="adBar"></i></div>
+    <button class="btn primary full" id="adClaim" disabled>Подождите…</button>
+  </div>
+</div>
+
+<div class="modal" id="pickModal">
+  <div class="modal-box wide">
+    <button class="modal-close" data-close="pickModal">✕</button>
+    <h3 id="pickTitle">Выбери компонент</h3>
+    <p class="modal-sub" id="pickSub"></p>
+    <div class="inv-grid" id="pickList"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+"use strict";
+
+/* ==================== DATA ==================== */
+const RARITIES={
+  c:{name:'Обычный',color:'#7f8aa3',weight:58},
+  r:{name:'Редкий',color:'#00e5ff',weight:27},
+  e:{name:'Эпический',color:'#b14aff',weight:11},
+  l:{name:'Легендарный',color:'#c6ff3d',weight:4}
+};
+
+const ITEMS=[
+/* GPU */
+{id:'gt1030',name:'GeForce GT 1030 2GB',i:'🎮',price:2200,rar:'c',cat:'gpu',col:'#76b900',fans:1,tdp:30},
+{id:'rx550',name:'Radeon RX 550 4GB',i:'🎮',price:3000,rar:'c',cat:'gpu',col:'#e53935',fans:1,tdp:50},
+{id:'gtx1050ti',name:'GeForce GTX 1050 Ti 4GB',i:'🎮',price:5200,rar:'c',cat:'gpu',col:'#76b900',fans:2,tdp:75},
+{id:'rx580',name:'Radeon RX 580 8GB',i:'🎮',price:5800,rar:'c',cat:'gpu',col:'#e53935',fans:2,tdp:185},
+{id:'gtx1060',name:'GeForce GTX 1060 6GB',i:'🎮',price:6500,rar:'c',cat:'gpu',col:'#76b900',fans:2,tdp:120},
+{id:'gtx1650',name:'GeForce GTX 1650 4GB',i:'🎮',price:7600,rar:'c',cat:'gpu',col:'#76b900',fans:2,tdp:75},
+{id:'rtx2060',name:'GeForce RTX 2060 6GB',i:'🎮',price:9500,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:160},
+{id:'rx6600',name:'Radeon RX 6600 8GB',i:'🎮',price:12500,rar:'r',cat:'gpu',col:'#e53935',fans:2,tdp:132},
+{id:'rtx3050',name:'GeForce RTX 3050 8GB',i:'🎮',price:14500,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:130},
+{id:'rtx3060',name:'GeForce RTX 3060 12GB',i:'🎮',price:19000,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:170},
+{id:'rtx3060ti',name:'GeForce RTX 3060 Ti 8GB',i:'🎮',price:24000,rar:'e',cat:'gpu',col:'#76b900',fans:2,tdp:200},
+{id:'rtx4060',name:'GeForce RTX 4060 8GB',i:'🎮',price:27000,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:115},
+{id:'rx6700xt',name:'Radeon RX 6700 XT 12GB',i:'🎮',price:31000,rar:'e',cat:'gpu',col:'#e53935',fans:2,tdp:230},
+{id:'rtx4060ti',name:'GeForce RTX 4060 Ti 8GB',i:'🎮',price:36000,rar:'e',cat:'gpu',col:'#76b900',fans:3,tdp:160},
+{id:'rtx4070',name:'GeForce RTX 4070 12GB',i:'🎮',price:52000,rar:'e',cat:'gpu',col:'#76b900',fans:3,tdp:200},
+{id:'rx7800xt',name:'Radeon RX 7800 XT 16GB',i:'🎮',price:56000,rar:'e',cat:'gpu',col:'#e53935',fans:3,tdp:263},
+{id:'rtx4070tis',name:'GeForce RTX 4070 Ti Super',i:'🎮',price:82000,rar:'l',cat:'gpu',col:'#76b900',fans:3,tdp:285},
+{id:'rtx3090',name:'GeForce RTX 3090 24GB',i:'🎮',price:88000,rar:'l',cat:'gpu',col:'#76b900',fans:3,tdp:350},
+{id:'rtx4080s',name:'GeForce RTX 4080 Super',i:'🎮',price:128000,rar:'l',cat:'gpu',col:'#76b900',fans:3,tdp:320},
+{id:'rtx4090',name:'GeForce RTX 4090',i:'🎮',price:195000,rar:'l',cat:'gpu',col:'#76b900',fans:3,tdp:450},
+
+/* CPU — Intel */
+{id:'pentium',name:'Intel Pentium',i:'⚙️',price:900,rar:'c',cat:'cpu',brand:'intel',socket:'lga1155',col:'#0071c5',tdp:65},
+{id:'celeron',name:'Intel Celeron',i:'⚙️',price:700,rar:'c',cat:'cpu',brand:'intel',socket:'lga1155',col:'#0071c5',tdp:55},
+{id:'i3_10100f',name:'Intel Core i3-10100F',i:'⚙️',price:3600,rar:'c',cat:'cpu',brand:'intel',socket:'lga1200',col:'#0071c5',tdp:65},
+{id:'i3_12100f',name:'Intel Core i3-12100F',i:'⚙️',price:6200,rar:'c',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:58},
+{id:'i3_14100f',name:'Intel Core i3-14100F',i:'⚙️',price:7200,rar:'c',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:60},
+{id:'i5_10400f',name:'Intel Core i5-10400F',i:'⚙️',price:7000,rar:'c',cat:'cpu',brand:'intel',socket:'lga1200',col:'#0071c5',tdp:65},
+{id:'i5_12400f',name:'Intel Core i5-12400F',i:'⚙️',price:11800,rar:'r',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:65},
+{id:'i5_14400f',name:'Intel Core i5-14400F',i:'⚙️',price:14500,rar:'r',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:65},
+{id:'i7_10700f',name:'Intel Core i7-10700F',i:'⚙️',price:14500,rar:'r',cat:'cpu',brand:'intel',socket:'lga1200',col:'#0071c5',tdp:65},
+{id:'i7_12700f',name:'Intel Core i7-12700F',i:'⚙️',price:20500,rar:'r',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:65},
+{id:'i7_14700f',name:'Intel Core i7-14700F',i:'⚙️',price:36500,rar:'e',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:219},
+{id:'i9_10900f',name:'Intel Core i9-10900F',i:'⚙️',price:22000,rar:'r',cat:'cpu',brand:'intel',socket:'lga1200',col:'#0071c5',tdp:65},
+{id:'i9_12900f',name:'Intel Core i9-12900F',i:'⚙️',price:47000,rar:'e',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:202},
+{id:'i9_14900f',name:'Intel Core i9-14900F',i:'⚙️',price:72000,rar:'l',cat:'cpu',brand:'intel',socket:'lga1700',col:'#0071c5',tdp:219},
+
+/* CPU — AMD */
+{id:'athlon2',name:'AMD Athlon II',i:'⚙️',price:650,rar:'c',cat:'cpu',brand:'amd',socket:'am3plus',col:'#e53935',tdp:65},
+{id:'fx',name:'AMD FX',i:'⚙️',price:950,rar:'c',cat:'cpu',brand:'amd',socket:'am3plus',col:'#e53935',tdp:125},
+{id:'r3_3200',name:'AMD Ryzen 3 3200',i:'⚙️',price:3900,rar:'c',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:65},
+{id:'r5_2600',name:'AMD Ryzen 5 2600',i:'⚙️',price:4300,rar:'c',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:65},
+{id:'r5_3600',name:'AMD Ryzen 5 3600',i:'⚙️',price:5400,rar:'c',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:65},
+{id:'r5_5500',name:'AMD Ryzen 5 5500',i:'⚙️',price:6500,rar:'c',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:65},
+{id:'r5_5600',name:'AMD Ryzen 5 5600',i:'⚙️',price:9200,rar:'r',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:65},
+{id:'r7_2700',name:'AMD Ryzen 7 2700',i:'⚙️',price:7000,rar:'c',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:105},
+{id:'r7_3700',name:'AMD Ryzen 7 3700',i:'⚙️',price:8200,rar:'r',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:65},
+{id:'r7_5800',name:'AMD Ryzen 7 5800',i:'⚙️',price:10500,rar:'r',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:105},
+{id:'r9_3950',name:'AMD Ryzen 9 3950',i:'⚙️',price:14500,rar:'r',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:105},
+{id:'r9_5900',name:'AMD Ryzen 9 5900',i:'⚙️',price:19500,rar:'e',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:105},
+{id:'r9_5950x',name:'AMD Ryzen 9 5950X',i:'⚙️',price:28000,rar:'e',cat:'cpu',brand:'amd',socket:'am4',col:'#e53935',tdp:105},
+{id:'r5_7500f',name:'AMD Ryzen 5 7500F',i:'⚙️',price:12500,rar:'r',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:65},
+{id:'r5_8400f',name:'AMD Ryzen 5 8400F',i:'⚙️',price:13500,rar:'r',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:65},
+{id:'r5_9600x',name:'AMD Ryzen 5 9600X',i:'⚙️',price:22000,rar:'e',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:65},
+{id:'r7_7700',name:'AMD Ryzen 7 7700',i:'⚙️',price:23000,rar:'e',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:65},
+{id:'r7_7800x3d',name:'AMD Ryzen 7 7800X3D',i:'⚙️',price:42000,rar:'e',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:120},
+{id:'r7_9800x3d',name:'AMD Ryzen 7 9800X3D',i:'⚙️',price:68000,rar:'l',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:120},
+{id:'r9_9950x3d',name:'AMD Ryzen 9 9950X3D',i:'⚙️',price:92000,rar:'l',cat:'cpu',brand:'amd',socket:'am5',col:'#e53935',tdp:170},
+
+/* SSD — SATA */
+{id:'sata128',name:'Kingston A400 128GB SATA',i:'💾',price:450,rar:'c',cat:'ssd',col:'#1e88e5',form:'sata'},
+{id:'sata240',name:'Kingston A400 240GB SATA',i:'💾',price:650,rar:'c',cat:'ssd',col:'#1e88e5',form:'sata'},
+{id:'sata256',name:'WD Green 256GB SATA',i:'💾',price:800,rar:'c',cat:'ssd',col:'#78a22f',form:'sata'},
+{id:'sata480',name:'Team GX2 480GB SATA',i:'💾',price:1100,rar:'c',cat:'ssd',col:'#7b8aa1',form:'sata'},
+{id:'sata500',name:'Crucial BX500 500GB SATA',i:'💾',price:1400,rar:'c',cat:'ssd',col:'#1e88e5',form:'sata'},
+{id:'sata1t',name:'Samsung 870 EVO 1TB SATA',i:'💾',price:2600,rar:'r',cat:'ssd',col:'#1428a0',form:'sata'},
+{id:'sata2t',name:'Samsung 870 QVO 2TB SATA',i:'💾',price:5200,rar:'e',cat:'ssd',col:'#1428a0',form:'sata'},
+
+/* SSD — M.2 NVMe */
+{id:'nvme128',name:'Kingston NV2 128GB M.2 NVMe',i:'💾',price:850,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme256',name:'WD Blue SN570 250GB M.2 NVMe',i:'💾',price:1200,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme500',name:'Kingston NV2 500GB M.2 NVMe',i:'💾',price:1900,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme1t',name:'Kingston NV2 1TB M.2 NVMe',i:'💾',price:3200,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme1t_fast',name:'WD Black SN770 1TB M.2 NVMe',i:'💾',price:5200,rar:'r',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme1t_pro',name:'Samsung 990 Pro 1TB M.2 NVMe',i:'💾',price:8200,rar:'r',cat:'ssd',col:'#1428a0',form:'nvme'},
+{id:'nvme2t',name:'WD Black SN850X 2TB M.2 NVMe',i:'💾',price:12500,rar:'e',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme2t_gen5',name:'Crucial T700 2TB M.2 NVMe Gen5',i:'💾',price:18500,rar:'l',cat:'ssd',col:'#1e88e5',form:'nvme'},
+
+/* RAM — DDR3 / DDR4 */
+{id:'ram2_3',name:'2GB DDR3',i:'🧠',price:220,rar:'c',cat:'ram',col:'#78909c',type:'ddr3',capacity:2},
+{id:'ram4_3',name:'4GB DDR3',i:'🧠',price:350,rar:'c',cat:'ram',col:'#78909c',type:'ddr3',capacity:4},
+{id:'ram8_3',name:'8GB DDR3',i:'🧠',price:600,rar:'c',cat:'ram',col:'#78909c',type:'ddr3',capacity:8},
+{id:'ram16_3',name:'16GB DDR3',i:'🧠',price:1100,rar:'c',cat:'ram',col:'#78909c',type:'ddr3',capacity:16},
+{id:'ram2_4',name:'2GB DDR4',i:'🧠',price:250,rar:'c',cat:'ram',col:'#e53935',type:'ddr4',capacity:2},
+{id:'ram4_4',name:'4GB DDR4',i:'🧠',price:450,rar:'c',cat:'ram',col:'#e53935',type:'ddr4',capacity:4},
+{id:'ram8_4',name:'8GB DDR4',i:'🧠',price:800,rar:'c',cat:'ram',col:'#e53935',type:'ddr4',capacity:8},
+{id:'ram16_4',name:'16GB DDR4',i:'🧠',price:1500,rar:'c',cat:'ram',col:'#e53935',type:'ddr4',capacity:16},
+{id:'ram32_4',name:'32GB DDR4',i:'🧠',price:2900,rar:'r',cat:'ram',col:'#00e5ff',type:'ddr4',capacity:32},
+{id:'ram64_4',name:'64GB DDR4',i:'🧠',price:5600,rar:'e',cat:'ram',col:'#00e5ff',type:'ddr4',capacity:64},
+{id:'ram128_4',name:'128GB DDR4',i:'🧠',price:11000,rar:'l',cat:'ram',col:'#00e5ff',type:'ddr4',capacity:128},
+
+/* RAM — DDR5 */
+{id:'ram4_5',name:'4GB DDR5',i:'🧠',price:900,rar:'c',cat:'ram',col:'#b14aff',type:'ddr5',capacity:4},
+{id:'ram8_5',name:'8GB DDR5',i:'🧠',price:1500,rar:'c',cat:'ram',col:'#b14aff',type:'ddr5',capacity:8},
+{id:'ram16_5',name:'16GB DDR5',i:'🧠',price:3200,rar:'r',cat:'ram',col:'#b14aff',type:'ddr5',capacity:16},
+{id:'ram32_5',name:'32GB DDR5',i:'🧠',price:5200,rar:'r',cat:'ram',col:'#b14aff',type:'ddr5',capacity:32},
+{id:'ram64_5',name:'64GB DDR5',i:'🧠',price:10500,rar:'e',cat:'ram',col:'#c6ff3d',type:'ddr5',capacity:64},
+{id:'ram128_5',name:'128GB DDR5',i:'🧠',price:21000,rar:'e',cat:'ram',col:'#c6ff3d',type:'ddr5',capacity:128},
+{id:'ram256_5',name:'256GB DDR5',i:'🧠',price:39000,rar:'l',cat:'ram',col:'#c6ff3d',type:'ddr5',capacity:256},
+
+/* Motherboards — Intel */
+{id:'mb_h61',name:'LGA 1155 H61',i:'🧩',price:900,rar:'c',cat:'mb',platform:'intel',col:'#8795a1',socket:'lga1155',mem:'ddr3'},
+{id:'mb_b75',name:'LGA 1155 B75',i:'🧩',price:1500,rar:'c',cat:'mb',platform:'intel',col:'#8795a1',socket:'lga1155',mem:'ddr3'},
+{id:'mb_h410',name:'LGA 1200 H410',i:'🧩',price:2400,rar:'c',cat:'mb',platform:'intel',col:'#8795a1',socket:'lga1200',mem:'ddr4'},
+{id:'mb_b460',name:'LGA 1200 B460',i:'🧩',price:3500,rar:'c',cat:'mb',platform:'intel',col:'#00a7c4',socket:'lga1200',mem:'ddr4'},
+{id:'mb_z490',name:'LGA 1200 Z490',i:'🧩',price:7500,rar:'r',cat:'mb',platform:'intel',col:'#00e5ff',socket:'lga1200',mem:'ddr4'},
+{id:'mb_h610',name:'LGA 1700 H610',i:'🧩',price:4200,rar:'c',cat:'mb',platform:'intel',col:'#8795a1',socket:'lga1700',mem:'ddr4'},
+{id:'mb_b660',name:'LGA 1700 B660',i:'🧩',price:7000,rar:'r',cat:'mb',platform:'intel',col:'#00e5ff',socket:'lga1700',mem:'ddr4'},
+{id:'mb_z690',name:'LGA 1700 Z690',i:'🧩',price:18000,rar:'e',cat:'mb',platform:'intel',col:'#b14aff',socket:'lga1700',mem:'ddr5'},
+{id:'mb_z790',name:'LGA 1700 Z790 DDR5',i:'🧩',price:28000,rar:'l',cat:'mb',platform:'intel',col:'#c6ff3d',socket:'lga1700',mem:'ddr5'},
+
+/* Motherboards — AMD */
+{id:'mb_am3_970',name:'Socket AM3+ 970',i:'🧩',price:1400,rar:'c',cat:'mb',platform:'amd',col:'#8795a1',socket:'am3plus',mem:'ddr3'},
+{id:'mb_am3_990',name:'Socket AM3+ 990FX',i:'🧩',price:2600,rar:'c',cat:'mb',platform:'amd',col:'#00a7c4',socket:'am3plus',mem:'ddr3'},
+{id:'mb_a320',name:'Socket AM4 A320',i:'🧩',price:2400,rar:'c',cat:'mb',platform:'amd',col:'#8795a1',socket:'am4',mem:'ddr4'},
+{id:'mb_b450',name:'Socket AM4 B450',i:'🧩',price:4800,rar:'c',cat:'mb',platform:'amd',col:'#00a7c4',socket:'am4',mem:'ddr4'},
+{id:'mb_b550',name:'Socket AM4 B550 Gaming',i:'🧩',price:6500,rar:'r',cat:'mb',platform:'amd',col:'#00e5ff',socket:'am4',mem:'ddr4'},
+{id:'mb_b650',name:'Socket AM5 B650 Gaming',i:'🧩',price:16000,rar:'e',cat:'mb',platform:'amd',col:'#b14aff',socket:'am5',mem:'ddr5'},
+{id:'mb_x670',name:'Socket AM5 X670',i:'🧩',price:22000,rar:'e',cat:'mb',platform:'amd',col:'#b14aff',socket:'am5',mem:'ddr5'},
+{id:'mb_x870',name:'Socket AM5 X870',i:'🧩',price:30000,rar:'l',cat:'mb',platform:'amd',col:'#c6ff3d',socket:'am5',mem:'ddr5'},
+
+/* PSU — 450–1000W */
+{id:'psu_450',name:'БП 450W Bronze',i:'🔌',price:1200,rar:'c',cat:'psu',col:'#8795a1',watts:450},
+{id:'psu_500',name:'БП 500W Bronze',i:'🔌',price:1500,rar:'c',cat:'psu',col:'#8795a1',watts:500},
+{id:'psu_550',name:'БП 550W Bronze',i:'🔌',price:2100,rar:'c',cat:'psu',col:'#8795a1',watts:550},
+{id:'psu_600',name:'БП 600W Bronze',i:'🔌',price:2600,rar:'c',cat:'psu',col:'#8795a1',watts:600},
+{id:'psu_650',name:'БП 650W Gold',i:'🔌',price:4500,rar:'r',cat:'psu',col:'#00e5ff',watts:650},
+{id:'psu_700',name:'БП 700W Gold',i:'🔌',price:5200,rar:'r',cat:'psu',col:'#00e5ff',watts:700},
+{id:'psu_750',name:'БП 750W Gold',i:'🔌',price:6700,rar:'r',cat:'psu',col:'#00e5ff',watts:750},
+{id:'psu_850',name:'БП 850W Gold',i:'🔌',price:9200,rar:'e',cat:'psu',col:'#b14aff',watts:850},
+{id:'psu_900',name:'БП 900W Gold',i:'🔌',price:10800,rar:'e',cat:'psu',col:'#b14aff',watts:900},
+{id:'psu_1000',name:'БП 1000W Platinum',i:'🔌',price:14500,rar:'l',cat:'psu',col:'#c6ff3d',watts:1000},
+
+/* Cooling */
+{id:'cool_stock',name:'Штатный кулер 65W',i:'❄️',price:450,rar:'c',cat:'cool',col:'#8da1b8',coolType:'air'},
+{id:'fan_120',name:'Корпусный вентилятор 120 мм',i:'🌀',price:500,rar:'c',cat:'cool',col:'#5c7894',coolType:'air'},
+{id:'cool_lowprofile',name:'Низкопрофильный кулер',i:'❄️',price:800,rar:'c',cat:'cool',col:'#78909c',coolType:'air'},
+{id:'cool_air_basic',name:'Башенный кулер 120 мм',i:'❄️',price:1500,rar:'c',cat:'cool',col:'#00e5ff',coolType:'air'},
+{id:'cool_air_4pipe',name:'Башенный кулер 4 теплотрубки',i:'❄️',price:2600,rar:'c',cat:'cool',col:'#00e5ff',coolType:'air'},
+{id:'cool_dual',name:'Двухбашенный кулер',i:'❄️',price:4200,rar:'r',cat:'cool',col:'#00e5ff',coolType:'air'},
+{id:'cool_aio120',name:'СЖО 120 мм',i:'❄️',price:3600,rar:'c',cat:'cool',col:'#3aa7ff',coolType:'water'},
+{id:'cool_aio240',name:'СЖО 240 мм',i:'❄️',price:7000,rar:'r',cat:'cool',col:'#00e5ff',coolType:'water'},
+{id:'cool_aio280',name:'СЖО 280 мм ARGB',i:'❄️',price:9000,rar:'r',cat:'cool',col:'#3aa7ff',coolType:'water'},
+{id:'cool_aio360',name:'СЖО 360 мм ARGB',i:'❄️',price:12500,rar:'e',cat:'cool',col:'#b14aff',coolType:'water'},
+{id:'cool_custom',name:'Кастомная СЖО 360 мм',i:'❄️',price:21000,rar:'l',cat:'cool',col:'#c6ff3d',coolType:'water'}
+];
+
+const ITEM_MAP={};ITEMS.forEach(x=>{ITEM_MAP[x.id]=x});
+const CASES=[
+{id:'starter',name:'Бюджетный старт',icon:'⚡',tag:'Для новичка',price:1500,color:'#00e5ff',pool:['cool_stock','fan_120','ram2_4','ram4_3','sata128','athlon2','fx','celeron','pentium','mb_h61','mb_am3_970','psu_450','gt1030']},
+{id:'sata_case',name:'SATA-память',icon:'💾',tag:'2.5" SATA',price:2500,color:'#3aa7ff',pool:['sata128','sata240','sata256','sata480','sata500','sata1t','sata2t']},
+{id:'nvme_case',name:'M.2 NVMe',icon:'⚡',tag:'Быстрые накопители',price:10000,color:'#42b9ff',pool:['nvme128','nvme256','nvme500','nvme1t','nvme1t_fast','nvme1t_pro','nvme2t','nvme2t_gen5']},
+{id:'ram4_case',name:'RAM: DDR3 / DDR4',icon:'🧠',tag:'Бюджетная память',price:4500,color:'#b14aff',pool:['ram2_3','ram4_3','ram8_3','ram16_3','ram2_4','ram4_4','ram8_4','ram16_4','ram32_4','ram64_4']},
+{id:'ram5_case',name:'RAM: DDR5',icon:'🧠',tag:'Новое поколение',price:8000,color:'#d05cff',pool:['ram4_5','ram8_5','ram16_5','ram32_5','ram64_5','ram128_5']},
+{id:'ram_extreme',name:'RAM: Extreme',icon:'💠',tag:'128–256 GB',price:25000,color:'#c6ff3d',pool:['ram64_4','ram128_4','ram64_5','ram128_5','ram256_5']},
+{id:'intel_cpu_case',name:'Intel CPU',icon:'🔷',tag:'Core i3 → Core i9',price:42000,color:'#0071c5',pool:['i3_10100f','i5_10400f','i3_12100f','i3_14100f','i5_12400f','i5_14400f','i7_10700f','i7_12700f','i9_10900f','i7_14700f','i9_12900f','i9_14900f']},
+{id:'amd_cpu_case',name:'AMD CPU',icon:'🔴',tag:'Ryzen 3 → Ryzen 9',price:48000,color:'#e53935',pool:['r3_3200','r5_2600','r5_3600','r5_5500','r5_5600','r7_2700','r7_3700','r7_5800','r9_3950','r9_5900','r9_5950x','r5_7500f','r5_8400f','r5_9600x','r7_7700','r7_7800x3d','r7_9800x3d','r9_9950x3d']},
+{id:'intel_mb_case',name:'Intel Motherboards',icon:'🔷',tag:'LGA 1155 / 1200 / 1700',price:17000,color:'#00a7c4',pool:['mb_b75','mb_h410','mb_b460','mb_z490','mb_h610','mb_b660','mb_z690','mb_z790']},
+{id:'amd_mb_case',name:'AMD Motherboards',icon:'🔴',tag:'AM3+ / AM4 / AM5',price:20000,color:'#e85b68',pool:['mb_am3_990','mb_a320','mb_b450','mb_b550','mb_b650','mb_x670','mb_x870']},
+{id:'psu_case',name:'Блоки питания',icon:'🔌',tag:'450–1000W',price:11000,color:'#ffd166',pool:['psu_450','psu_500','psu_550','psu_600','psu_650','psu_700','psu_750','psu_850','psu_1000']},
+{id:'cool_case',name:'Воздушное охлаждение',icon:'🌬️',tag:'Кулеры и вентиляторы',price:3200,color:'#5ce1e6',pool:['cool_stock','fan_120','cool_lowprofile','cool_air_basic','cool_air_4pipe','cool_dual']},
+{id:'water_case',name:'Водяное охлаждение',icon:'💧',tag:'СЖО 120 / 240 / 280 / 360',price:8000,color:'#3aa7ff',pool:['cool_stock','cool_aio120','cool_aio240','cool_aio280','cool_aio360']},
+{id:'gpu_budget',name:'GPU: Бюджет',icon:'🎮',tag:'Начальный уровень',price:10000,color:'#7dffb0',pool:['gt1030','rx550','gtx1050ti','rx580','gtx1060','gtx1650','rtx2060','rx6600']},
+{id:'gpu_pro',name:'GPU: Pro',icon:'🎮',tag:'Средний класс',price:40000,color:'#9affc3',pool:['rx6600','rtx3050','rtx3060','rtx3060ti','rtx4060','rx6700xt','rtx4060ti','rtx4070','rx7800xt']},
+{id:'gpu_ultra',name:'GPU: Ultra',icon:'🟢',tag:'Топ-сегмент',price:100000,color:'#c6ff3d',pool:['rtx4070','rx7800xt','rtx4070tis','rtx3090','rtx4080s','rtx4090']},
+{id:'builder',name:'Сборка: мастерская',icon:'🛠️',tag:'Смешанный набор',price:10000,color:'#b14aff',pool:['sata1t','nvme1t','ram32_4','mb_b550','psu_750','cool_aio240','nvme1t_pro','cool_aio360']},
+{id:'elite',name:'Флагманский',icon:'💎',tag:'Высокий риск',price:100000,color:'#c6ff3d',pool:['rtx4070','rx7800xt','rtx4070tis','rtx3090','rtx4080s','i9_14900f','r7_9800x3d','r9_9950x3d','rtx4090']}
+];
+
+// Сортируем кейсы по стоимости: от самых доступных к самым дорогим.
+CASES.sort((a,b)=>a.price-b.price || a.name.localeCompare(b.name,'ru'));
+
+/* Every case has 1–2 items above its price; every other item is strictly cheaper. */
+function validateCases(){return CASES.every(c=>{const prices=c.pool.map(id=>ITEM_MAP[id] ? ITEM_MAP[id].price : undefined);if(prices.some(v=>v==null))return false;const above=prices.filter(v=>v>c.price).length;const equal=prices.filter(v=>v===c.price).length;return above>=1&&above<=2&&equal===0})}
+if(!validateCases())console.warn('CYBERDROP: баланс кейсов нарушен');
+const SLOTS=[
+  ['cpu','Процессор'],['mb','Материнская плата'],['ram','Оперативная память'],['gpu','Видеокарта'],['ssd','Накопитель'],['psu','Блок питания'],['cool','Охлаждение']
+];
+
+/* ==================== ART ==================== */
+function fan(cx,cy,r,c,angle=0){let b='';for(let i=0;i<7;i++)b+=`<path d="M0 0 C${r*.18} ${-r*.45}, ${r*.55} ${-r*.72}, ${r*.18} ${-r*.92} C${-r*.18} ${-r*.75}, ${-r*.35} ${-r*.3}, 0 0Z" fill="#222b3b" stroke="#44516b" stroke-width=".8" transform="rotate(${i*51.43+angle})"/>`;return `<g transform="translate(${cx},${cy})"><circle r="${r}" fill="#070a10" stroke="#56627a" stroke-width="1"/><circle r="${r*.82}" fill="#111827"/>${b}<circle r="${r*.23}" fill="${c}"/><circle r="${r*.1}" fill="#d8e2f0" opacity=".7"/></g>`}
+function screws(){return `<g fill="#8d9ab0"><circle cx="12" cy="12" r="1.5"/><circle cx="88" cy="12" r="1.5"/><circle cx="12" cy="88" r="1.5"/><circle cx="88" cy="88" r="1.5"/></g>`}
+const ART={
+ gpu(it){const c=it.col||'#76b900',three=it.fans===3,fanXs=three?[25,50,75]:[34,66],r=three?13:17;return `<svg viewBox="0 0 100 100"><defs><linearGradient id="g${it.id}" x1="0" x2="1"><stop stop-color="#151b27"/><stop offset=".55" stop-color="#303a4d"/><stop offset="1" stop-color="#10151f"/></linearGradient></defs><rect x="5" y="17" width="4" height="66" rx="1" fill="#c3ccd9"/><rect x="9" y="12" width="82" height="76" rx="7" fill="url(#g${it.id})" stroke="#59657a"/><rect x="13" y="18" width="74" height="58" rx="5" fill="#0b0f17"/>${fanXs.map(x=>fan(x,47,r,c)).join('')}<rect x="13" y="76" width="74" height="4" fill="${c}" opacity=".7"/><rect x="75" y="20" width="8" height="3" rx="1" fill="#eef3f8" opacity=".7"/><path d="M84 83h7" stroke="#dce5f1" stroke-width="2"/>${screws()}</svg>`},
+ cpu(it){const c=it.col||'#0071c5';return `<svg viewBox="0 0 100 100"><defs><linearGradient id="cpu${it.id}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4f7fb"/><stop offset=".5" stop-color="#aeb9c9"/><stop offset="1" stop-color="#7d899b"/></linearGradient></defs><rect x="13" y="13" width="74" height="74" rx="7" fill="#0a0e15" stroke="#44516a"/><rect x="19" y="19" width="62" height="62" rx="4" fill="url(#cpu${it.id})"/><rect x="25" y="25" width="50" height="50" rx="3" fill="#d7dee8"/><rect x="29" y="29" width="42" height="42" rx="2" fill="#111827"/><path d="M34 34h32v32H34z" fill="${c}" opacity=".28"/><path d="M34 42h32M34 50h32M34 58h32" stroke="${c}" opacity=".7"/><g stroke="#dce5ef" stroke-width="2">${Array.from({length:8},(_,i)=>`<path d="M${22+i*7} 12v-4M${22+i*7} 88v4"/>`).join('')}</g></svg>`},
+ ssd(it){const c=it.col||'#1e88e5';const nv=it.form==='nvme';return nv?`<svg viewBox="0 0 100 100"><defs><linearGradient id="m${it.id}" x1="0" x2="1"><stop stop-color="#1a2230"/><stop offset="1" stop-color="#3b4659"/></linearGradient></defs><rect x="14" y="12" width="72" height="76" rx="4" fill="url(#m${it.id})" stroke="#66738a"/><rect x="20" y="19" width="60" height="62" rx="3" fill="#0d111a"/><rect x="25" y="25" width="19" height="17" rx="2" fill="#171e2b" stroke="#303b50"/><rect x="48" y="25" width="27" height="17" rx="2" fill="#171e2b" stroke="#303b50"/><rect x="25" y="48" width="50" height="22" rx="2" fill="#141b27"/><rect x="30" y="53" width="40" height="4" rx="2" fill="${c}"/><circle cx="75" cy="17" r="2" fill="#d4af37"/></svg>`:`<svg viewBox="0 0 100 100"><rect x="10" y="28" width="80" height="44" rx="5" fill="#151b26" stroke="#5c687c"/><rect x="16" y="34" width="9" height="32" fill="#d4af37"/><rect x="30" y="35" width="20" height="30" rx="2" fill="#0b1018"/><rect x="54" y="35" width="17" height="30" rx="2" fill="#0b1018"/><rect x="74" y="35" width="10" height="30" rx="2" fill="#0b1018"/><path d="M30 41h54M30 47h54" stroke="${c}" stroke-width="2" opacity=".75"/></svg>`},
+ ram(it){const c=it.col||'#e53935';return `<svg viewBox="0 0 100 100"><rect x="9" y="28" width="82" height="48" rx="5" fill="#111722" stroke="#56637a"/><rect x="13" y="32" width="74" height="37" rx="3" fill="#202938"/><rect x="16" y="35" width="68" height="7" rx="2" fill="${c}"/><rect x="22" y="47" width="12" height="15" rx="1" fill="#0b1018"/><rect x="39" y="47" width="12" height="15" rx="1" fill="#0b1018"/><rect x="56" y="47" width="12" height="15" rx="1" fill="#0b1018"/><rect x="73" y="47" width="8" height="15" rx="1" fill="#0b1018"/><path d="M16 72h68" stroke="#d7e0ec" stroke-width="2" opacity=".45"/><path d="M20 76v7M28 76v7M36 76v7M44 76v7M52 76v7M60 76v7M68 76v7M76 76v7" stroke="#d4af37" stroke-width="1.4"/></svg>`},
+ mb(it){const c=it.col||'#00e5ff';return `<svg viewBox="0 0 100 100"><rect x="13" y="8" width="74" height="84" rx="4" fill="#101720" stroke="#5b6b80"/><rect x="19" y="14" width="62" height="72" fill="#15241e" stroke="#294a3c"/><rect x="27" y="23" width="24" height="24" rx="2" fill="#0b1018" stroke="#66758a"/><rect x="57" y="20" width="16" height="32" rx="2" fill="#0b1018" stroke="#3f4b5e"/><rect x="28" y="56" width="44" height="5" rx="2" fill="${c}" opacity=".8"/><rect x="28" y="65" width="32" height="4" rx="2" fill="#66758a"/><path d="M52 23v61M24 50h53" stroke="#45614f" stroke-width="1"/><circle cx="23" cy="18" r="2" fill="#d4af37"/><circle cx="77" cy="82" r="2" fill="#d4af37"/></svg>`},
+ psu(it){const c=it.col||'#8795a1';return `<svg viewBox="0 0 100 100"><rect x="11" y="19" width="78" height="62" rx="6" fill="#171c25" stroke="#657287"/><circle cx="50" cy="49" r="22" fill="#090d14" stroke="#3d485c"/>${fan(50,49,17,c)}<rect x="17" y="25" width="24" height="4" rx="2" fill="${c}"/><rect x="17" y="31" width="17" height="3" rx="1" fill="#78869b"/><rect x="17" y="69" width="28" height="4" rx="2" fill="#343f52"/><path d="M67 25h13v7H67zM67 36h13v7H67zM67 47h13v7H67zM67 58h13v7H67z" fill="#3c485b"/></svg>`},
+ cool(it){const water=it.coolType==='water';if(water)return `<svg viewBox="0 0 100 100"><defs><linearGradient id="w${it.id}" x1="0" x2="1"><stop stop-color="#111a29"/><stop offset="1" stop-color="#34445e"/></linearGradient></defs><rect x="11" y="28" width="78" height="20" rx="4" fill="url(#w${it.id})" stroke="#66758b"/><path d="M17 33h66M17 39h66M17 44h66" stroke="${it.col||'#00e5ff'}" stroke-width="2" opacity=".75"/><path d="M35 48 C35 59 30 62 27 69 M65 48 C65 59 70 62 73 69" fill="none" stroke="#5f7894" stroke-width="5"/><circle cx="27" cy="73" r="12" fill="#101722" stroke="#56657b"/>${fan(27,73,8,it.col||'#00e5ff')}<rect x="56" y="59" width="20" height="20" rx="5" fill="#111827" stroke="#66758b"/><circle cx="66" cy="69" r="6" fill="${it.col||'#00e5ff'}" opacity=".65"/></svg>`;return `<svg viewBox="0 0 100 100"><rect x="27" y="15" width="46" height="70" rx="5" fill="#242d3c" stroke="#68768b"/><rect x="32" y="20" width="36" height="60" rx="3" fill="#151b27"/>${fan(50,50,22,it.col||'#00e5ff')}<rect x="20" y="84" width="60" height="5" rx="2" fill="#aab6c6"/><path d="M24 18h-6v12M76 18h6v12" stroke="#9ba9bc" stroke-width="3"/></svg>`},
+ other(it){return `<div style="font-size:3em;line-height:1;filter:drop-shadow(0 0 12px ${it.col||'#00e5ff'})">${it.i}</div>`}
+};
+function itemArt(it){try{return (ART[it.cat]||ART.other)(it)}catch{return ART.other(it)}}
+function fmt(n){return Math.floor(n).toLocaleString('ru-RU')}
+function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+
+/* ==================== STORAGE ==================== */
+const DBKEY='cyberdrop_v2';
+const SAFE_STORE={
+  get(key){try{return window.localStorage.getItem(key)}catch{return null}},
+  set(key,value){try{window.localStorage.setItem(key,value);return true}catch{return false}},
+  remove(key){try{window.localStorage.removeItem(key)}catch{}}
+};
+let db=loadDB();
+let currentUser=db.current&&db.users[db.current]?db.current:null;
+let authMode='login',activeCase=null,spinning=false,gameTimer=null,hotChip=-1,caseTimer=null,hackTimer=null,hackState=null;
+const LEGACY_MAP={
+  ssd_a400:'sata240',ssd_green240:'sata240',ssd_lexar256:'sata256',ssd_nv2_500:'nvme500',ssd_nv2_1t:'nvme1t',ssd_p3_1t:'nvme1t_fast',ssd_980_1t:'nvme1t_fast',ssd_sn770:'nvme1t_fast',ssd_990_1t:'nvme1t_pro',ssd_sn850x:'nvme2t',ssd_t700:'nvme2t_gen5',
+  ram_4_4:'ram4_4',ram_8_4:'ram8_4',ram_16_4:'ram16_4',ram_32_4:'ram32_4',ram_16_5:'ram16_5',ram_32_5:'ram32_5',ram_64_5:'ram64_5',
+  mb_h510:'mb_h410',
+  athlon3000g:'athlon2',r3_3100:'r3_3200',r7_5700x:'r7_5800',r5_7600:'r5_7500f',i5_13600k:'i5_14400f',i9_14900k:'i9_14900f',r9_7950x:'r7_9800x3d',
+  psu_350:'psu_450',psu_650:'psu_650',psu_1200:'psu_1000',cool_air:'cool_air_basic'
+};
+function normalizeUser(u){if(!u||!u.inventory)return u;const inv={};for(const [id,n] of Object.entries(u.inventory)){const nid=LEGACY_MAP[id]||id;if(ITEM_MAP[nid])inv[nid]=(inv[nid]||0)+n}u.inventory=inv;for(const slot of ['cpu','mb','ram','gpu','ssd','psu','cool']){if(u.build && u.build[slot]){const nid=LEGACY_MAP[u.build[slot]]||u.build[slot];if(ITEM_MAP[nid])u.build[slot]=nid;else delete u.build[slot]}}return u}
+function loadDB(){try{const d=JSON.parse(SAFE_STORE.get(DBKEY)||'');if(d&&d.users){for(const k of Object.keys(d.users))d.users[k]=normalizeUser(d.users[k]);return d}}catch{}return{users:{},current:null}}
+function saveDB(){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db))}
+function user(){return currentUser?db.users[currentUser]:null}
+function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now()}}
+function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
+function addItem(id,n=1){const u=user();if(!u)return;u.inventory[id]=(u.inventory[id]||0)+n;saveDB()}
+function takeItem(id,n=1){const u=user();if(!u||!(u.inventory[id]>=n))return false;u.inventory[id]-=n;if(u.inventory[id]<=0)delete u.inventory[id];saveDB();return true}
+function addCredits(n){const u=user();if(!u)return;u.credits=Math.max(0,Math.floor(u.credits+n));saveDB();renderHeader()}
+
+/* ==================== UI CORE ==================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function toast(msg,type='info'){const x=document.createElement('div');x.className=`toast ${type}`;x.textContent=msg;$('#toasts').appendChild(x);requestAnimationFrame(()=>x.classList.add('show'));setTimeout(()=>{x.classList.remove('show');setTimeout(()=>x.remove(),300)},2600)}
+function openModal(id){$('#'+id).classList.add('open');document.body.classList.add('modal-open');setTimeout(()=>{const el=$('#'+id);if(!el)return;const f=el.querySelector('input,button');if(f&&f.focus)f.focus({preventScroll:true})},0)}
+function closeModal(id){const el=$('#'+id);if(el)el.classList.remove('open');if(!$$('.modal.open').length)document.body.classList.remove('modal-open')}
+function requireAuth(){if(user())return true;openModal('authModal');return false}
+function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><div class="avatar">${esc(currentUser[0].toUpperCase())}</div><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',()=>{currentUser=null;saveDB();renderAll();toast('Вы вышли из аккаунта')})}
+function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));$('#tab-'+tab).classList.add('active');if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn()}
+$$('.nav-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+$$('.modal').forEach(m=>m.addEventListener('mousedown',e=>{if(e.target===m&&m.id!=='adModal')closeModal(m.id)}));
+
+/* ==================== THEME ==================== */
+const THEME_KEY='cyberdrop_theme';
+let themeMode=SAFE_STORE.get(THEME_KEY)==='light'?'light':'dark';
+function applyTheme(mode){themeMode=mode==='light'?'light':'dark';document.documentElement.dataset.theme=themeMode;const b=$('#themeToggle');if(b){b.textContent=themeMode==='light'?'☾':'☼';b.title=themeMode==='light'?'Переключить на тёмную тему':'Переключить на светлую тему';b.setAttribute('aria-label',b.title)}}
+function toggleTheme(){applyTheme(themeMode==='dark'?'light':'dark');SAFE_STORE.set(THEME_KEY,themeMode);ensureAudio();tone(themeMode==='light'?660:440,.11,'triangle',.025)}
+
+applyTheme(themeMode);
+if($('#themeToggle'))$('#themeToggle').onclick=toggleTheme;
+
+/* ==================== AUDIO ==================== */
+const AUDIO_KEY='cyberdrop_audio';
+let audioCtx=null,audioMaster=null,musicTimer=null,musicOn=SAFE_STORE.get(AUDIO_KEY)==='1';
+function ensureAudio(){
+  if(audioCtx)return;
+  const C=window.AudioContext||window.webkitAudioContext;
+  if(!C){toast('Аудио не поддерживается браузером','err');return}
+  audioCtx=new C();
+  audioMaster=audioCtx.createGain();audioMaster.gain.value=.055;audioMaster.connect(audioCtx.destination);
+}
+function tone(freq,dur,type='sine',vol=.05,when=0){
+  ensureAudio();if(!audioCtx)return;const now=audioCtx.currentTime+when;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);
+  g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(Math.max(.0001,vol),now+.015);g.gain.exponentialRampToValueAtTime(.0001,now+dur);
+  o.connect(g);g.connect(audioMaster);o.start(now);o.stop(now+dur+.03);
+}
+function caseSfx(){
+  ensureAudio();if(!audioCtx)return;
+  tone(110,.12,'sawtooth',.055);tone(165,.16,'triangle',.04,.08);tone(245,.12,'triangle',.035,.22);
+  [0,0.24,0.48,0.72,0.96,1.2,1.44,1.68].forEach((t,i)=>tone(180+i*26,.075,'square',.018,t));
+  tone(430,.15,'sine',.055,1.95);tone(540,.18,'sine',.04,2.05);
+  [0,0.6,1.2,1.8,2.4,3.0,3.6,4.2,4.8,5.4].forEach((t,i)=>tone(130+i*6,.06,'square',.012,t));
+}
+function winSfx(rar){
+  const seq=rar==='l'?[523,659,784,1046]:rar==='e'?[440,554,659]:rar==='r'?[392,494,587]:[330,392];
+  seq.forEach((f,i)=>tone(f,.2,'triangle',rar==='l' ? .06 : .04,i*.08));
+}
+function musicStep(){
+  if(!musicOn||!audioCtx)return;
+  const seq=[65.41,73.42,82.41,98,82.41,73.42,65.41,61.74];
+  const i=Math.floor(Date.now()/1500)%seq.length;
+  tone(seq[i],1.1,'sine',.012);tone(seq[(i+2)%seq.length]*2,0.42,'triangle',.007,.32);
+}
+function startMusic(){
+  ensureAudio();if(!audioCtx)return;if(audioCtx.state==='suspended')audioCtx.resume();
+  if(!musicTimer)musicTimer=setInterval(musicStep,1500);
+  musicStep();
+  $('#audioToggle').classList.add('on');$('#audioToggle').textContent='♫';$('#audioToggle').title='Выключить атмосферу';$('#audioToggle').setAttribute('aria-label','Выключить атмосферу');
+  SAFE_STORE.set(AUDIO_KEY,'1');musicOn=true;
+}
+function stopMusic(){
+  if(musicTimer){clearInterval(musicTimer);musicTimer=null}
+  $('#audioToggle').classList.remove('on');$('#audioToggle').textContent='♪';$('#audioToggle').title='Включить атмосферу';$('#audioToggle').setAttribute('aria-label','Включить атмосферу');
+  SAFE_STORE.set(AUDIO_KEY,'0');musicOn=false;
+}
+if($('#audioToggle'))if($('#audioToggle'))$('#audioToggle').onclick=()=>{if(musicOn)stopMusic();else startMusic()};
+window.addEventListener('pointerdown',()=>{if(musicOn)startMusic()},{once:true});
+if(musicOn&&$('#audioToggle')){$('#audioToggle').classList.add('on');$('#audioToggle').textContent='♫';$('#audioToggle').title='Выключить атмосферу';$('#audioToggle').setAttribute('aria-label','Выключить атмосферу');}
+
+/* ==================== CASES ==================== */
+function caseAboveCount(c){return c.pool.map(id=>ITEM_MAP[id]).filter(it=>it&&it.price>c.price).length}
+function renderCases(){
+ $('#casesGrid').innerHTML=CASES.map(c=>{const prev=c.pool.slice(0,5).map(id=>{const it=ITEM_MAP[id];return `<div class="drop-dot" style="--dc:${RARITIES[it.rar].color}" title="${esc(it.name)}"><div class="item-visual">${itemArt(it)}</div></div>`}).join('');return `<article class="case-card" style="--cc:${c.color}"><div class="case-top"><div class="case-icon">${c.icon}</div><div class="case-tag">${c.tag}</div></div><div class="case-name">${c.name}</div><div class="case-price">Цена: <b>${fmt(c.price)} кр.</b></div><div class="case-drops">${prev}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-preview-case="${c.id}">Содержимое</button><button class="btn primary" data-open-case="${c.id}">Открыть кейс</button></div></article>`}).join('');
+ $$('[data-open-case]').forEach(b=>b.addEventListener('click',()=>startCase(b.dataset.openCase)));
+ $$('[data-preview-case]').forEach(b=>b.addEventListener('click',()=>openCasePreview(b.dataset.previewCase)));
+}
+function openCasePreview(id){
+ const c=CASES.find(x=>x.id===id);if(!c)return;
+ const arr=c.pool.map(x=>ITEM_MAP[x]).filter(Boolean);
+ const total=arr.reduce((sum,it)=>sum+RARITIES[it.rar].weight,0);
+ const above=arr.filter(it=>it.price>c.price).length;
+ $('#previewTitle').textContent=c.name;
+ $('#previewSub').textContent='Нажми «Открыть кейс», когда будешь готов. Список не расходует кредиты.';
+ $('#previewPrice').textContent=fmt(c.price)+' кр.';
+ $('#previewCount').textContent=arr.length;
+ $('#previewJackpots').textContent=above;
+ $('#casePreviewGrid').innerHTML=arr.map(it=>{
+   const chance=(RARITIES[it.rar].weight/total*100);
+   return `<div class="case-preview-card" style="--rc:${RARITIES[it.rar].color}"><div class="item-visual">${itemArt(it)}</div><div class="cp-name">${esc(it.name)}</div><div class="cp-rar" style="color:${RARITIES[it.rar].color}">${RARITIES[it.rar].name}</div><div class="cp-price">${fmt(it.price)} кр.</div><div class="cp-chance">Шанс предмета: ${chance<1?chance.toFixed(2):chance.toFixed(1)}%</div></div>`;
+ }).join('');
+ $('#previewOpenBtn').onclick=()=>{closeModal('casePreviewModal');setTimeout(()=>startCase(c.id),120)};
+ openModal('casePreviewModal');
+}
+function weightedItem(pool){
+ const arr=pool.map(id=>ITEM_MAP[id]);let total=arr.reduce((s,it)=>s+RARITIES[it.rar].weight,0),r=Math.random()*total;
+ for(const it of arr){r-=RARITIES[it.rar].weight;if(r<=0)return it}return arr[arr.length-1]
+}
+function rouHTML(it){return `<div class="rou-item" style="--rc:${RARITIES[it.rar].color}"><div class="item-visual">${itemArt(it)}</div><div class="ri-nm">${esc(it.name)}</div></div>`}
+function startCase(id){
+ closeModal('casePreviewModal');
+ if(!requireAuth())return;if(spinning)return;const c=CASES.find(x=>x.id===id),u=user();if(!c)return;if(u.credits<c.price){toast('Недостаточно кредитов','err');return}
+ addCredits(-c.price);activeCase=c;spinning=true;caseSfx();
+ if(caseTimer)clearInterval(caseTimer);
+ $('#caseTitle').textContent=c.name+' кейс';$('#caseSub').textContent='Система анализирует содержимое…';$('#result').innerHTML='';$('#caseLiveText').textContent='СКАНИРОВАНИЕ ПРИЗОВ';$('#caseLiveTimer').textContent='6.4s';$('#caseProgressBar').style.width='0%';openModal('caseModal');
+ const win=weightedItem(c.pool),items=[];for(let i=0;i<30;i++)items.push(weightedItem(c.pool));items[24]=win;
+ const strip=$('#strip');strip.style.transition='none';strip.style.transform='translateX(0)';strip.innerHTML=items.map(rouHTML).join('');
+ const totalMs=6400,started=performance.now();
+ caseTimer=setInterval(()=>{const elapsed=performance.now()-started,p=Math.min(100,elapsed/totalMs*100),left=Math.max(0,(totalMs-elapsed)/1000);$('#caseProgressBar').style.width=p.toFixed(1)+'%';$('#caseLiveTimer').textContent=left.toFixed(1)+'s';if(left<4.7)$('#caseLiveText').textContent='СИНХРОНИЗАЦИЯ…';if(left<2.2)$('#caseLiveText').textContent='ФИКСАЦИЯ РЕЗУЛЬТАТА'},100);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const rw=$('.roulette').clientWidth,card=142,gap=8,target=24*(card+gap)+card/2-rw/2;strip.style.transition='transform 6.05s cubic-bezier(.10,.72,.08,1)';strip.style.transform=`translateX(${-target}px)`;}));
+ setTimeout(()=>{
+   if(caseTimer){clearInterval(caseTimer);caseTimer=null}
+   addItem(win.id);const nodes=$$('#strip .rou-item');if(nodes[24])nodes[24].classList.add('win');$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
+   $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
+   $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
+   $('#sellWinBtn').onclick=()=>{if(takeItem(win.id)){addCredits(win.price);closeModal('caseModal');renderInventory();toast('Предмет продан','ok')}};
+   spinning=false;renderBadges();
+ },totalMs+80);
+}
+
+/* ==================== INVENTORY ==================== */
+function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inventory).filter(([,n])=>n>0).map(([id,n])=>[ITEM_MAP[id],n]).filter(([it])=>it)}
+function renderInventory(){
+ const u=user();if(!u){$('#invCount').textContent='0';$('#invValue').textContent='0';$('#invGrid').innerHTML='<div class="inv-empty"><span class="big">🔒</span>Войдите, чтобы увидеть инвентарь.</div>';return}
+ const e=invEntries(),count=e.reduce((s,[,n])=>s+n,0),value=e.reduce((s,[it,n])=>s+it.price*n,0);$('#invCount').textContent=count;$('#invValue').textContent=fmt(value);
+ $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}">Продать</button></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
+ $$('[data-sell]').forEach(b=>b.onclick=()=>{const it=ITEM_MAP[b.dataset.sell];if(takeItem(it.id)){addCredits(it.price);renderInventory();renderBadges();toast(`Продано: ${it.name}`,'ok')}});
+}
+$('#sellAllBtn').addEventListener('click',()=>{if(!requireAuth())return;const e=invEntries();if(!e.length)return toast('Инвентарь пуст');const sum=e.reduce((s,[it,n])=>s+it.price*n,0);user().inventory={};addCredits(sum);saveDB();renderInventory();renderBadges();toast(`Продано на ${fmt(sum)} кр.`,'ok')});
+
+/* ==================== BUILD ==================== */
+function socketLabel(s){return ({lga1155:'LGA 1155',lga1200:'LGA 1200',lga1700:'LGA 1700',am3plus:'AM3+',am4:'AM4',am5:'AM5'})[s]||String(s||'').toUpperCase()}
+function buildIssues(){const u=user();if(!u)return[];const b=u.build,issues=[],cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],psu=ITEM_MAP[b.psu];if(cpu&&mb&&cpu.socket!==mb.socket)issues.push(`Сокет процессора ${socketLabel(cpu.socket)} не совместим с платой ${socketLabel(mb.socket)}.`);if(ram&&mb&&ram.type!==mb.mem)issues.push(`Память ${ram.type.toUpperCase()} не совместима с платой ${mb.mem.toUpperCase()}.`);if(psu){const draw=((cpu&&cpu.tdp)||0)+((gpu&&gpu.tdp)||0)+120;if(psu.watts<draw)issues.push(`БП ${psu.watts}W слабее рекомендуемой мощности ${draw}W.`)}return issues}
+function buildIncome(){const u=user();if(!u)return 0;const ids=SLOTS.map(([s])=>u.build[s]);if(ids.some(x=>!x)||buildIssues().length)return 0;const value=ids.reduce((s,id)=>s+(ITEM_MAP[id] ? ITEM_MAP[id].price : undefined||0),0);return Math.max(20,Math.floor(value/1500))}
+function renderBuild(){
+ const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML='<div class="item">Статус<b class="err">Нужен вход</b></div>';$('#buildGrid').innerHTML='';$('#buildIncome').innerHTML='';return}
+ const issues=buildIssues(),filled=SLOTS.filter(([s])=>u.build[s]).length,income=buildIncome();$('#buildIncompat').innerHTML=issues.length?`<div class="incompat"><b>Есть проблемы совместимости:</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
+ $('#buildStatus').innerHTML=`<div class="item">Компонентов<b>${filled}/${SLOTS.length}</b></div><div class="item">Совместимость<b class="${issues.length?'err':'ok'}">${issues.length?'Ошибка':'ОК'}</b></div><div class="item">Доход/мин<b class="${income?'ok':''}">${fmt(income)} кр.</b></div>`;
+ $('#buildGrid').innerHTML=SLOTS.map(([slot,label])=>{const it=ITEM_MAP[u.build[slot]];return `<div class="slot ${it?'filled':''}" style="--rc:${it?RARITIES[it.rar].color:'#242b3d'}"><div class="slot-label">${label}</div>${it?`<div class="slot-visual"><div class="item-visual">${itemArt(it)}</div></div><div class="slot-name">${esc(it.name)}</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Заменить</button><button class="btn ghost" data-remove="${slot}">Снять</button></div>`:`<div class="slot-empty">＋</div><div class="slot-name">Пусто</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Установить</button></div>`}</div>`}).join('');
+ $('#buildIncome').innerHTML=`<div class="income-box"><div><div class="lbl">Пассивный доход</div><div class="val">${fmt(income)} кр./мин</div></div><div class="sub">Доход начисляется, пока сайт открыт.<br>Для заработка нужна полная совместимая сборка.</div></div>`;
+ $$('[data-pick]').forEach(b=>b.onclick=()=>openPicker(b.dataset.pick));$$('[data-remove]').forEach(b=>b.onclick=()=>removeFromBuild(b.dataset.remove));renderBadges();
+}
+function openPicker(slot){if(!requireAuth())return;const foundSlot=SLOTS.find(x=>x[0]===slot);const label=(foundSlot?foundSlot[1]:slot);$('#pickTitle').textContent='Выбери: '+label;const list=invEntries().filter(([it])=>it.cat===slot);$('#pickSub').textContent=list.length?'Выбери предмет из инвентаря.':'Подходящих предметов в инвентаре нет.';$('#pickList').innerHTML=list.length?list.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn primary sm" data-install="${it.id}" data-slot="${slot}">Установить</button></div>`).join(''):'<div class="inv-empty">Нет подходящих компонентов.</div>';$$('[data-install]').forEach(b=>b.onclick=()=>installToBuild(b.dataset.slot,b.dataset.install));openModal('pickModal')}
+function installToBuild(slot,id){const u=user(),old=u.build[slot];if(!takeItem(id))return toast('Предмет уже недоступен','err');if(old)addItem(old);u.build[slot]=id;saveDB();closeModal('pickModal');renderBuild();renderInventory();toast('Компонент установлен','ok')}
+function removeFromBuild(slot){const u=user(),id=u.build[slot];if(!id)return;addItem(id);delete u.build[slot];saveDB();renderBuild();renderInventory();toast('Компонент возвращён в инвентарь')}
+function tickIncome(){const u=user();if(!u)return;const now=Date.now(),income=buildIncome();u.lastIncome=u.lastIncome||now;const mins=Math.floor((now-u.lastIncome)/60000);if(mins>0){if(income){u.credits+=income*mins;toast(`Пассивный доход: +${fmt(income*mins)} кр.`,'ok')}u.lastIncome+=mins*60000;saveDB();renderHeader();if($('#tab-build').classList.contains('active'))renderBuild()}}
+setInterval(tickIncome,5000);
+
+/* ==================== EARN ==================== */
+function renderEarn(){const u=user();$('#refCode').textContent=u?u.refCode:'——————';$('#refCount').textContent=u?u.refCount:0;$('#refEarned').textContent=u?fmt(u.refEarned):0;$('#refInputWrap').style.display=u&&!u.usedRef?'flex':'none';updateAdButton()}
+function updateAdButton(){const b=$('#adBtn'),u=user();if(!u){b.disabled=false;b.textContent='Смотреть рекламу';return}const left=Math.max(0,45000-(Date.now()-u.lastAd));if(left){b.disabled=true;b.textContent=`Доступно через ${Math.ceil(left/1000)} с`}else{b.disabled=false;b.textContent='Смотреть рекламу'}}
+setInterval(updateAdButton,1000);
+$('#adBtn').onclick=()=>{if(!requireAuth())return;const u=user();if(Date.now()-u.lastAd<45000)return updateAdButton();openModal('adModal');const ads=[['🚀','Ускорь свой ПК','Термопаста нового поколения — минус 12°C под нагрузкой'],['🛰️','Сеть без лагов','Игровой роутер для стабильного соединения'],['⌨️','Нажимай быстрее','Механические переключатели для киберспорта']];const a=ads[Math.floor(Math.random()*ads.length)];$('#adEmoji').textContent=a[0];$('#adHead').textContent=a[1];$('#adText').textContent=a[2];$('#adBar').style.width='0';$('#adClaim').disabled=true;$('#adClaim').textContent='Подождите…';let p=0;const t=setInterval(()=>{p+=4;$('#adBar').style.width=Math.min(100,p)+'%';if(p>=100){clearInterval(t);$('#adClaim').disabled=false;$('#adClaim').textContent='Получить награду'}},200)};
+$('#adClaim').onclick=()=>{const u=user();if(!u)return;const reward=120+Math.floor(Math.random()*181);u.lastAd=Date.now();u.credits+=reward;saveDB();closeModal('adModal');renderHeader();updateAdButton();toast(`За рекламу: +${reward} кр.`,'ok')};
+$('#copyRef').onclick=async()=>{if(!requireAuth())return;try{await navigator.clipboard.writeText(user().refCode);toast('Реферальный код скопирован','ok')}catch{toast('Код: '+user().refCode)}};
+function applyRef(code){const u=user();if(!u||u.usedRef)return false;code=String(code||'').trim().toUpperCase();const ownerName=Object.keys(db.users).find(n=>n!==currentUser&&db.users[n].refCode===code);if(!ownerName)return false;u.usedRef=true;u.credits+=400;db.users[ownerName].credits+=800;db.users[ownerName].refCount=(db.users[ownerName].refCount||0)+1;db.users[ownerName].refEarned=(db.users[ownerName].refEarned||0)+800;saveDB();renderHeader();renderEarn();toast('Код активирован: +400 кр.','ok');return true}
+$('#applyRef').onclick=()=>{if(!requireAuth())return;if(!applyRef($('#refInput').value))toast('Код не найден или уже использован','err')};
+
+/* ==================== CLICKER ==================== */
+function renderGameGrid(){$('#gameGrid').innerHTML=Array.from({length:9},(_,i)=>`<button class="chip ${i===hotChip?'hot':''}" data-chip="${i}">${i===hotChip?'⚡':'·'}</button>`).join('');$$('[data-chip]').forEach(b=>b.onclick=()=>hitChip(+b.dataset.chip))}
+function moveHot(){hotChip=Math.floor(Math.random()*9);renderGameGrid()}
+function hitChip(i){if(!gameTimer||i!==hotChip)return;const sc=$('#gameScore');sc.textContent=(+sc.textContent||0)+15;moveHot()}
+$('#gameBtn').onclick=()=>{if(!requireAuth())return;if(gameTimer)return;let left=20;$('#gameArea').classList.add('on');$('#gameTime').textContent=left;$('#gameScore').textContent='0';$('#gameBtn').disabled=true;$('#gameNote').textContent='Кликай по подсвеченному чипу!';moveHot();gameTimer=setInterval(()=>{left--;$('#gameTime').textContent=left;if(left<=0){clearInterval(gameTimer);gameTimer=null;hotChip=-1;renderGameGrid();const score=+$('#gameScore').textContent;addCredits(score);$('#gameBtn').disabled=false;$('#gameNote').textContent=`Игра окончена. Получено ${score} кр.`;toast(`Кибер-кликер: +${score} кр.`,'ok')}else moveHot()},1000)};
+renderGameGrid();
+
+/* ==================== PROTOCOL HACK ==================== */
+const HACK_SYMBOLS=['1','2','3','4','5','6','7','8','9'];
+function renderHackGrid(){
+  if(!hackState){$('#hackGrid').innerHTML='';return}
+  $('#hackGrid').innerHTML=HACK_SYMBOLS.map((v,i)=>`<button class="hack-node ${hackState.finished?'locked':''} ${hackState.used.has(v)?'used':''}" data-hack="${v}" type="button">${v}</button>`).join('');
+  $$('[data-hack]').forEach(b=>b.onclick=()=>hackClick(b.dataset.hack));
+}
+function hackReset(){if(hackTimer){clearInterval(hackTimer);hackTimer=null}hackState=null;$('#hackTime').textContent='18';$('#hackScore').textContent='0';$('#hackDisplay').textContent='READY';$('#hackDisplay').className='hack-display ready';renderHackGrid()}
+function hackStart(){
+  if(!requireAuth())return;if(hackTimer)return;
+  const seq=[...HACK_SYMBOLS].sort(()=>Math.random()-.5).slice(0,5);
+  hackState={seq,index:0,used:new Set(),finished:false};
+  $('#hackBtn').disabled=true;$('#hackArea').classList.add('on');$('#hackTime').textContent='18';$('#hackScore').textContent='180';$('#hackNote').textContent='Запомни код. Через 3 секунды узлы исчезнут.';
+  $('#hackDisplay').textContent=seq.join('');$('#hackDisplay').className='hack-display';renderHackGrid();tone(523,.18,'triangle',.05);tone(659,.2,'triangle',.04,.16);
+  setTimeout(()=>{if(!hackState)return;$('#hackDisplay').textContent='•••••';$('#hackNote').textContent='Повтори 5 цифр в правильном порядке.';let left=18;$('#hackTime').textContent=left;hackTimer=setInterval(()=>{left--;$('#hackTime').textContent=left;if(left<=0)hackFinish(false,'Время вышло. Протокол заблокирован.');},1000)},3000);
+}
+function hackClick(v){
+  if(!hackState||hackState.finished||!hackTimer)return;const expected=hackState.seq[hackState.index];
+  if(v!==expected){hackFinish(false,'Ошибка ввода. Последовательность сброшена.');return}
+  hackState.used.add(v);hackState.index++;tone(420+hackState.index*55,.11,'square',.028);renderHackGrid();
+  if(hackState.index===hackState.seq.length){const left=Math.max(1,+$('#hackTime').textContent||1),score=Math.min(180,120+left*4);$('#hackScore').textContent=score;hackFinish(true,`Протокол взломан. Получено ${score} кр.` ,score)}
+}
+function hackFinish(ok,msg,score=0){
+  if(!hackState||hackState.finished)return;hackState.finished=true;if(hackTimer){clearInterval(hackTimer);hackTimer=null}
+  if(ok){addCredits(score);$('#hackDisplay').textContent='ACCESS';$('#hackDisplay').className='hack-display success';tone(784,.2,'triangle',.05);tone(1046,.24,'triangle',.045,.12);$('#hackNote').textContent=msg;toast(`Взлом протокола: +${score} кр.`,'ok')}
+  else{$('#hackDisplay').textContent='LOCKED';$('#hackDisplay').className='hack-display fail';$('#hackScore').textContent='0';$('#hackNote').textContent=msg;tone(170,.18,'sawtooth',.035);tone(100,.25,'sawtooth',.03,.16);toast('Взлом не удался','err')}
+  $('#hackBtn').disabled=false;$('#hackBtn').textContent='Новая попытка';renderHackGrid();
+  setTimeout(()=>{if(hackState&&hackState.finished){hackState=null;$('#hackBtn').textContent='Начать взлом';$('#hackDisplay').textContent='READY';$('#hackDisplay').className='hack-display ready';$('#hackTime').textContent='18';$('#hackScore').textContent='0';$('#hackNote').textContent='Сначала появятся 5 цифр. Не моргай.';renderHackGrid()}},2200);
+}
+$('#hackBtn').onclick=hackStart;
+
+/* ==================== AUTH ==================== */
+function setAuthMode(mode){authMode=mode;$$('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.authTab===mode));$('#refField').classList.toggle('hidden',mode!=='reg');$('#authSubmit').textContent=mode==='login'?'Войти':'Создать аккаунт';$('#authErr').textContent=''}
+$$('.auth-tab').forEach(b=>b.onclick=()=>setAuthMode(b.dataset.authTab));
+$('#authForm').addEventListener('submit',e=>{e.preventDefault();const name=$('#authName').value.trim(),pass=$('#authPass').value,err=$('#authErr');err.textContent='';if(name.length<3)return err.textContent='Логин должен содержать минимум 3 символа.';if(pass.length<4)return err.textContent='Пароль должен содержать минимум 4 символа.';if(authMode==='reg'){if(db.users[name])return err.textContent='Такой логин уже существует.';db.users[name]=newUser(name,pass);currentUser=name;saveDB();const ref=$('#authRef').value.trim();if(ref)applyRef(ref);closeModal('authModal');renderAll();toast('Аккаунт создан. Начислено 2000 кредитов!','ok')}else{if(!db.users[name]||db.users[name].pass!==pass)return err.textContent='Неверный логин или пароль.';currentUser=name;saveDB();closeModal('authModal');renderAll();toast('Вход выполнен','ok')}});
+
+/* ==================== BADGES / INIT ==================== */
+function renderBadges(){const u=user(),cnt=u?Object.values(u.inventory).reduce((a,b)=>a+b,0):0;$('#invBadge').textContent=cnt;$('#invBadge').style.display=cnt?'inline-block':'none';const issues=u?buildIssues().length:0;$('#buildBadge').style.display=issues?'inline-block':'none'}
+function renderAll(){renderHeader();renderCases();renderInventory();renderBuild();renderEarn();renderBadges();renderHackGrid()}
+try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.body.setAttribute('data-app-error','1');}
+</script>
+
+<script>
+(function(){
+  try {
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(err){ console.warn('CYBERDROP SW:', err); }); });
+    }
+  } catch(e) { console.warn('CYBERDROP SW init:', e); }
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var cfg = window.CYBERDROP_SUPABASE_CONFIG || {};
+  var ready = !!(window.supabase && cfg.url && cfg.publishableKey && !String(cfg.url).includes('YOUR_PROJECT_REF') && !String(cfg.publishableKey).includes('YOUR_SUPABASE_PUBLISHABLE_KEY'));
+  var client = null;
+  var syncing = false;
+  var suppressPush = false;
+  var pushTimer = null;
+  var baseSaveDB = window.saveDB;
+
+  window.CYBERDROP_CLOUD = {
+    enabled: ready,
+    configured: ready,
+    client: null,
+    userId: null,
+    status: ready ? 'ready' : 'local'
+  };
+
+  if (!ready) {
+    console.info('CYBERDROP: Supabase is not configured; local mode is active.');
+    return;
+  }
+
+  try {
+    client = window.supabase.createClient(cfg.url, cfg.publishableKey, {
+      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true }
+    });
+    window.CYBERDROP_CLOUD.client = client;
+  } catch (err) {
+    console.error('CYBERDROP Supabase init failed:', err);
+    window.CYBERDROP_CLOUD.enabled = false;
+    return;
+  }
+
+  function cloudUser() { return window.CYBERDROP_CLOUD.userId; }
+
+  function schedulePush() {
+    if (suppressPush || !cloudUser() || pushTimer) return;
+    pushTimer = setTimeout(function () {
+      pushTimer = null;
+      pushState().catch(function (err) { console.warn('CYBERDROP cloud sync:', err); });
+    }, 250);
+  }
+
+  async function pushState() {
+    if (syncing || suppressPush || !cloudUser()) return;
+    var u = user && user();
+    if (!u) return;
+    syncing = true;
+    try {
+      var uid = cloudUser();
+      var profile = {
+        id: uid,
+        username: window.currentUser || u.username || uid.slice(0, 8),
+        credits: Math.floor(Number(u.credits) || 0),
+        ref_code: u.refCode || null,
+        ref_count: Number(u.refCount) || 0,
+        ref_earned: Math.floor(Number(u.refEarned) || 0),
+        used_ref: !!u.usedRef,
+        last_ad: u.lastAd ? new Date(u.lastAd).toISOString() : null,
+        last_income: u.lastIncome ? new Date(u.lastIncome).toISOString() : new Date().toISOString()
+      };
+      var pr = await client.from('profiles').upsert(profile, { onConflict: 'id' });
+      if (pr.error) throw pr.error;
+
+      var ir = await client.from('inventory').delete().eq('user_id', uid);
+      if (ir.error) throw ir.error;
+      var rows = Object.keys(u.inventory || {}).filter(function (id) { return Number(u.inventory[id]) > 0; }).map(function (id) {
+        return { user_id: uid, item_id: id, quantity: Math.floor(Number(u.inventory[id])) };
+      });
+      if (rows.length) {
+        var ins = await client.from('inventory').insert(rows);
+        if (ins.error) throw ins.error;
+      }
+
+      var b = u.build || {};
+      var br = await client.from('builds').upsert({
+        user_id: uid, cpu: b.cpu || null, mb: b.mb || null, ram: b.ram || null,
+        gpu: b.gpu || null, ssd: b.ssd || null, psu: b.psu || null, cool: b.cool || null
+      }, { onConflict: 'user_id' });
+      if (br.error) throw br.error;
+      window.CYBERDROP_CLOUD.status = 'synced';
+    } finally {
+      syncing = false;
+    }
+  }
+
+  async function pullState(authUser) {
+    suppressPush = true;
+    try {
+      window.CYBERDROP_CLOUD.userId = authUser.id;
+      var pr = await client.from('profiles').select('*').eq('id', authUser.id).single();
+      if (pr.error) throw pr.error;
+      var ir = await client.from('inventory').select('item_id,quantity').eq('user_id', authUser.id);
+      if (ir.error) throw ir.error;
+      var br = await client.from('builds').select('*').eq('user_id', authUser.id).maybeSingle();
+      if (br.error) throw br.error;
+
+      var cloudProfile = pr.data;
+      var uname = cloudProfile.username;
+      var u = {
+        pass: '',
+        credits: Number(cloudProfile.credits) || 0,
+        inventory: {},
+        build: {
+          cpu: br.data ? br.data.cpu || '' : '', mb: br.data ? br.data.mb || '' : '',
+          ram: br.data ? br.data.ram || '' : '', gpu: br.data ? br.data.gpu || '' : '',
+          ssd: br.data ? br.data.ssd || '' : '', psu: br.data ? br.data.psu || '' : '',
+          cool: br.data ? br.data.cool || '' : ''
+        },
+        refCode: cloudProfile.ref_code,
+        refCount: Number(cloudProfile.ref_count) || 0,
+        refEarned: Number(cloudProfile.ref_earned) || 0,
+        usedRef: !!cloudProfile.used_ref,
+        lastAd: cloudProfile.last_ad ? new Date(cloudProfile.last_ad).getTime() : 0,
+        lastIncome: cloudProfile.last_income ? new Date(cloudProfile.last_income).getTime() : Date.now(),
+        cloudId: authUser.id,
+        email: authUser.email || ''
+      };
+      (ir.data || []).forEach(function (row) {
+        if (Number(row.quantity) > 0) u.inventory[row.item_id] = Number(row.quantity);
+      });
+      db.users = {};
+      db.users[uname] = u;
+      currentUser = uname;
+      if (baseSaveDB) baseSaveDB();
+      window.renderAll();
+      window.CYBERDROP_CLOUD.status = 'synced';
+    } finally {
+      suppressPush = false;
+    }
+  }
+
+  function showCloudError(err) {
+    var msg = (err && err.message) ? err.message : String(err || 'Неизвестная ошибка');
+    var errEl = document.querySelector('#authErr');
+    if (errEl) errEl.textContent = msg;
+    console.error('CYBERDROP cloud auth:', err);
+  }
+
+  async function cloudAuthSubmit(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var nameEl = document.querySelector('#authName');
+    var emailEl = document.querySelector('#authEmail');
+    var passEl = document.querySelector('#authPass');
+    var refEl = document.querySelector('#authRef');
+    var errEl = document.querySelector('#authErr');
+    if (!nameEl || !passEl || !errEl) return;
+    errEl.textContent = '';
+    var username = nameEl.value.trim();
+    var email = (emailEl && emailEl.value.trim()) ? emailEl.value.trim() : username;
+    var pass = passEl.value;
+    if (authMode === 'reg') {
+      if (username.length < 3) { errEl.textContent = 'Логин должен содержать минимум 3 символа.'; return; }
+      if (!email || !email.includes('@')) { errEl.textContent = 'Укажите корректный email.'; return; }
+      if (pass.length < 6) { errEl.textContent = 'Пароль должен содержать минимум 6 символов.'; return; }
+      var sign = await client.auth.signUp({ email: email, password: pass, options: { data: { username: username, ref_code: refEl ? refEl.value.trim() : '' } } });
+      if (sign.error) { showCloudError(sign.error); return; }
+      if (!sign.data.session) {
+        errEl.textContent = 'Регистрация создана. Проверьте почту и подтвердите email, затем войдите.';
+        return;
+      }
+      await pullState(sign.data.user);
+      window.closeModal('authModal');
+      window.renderAll();
+      window.toast('Аккаунт создан и сохранён в облаке!','ok');
+    } else {
+      if (!email || !email.includes('@')) { errEl.textContent = 'Укажите email аккаунта.'; return; }
+      if (pass.length < 6) { errEl.textContent = 'Пароль должен содержать минимум 6 символов.'; return; }
+      var login = await client.auth.signInWithPassword({ email: email, password: pass });
+      if (login.error) { showCloudError(login.error); return; }
+      await pullState(login.data.user);
+      window.closeModal('authModal');
+      window.renderAll();
+      window.toast('Вход выполнен. Данные синхронизированы.','ok');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var emailWrap = document.querySelector('#authEmailWrap');
+    var nameLabel = document.querySelector('#authNameLabel');
+    var nameEl = document.querySelector('#authName');
+    var form = document.querySelector('#authForm');
+    if (form) form.addEventListener('submit', cloudAuthSubmit, true);
+
+    window.setAuthMode = function (mode) {
+      authMode = mode;
+      Array.prototype.forEach.call(document.querySelectorAll('.auth-tab'), function (x) { x.classList.toggle('active', x.dataset.authTab === mode); });
+      var ref = document.querySelector('#refField');
+      if (ref) ref.classList.toggle('hidden', mode !== 'reg');
+      var submit = document.querySelector('#authSubmit');
+      if (submit) submit.textContent = mode === 'login' ? 'Войти' : 'Создать аккаунт';
+      if (document.querySelector('#authErr')) document.querySelector('#authErr').textContent = '';
+      if (ready) {
+        if (emailWrap) emailWrap.classList.remove('hidden');
+        if (nameLabel) nameLabel.textContent = mode === 'reg' ? 'Логин' : 'Email';
+        if (nameEl) { nameEl.placeholder = mode === 'reg' ? 'Ваш никнейм' : 'you@example.com'; nameEl.type = mode === 'reg' ? 'text' : 'email'; }
+        if (emailWrap && mode === 'login') emailWrap.classList.add('hidden');
+      }
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('.auth-tab'), function (b) {
+      b.onclick = function () { window.setAuthMode(b.dataset.authTab); };
+    });
+    setAuthMode(authMode || 'login');
+  });
+
+  // Replace saveDB dynamically; existing game functions resolve the global name at call time.
+  window.saveDB = function () {
+    if (baseSaveDB) baseSaveDB();
+    schedulePush();
+  };
+
+  // In cloud mode, never treat an old local account as authenticated while the cloud session is loading.
+  currentUser = null;
+  if (db && db.current) { db.current = null; if (baseSaveDB) baseSaveDB(); }
+  window.renderAll();
+
+  // Cloud session wins on reload.
+  client.auth.getSession().then(function (res) {
+    if (res.error) throw res.error;
+    if (res.data && res.data.session && res.data.session.user) return pullState(res.data.session.user);
+  }).catch(function (err) {
+    console.warn('CYBERDROP session restore:', err);
+    window.CYBERDROP_CLOUD.status = 'auth-error';
+  });
+
+  client.auth.onAuthStateChange(function (event, session) {
+    if (event === 'SIGNED_OUT') {
+      window.CYBERDROP_CLOUD.userId = null;
+      currentUser = null;
+      if (baseSaveDB) baseSaveDB();
+      window.renderAll();
+    }
+  });
+
+  // Cloud mode logout.
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('#logoutBtn') : null;
+    if (btn && window.CYBERDROP_CLOUD.enabled) {
+      e.preventDefault();
+      client.auth.signOut().then(function () { window.toast('Вы вышли из аккаунта','ok'); }).catch(showCloudError);
+    }
+  }, true);
+})();
+</script>
+
+</body>
+</html>
