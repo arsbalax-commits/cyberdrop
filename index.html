@@ -253,6 +253,31 @@ input::placeholder{color:#5b6478}
 .socket-note.bad{color:#ff7b7b}
 @media(max-width:600px){.socket-cpu{padding:12px;gap:10px}.socket-cpu-visual{width:72px;height:72px;flex-basis:72px}.socket-model{font-size:14px}.socket-option{font-size:12px;min-height:42px;padding:8px}}
 
+.pro-game-card{transition:border-color .2s,opacity .2s;}
+.pro-game-card.locked{border-color:rgba(136,146,168,.5);}
+.pro-gate{position:relative;z-index:1;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:rgba(136,146,168,.08);color:var(--muted);font-size:11.5px;line-height:1.45;}
+.pro-gate.open{border-color:rgba(198,255,61,.28);background:rgba(198,255,61,.06);color:var(--lime);}
+.pro-game-area,.raid-area{display:none;flex-direction:column;gap:10px;position:relative;z-index:1;}
+.pro-game-area.on,.raid-area.on{display:flex;}
+.pro-hud{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);}
+.pro-hud b{color:var(--txt);}
+.pro-game-hint{font-size:11.5px;line-height:1.45;color:var(--muted);}
+.pro-game-feedback{min-height:30px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid var(--line);border-radius:10px;padding:7px 9px;color:var(--muted);font-size:11.5px;line-height:1.4;}
+.pro-game-feedback.good{color:var(--lime);border-color:rgba(198,255,61,.3);}
+.pro-game-feedback.bad{color:#ff7b7b;border-color:rgba(255,90,90,.32);}
+.boost-track{height:37px;position:relative;border-radius:10px;background:linear-gradient(90deg,rgba(255,90,90,.15),rgba(255,209,102,.18),rgba(198,255,61,.12));border:1px solid var(--line);overflow:hidden;}
+.boost-track i{position:absolute;top:0;bottom:0;background:rgba(198,255,61,.23);border-left:1px solid rgba(198,255,61,.65);border-right:1px solid rgba(198,255,61,.65);box-shadow:0 0 14px rgba(198,255,61,.12);}
+.boost-track b{position:absolute;top:-2px;bottom:-2px;width:3px;border-radius:2px;background:var(--acc);box-shadow:0 0 12px rgba(0,229,255,.8);transform:translateX(-50%);}
+.raid-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+.raid-node{aspect-ratio:1;min-height:39px;border:1px solid var(--line);border-radius:10px;background:radial-gradient(circle at 50% 35%,rgba(0,229,255,.09),transparent 65%),#0a0c13;color:#8892a8;font:800 12px ui-monospace,monospace;transition:background .12s,border-color .12s,transform .12s;}
+.raid-node:disabled{cursor:default;opacity:.75;}
+.raid-node:not(:disabled):hover{transform:translateY(-2px);border-color:var(--acc);color:var(--acc);}
+.raid-node.route-show{background:rgba(0,229,255,.16);border-color:var(--acc);color:var(--acc);box-shadow:inset 0 0 14px rgba(0,229,255,.1);}
+.raid-node.route-selected{background:rgba(198,255,61,.12);border-color:var(--lime);color:var(--lime);}
+.raid-node.wrong{background:rgba(255,90,90,.14);border-color:#ff7676;color:#ff7676;}
+@media(max-width:600px){.pro-hud{font-size:10.5px}.raid-grid{gap:5px}.raid-node{min-height:34px;border-radius:8px}.pro-game-feedback{font-size:10.5px}}
+
+
 #toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:500;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
 .toast{padding:12px 20px;border-radius:14px;font-size:14px;font-weight:700;background:rgba(20,24,35,.96);border:1px solid var(--line);backdrop-filter:blur(12px);box-shadow:0 16px 40px -12px rgba(0,0,0,.85);opacity:0;transform:translateY(14px);transition:.28s;text-align:center}
 .toast.show{opacity:1;transform:none}
@@ -627,7 +652,7 @@ button,.btn,input{touch-action:manipulation}
   <section id="tab-earn">
     <div class="page-head">
       <h1>Заработай <em>кредиты</em></h1>
-      <p>Пять способов: реклама, приглашение друзей и три мини-игры — «Кибер-кликер», «Взлом протокола» и «Охота за сокетом».</p>
+      <p>Семь способов: реклама, приглашение друзей и пять мини-игр. Две продвинутые игры открываются по мере роста дохода совместимой сборки.</p>
     </div>
     <div class="earn-grid">
       <div class="earn-card" style="--ec:rgba(0,229,255,.55)">
@@ -685,6 +710,34 @@ button,.btn,input{touch-action:manipulation}
           <div class="socket-note" id="socketNote">Нажми «Начать охоту».</div>
         </div>
         <button class="btn lime" id="socketBtn">Начать охоту</button>
+      </div>
+
+      <div class="earn-card pro-game-card locked" id="overclockCard" style="--ec:rgba(198,255,61,.55)">
+        <div class="earn-ico">⚡</div>
+        <h3>Разгон ядра</h3>
+        <p>Поймай частоту в зелёной зоне, не сорви стабильность и пройди 6 раундов. Чем точнее остановка — тем выше награда, <b style="color:var(--lime)">до 1 000 кр.</b></p>
+        <div class="pro-gate" id="overclockGate" role="status">🔒 Нужна совместимая сборка с доходом от 50 кр./мин.</div>
+        <div class="pro-game-area" id="overclockArea">
+          <div class="pro-hud"><span>Раунд <b id="overclockRound">0/6</b></span><span>Таймер <b id="overclockTime">4</b> с</span><span>✦ <b id="overclockScore">0</b> кр.</span></div>
+          <div class="pro-game-hint" id="overclockHint">Останови маркер как можно ближе к центру зелёной зоны.</div>
+          <div class="boost-track" id="overclockTrack"><i id="overclockZone"></i><b id="overclockNeedle"></b></div>
+          <div class="pro-game-feedback" id="overclockFeedback">Готов к разгону.</div>
+        </div>
+        <button class="btn lime" id="overclockBtn" type="button" disabled>Нужна сборка 50+</button>
+      </div>
+
+      <div class="earn-card pro-game-card locked" id="raidCard" style="--ec:rgba(177,74,255,.6)">
+        <div class="earn-ico">🛰️</div>
+        <h3>Киберрейд: маршрут через firewall</h3>
+        <p>Запомни сетевой маршрут и повтори переходы по соседним узлам. Шесть всё более длинных маршрутов, таймер и бонус за скорость — <b style="color:var(--lime)">до 2 050 кр.</b></p>
+        <div class="pro-gate" id="raidGate" role="status">🔒 Нужна совместимая сборка с доходом от 100 кр./мин.</div>
+        <div class="raid-area" id="raidArea">
+          <div class="pro-hud"><span>Этап <b id="raidRound">0/6</b></span><span>Время <b id="raidTime">50</b> с</span><span>✦ <b id="raidScore">0</b> кр.</span></div>
+          <div class="pro-game-hint" id="raidHint">Сейчас появится маршрут. Повтори его по узлам сетки.</div>
+          <div class="raid-grid" id="raidGrid" aria-label="Сетка сетевого маршрута"></div>
+          <div class="pro-game-feedback" id="raidFeedback">Ожидание соединения…</div>
+        </div>
+        <button class="btn primary" id="raidBtn" type="button" disabled>Нужна сборка 100+</button>
       </div>
       
     </div>
@@ -1571,7 +1624,7 @@ async function tickIncome(){
 setInterval(tickIncome,5000);
 
 /* ==================== EARN ==================== */
-function renderEarn(){updateAdButton()}
+function renderEarn(){updateAdButton();if(typeof renderProGameGates==='function')renderProGameGates()}
 function renderProfile(){const u=user();const itemCount=u?Object.values(u.inventory||{}).reduce((a,b)=>a+(Number(b)||0),0):0;const income=u?buildIncome():0;const filled=u?SLOTS.filter(([slot])=>u.build&&u.build[slot]).length:0;$('#profileAvatar').textContent=u&&currentUser?(currentUser[0]||'?').toUpperCase():'?';$('#profileName').textContent=u?currentUser:'Гость';$('#profileEmail').textContent=u?(u.email||'CYBERDROP аккаунт'):'Войдите, чтобы открыть профиль';$('#profileCredits').textContent=u?fmt(u.credits):'0';$('#profileItems').textContent=itemCount;$('#profileRefCount').textContent=u?(u.refCount||0):0;$('#profileRefEarned').textContent=u?fmt(u.refEarned||0):0;$('#profileBuildIncome').textContent=u?fmt(income)+' кр./мин':'0 кр./мин';$('#profileBuildParts').textContent=u?`${filled}/${SLOTS.length}`:'0/8';$('#refCode').textContent=u?(u.refCode||'——————'):'——————';$('#refCount').textContent=u?(u.refCount||0):0;$('#refEarned').textContent=u?fmt(u.refEarned||0):0;$('#refInputWrap').style.display=u&&!u.usedRef?'flex':'none'}
 function updateAdButton(){const b=$('#adBtn'),u=user();if(!u){b.disabled=false;b.textContent='Смотреть рекламу';return}const left=Math.max(0,45000-(Date.now()-u.lastAd));if(left){b.disabled=true;b.textContent=`Доступно через ${Math.ceil(left/1000)} с`}else{b.disabled=false;b.textContent='Смотреть рекламу'}}
 setInterval(updateAdButton,1000);
@@ -1778,6 +1831,206 @@ $('#authForm').addEventListener('submit',async e=>{
 function renderBadges(){const u=user(),cnt=u?Object.values(u.inventory).reduce((a,b)=>a+b,0):0;$('#invBadge').textContent=cnt;$('#invBadge').style.display=cnt?'inline-block':'none';const issues=u?buildIssues().length:0;$('#buildBadge').style.display=issues?'inline-block':'none'}
 function renderAll(){renderHeader();renderCases();renderInventory();renderBuild();renderEarn();renderProfile();renderBadges();renderHackGrid()}
 try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.body.setAttribute('data-app-error','1');}
+</script>
+
+<script>
+/* ==================== ADVANCED PRO MINI-GAMES ==================== */
+let overclockState=null,overclockTickTimer=null,overclockAdvanceTimer=null;
+let raidState=null,raidTimer=null,raidRevealTimer=null,raidAdvanceTimer=null;
+
+function proGameAccess(minIncome){return !!user()&&buildIncome()>=minIncome}
+function renderProGameGates(){
+  const u=user(),income=u?buildIncome():0;
+  const overOpen=!!u&&income>=50,raidOpen=!!u&&income>=100;
+  const overCard=$('#overclockCard'),overGate=$('#overclockGate'),overBtn=$('#overclockBtn');
+  const raidCard=$('#raidCard'),raidGate=$('#raidGate'),raidBtn=$('#raidBtn');
+  if(overCard&&overGate&&overBtn){
+    const busy=!!overclockState,allow=overOpen||busy;
+    overCard.classList.toggle('locked',!overOpen&&!busy);
+    overGate.classList.toggle('open',overOpen||busy);
+    if(busy){overGate.textContent=`⚡ Разгон активен · доход сборки ${fmt(income)} кр./мин`;}
+    else if(!u){overGate.textContent='🔒 Войдите в аккаунт и соберите совместимый ПК.';}
+    else if(overOpen){overGate.textContent=`✓ Доступ открыт · доход сборки ${fmt(income)} кр./мин (требуется 50+)`;}
+    else{overGate.textContent=`🔒 Нужна полная совместимая сборка с доходом от 50 кр./мин. Сейчас: ${fmt(income)} кр./мин.`;}
+    overBtn.disabled=!allow||!!(overclockState&&(overclockState.resolving||overclockState.finished));
+    if(overclockState){overBtn.textContent=overclockState.finished?'Начисление награды…':overclockState.resolving?'Стабилизация…':'Зафиксировать частоту';}
+    else{overBtn.textContent=overOpen?(overBtn.dataset.completed==='1'?'Новая попытка':'Начать разгон'):(u?'Нужна сборка 50+':'Войдите в аккаунт');}
+  }
+  if(raidCard&&raidGate&&raidBtn){
+    const busy=!!raidState,allow=raidOpen||busy;
+    raidCard.classList.toggle('locked',!raidOpen&&!busy);
+    raidGate.classList.toggle('open',raidOpen||busy);
+    if(busy){raidGate.textContent=`🛰️ Рейд активен · доход сборки ${fmt(income)} кр./мин`;}
+    else if(!u){raidGate.textContent='🔒 Войдите в аккаунт и соберите совместимый ПК.';}
+    else if(raidOpen){raidGate.textContent=`✓ Доступ открыт · доход сборки ${fmt(income)} кр./мин (требуется 100+)`;}
+    else{raidGate.textContent=`🔒 Нужна полная совместимая сборка с доходом от 100 кр./мин. Сейчас: ${fmt(income)} кр./мин.`;}
+    raidBtn.disabled=!allow||busy;
+    if(busy){raidBtn.textContent=raidState.finished?'Начисление награды…':'Рейд выполняется…';}
+    else{raidBtn.textContent=raidOpen?(raidBtn.dataset.completed==='1'?'Новый рейд':'Начать киберрейд'):(u?'Нужна сборка 100+':'Войдите в аккаунт');}
+  }
+}
+
+/* Game 4: overclock timing challenge. */
+function overclockSetRound(){
+  const s=overclockState;if(!s)return;
+  s.zoneWidth=18+Math.random()*8;s.zoneStart=6+Math.random()*(88-s.zoneWidth);s.roundStartedAt=performance.now();s.position=0;s.resolving=false;
+  $('#overclockRound').textContent=`${s.round}/${s.total}`;$('#overclockTime').textContent='4';
+  $('#overclockZone').style.left=s.zoneStart+'%';$('#overclockZone').style.width=s.zoneWidth+'%';$('#overclockNeedle').style.left='0%';
+  $('#overclockHint').textContent='Останови маркер как можно ближе к центру зелёной зоны.';
+  $('#overclockFeedback').className='pro-game-feedback';$('#overclockFeedback').textContent='Частота нестабильна — зафиксируй её вовремя.';
+  $('#overclockScore').textContent=s.score;
+}
+function overclockStart(){
+  if(!requireAuth())return;
+  if(overclockState){if(!overclockState.resolving&&!overclockState.finished)overclockResolve(false);return;}
+  if(!proGameAccess(50)){renderProGameGates();toast('Для «Разгона ядра» нужен доход сборки от 50 кр./мин.','err');return;}
+  $('#overclockArea').classList.add('on');$('#overclockBtn').dataset.completed='0';
+  overclockState={round:1,total:6,score:0,streak:0,position:0,zoneStart:0,zoneWidth:20,roundStartedAt:performance.now(),resolving:false,finished:false};
+  overclockSetRound();renderProGameGates();
+  if(overclockTickTimer)clearInterval(overclockTickTimer);
+  overclockTickTimer=setInterval(overclockTick,30);
+}
+function overclockTick(){
+  const s=overclockState;if(!s||s.finished||s.resolving)return;
+  const elapsed=performance.now()-s.roundStartedAt,cycle=(elapsed%1700)/1700;
+  s.position=(cycle<=.5?cycle*200:(1-cycle)*200);
+  $('#overclockNeedle').style.left=s.position+'%';
+  const left=Math.max(0,Math.ceil((4000-elapsed)/1000));$('#overclockTime').textContent=left;
+  if(elapsed>=4000)overclockResolve(true);
+}
+function overclockResolve(timeout){
+  const s=overclockState;if(!s||s.finished||s.resolving)return;
+  s.resolving=true;let points=10,label='Маркер ушёл в красную зону: +10 кр.';
+  if(!timeout){
+    const center=s.zoneStart+s.zoneWidth/2,ratio=Math.abs(s.position-center)/(s.zoneWidth/2);
+    if(ratio<=.24){s.streak++;points=150+Math.min(25,(s.streak-1)*5);label=`ИДЕАЛЬНО! Точная частота: +${points} кр.`;}
+    else if(ratio<=1){s.streak++;points=110+Math.min(20,(s.streak-1)*4);label=`Стабильный разгон: +${points} кр.`;}
+    else if(ratio<=1.65){s.streak=0;points=65;label='Частота почти стабильна: +65 кр.';}
+    else if(ratio<=2.4){s.streak=0;points=30;label='Нестабильная частота: +30 кр.';}
+    else{s.streak=0;points=10;label='Переразгон! Только +10 кр.';}
+  }else{s.streak=0;}
+  s.score+=points;$('#overclockScore').textContent=s.score;$('#overclockFeedback').className='pro-game-feedback '+(points>=100?'good':points<=30?'bad':'');$('#overclockFeedback').textContent=timeout?'Тайм-аут стабилизации: +10 кр.':label;
+  clearTimeout(overclockAdvanceTimer);
+  overclockAdvanceTimer=setTimeout(()=>{
+    if(!overclockState||overclockState!==s||s.finished)return;
+    if(s.round>=s.total){overclockFinish();return;}
+    s.round++;overclockSetRound();renderProGameGates();
+  },550);
+  renderProGameGates();
+}
+async function overclockFinish(){
+  const s=overclockState;if(!s||s.finished)return;s.finished=true;
+  if(overclockTickTimer){clearInterval(overclockTickTimer);overclockTickTimer=null;}
+  clearTimeout(overclockAdvanceTimer);
+  const reward=s.score;
+  $('#overclockFeedback').className='pro-game-feedback good';$('#overclockFeedback').textContent=`Разгон завершён. Итоговая награда: ${fmt(reward)} кр.`;
+  renderProGameGates();
+  const ok=await addCredits(reward);
+  if(ok){$('#overclockFeedback').textContent=`Разгон завершён — начислено ${fmt(reward)} кр.`;toast(`Разгон ядра: +${fmt(reward)} кр.`,'ok');}
+  else{$('#overclockFeedback').className='pro-game-feedback bad';$('#overclockFeedback').textContent='Не удалось подтвердить награду. Попробуй позже.';}
+  overclockState=null;$('#overclockBtn').dataset.completed='1';renderProGameGates();
+}
+$('#overclockBtn').addEventListener('click',overclockStart);
+
+/* Game 5: route-memory cyber raid on a 4x4 firewall grid. */
+function makeRaidPath(length){
+  const shuffled=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  for(let attempt=0;attempt<100;attempt++){
+    const path=[Math.floor(Math.random()*16)];
+    while(path.length<length){
+      const last=path[path.length-1],r=Math.floor(last/4),c=last%4;
+      const candidates=[];if(r>0)candidates.push(last-4);if(r<3)candidates.push(last+4);if(c>0)candidates.push(last-1);if(c<3)candidates.push(last+1);
+      const options=shuffled(candidates.filter(n=>!path.includes(n)));
+      if(!options.length)break;path.push(options[0]);
+    }
+    if(path.length===length)return path;
+  }
+  const fallback=[0,1,2,3,7,6,5,4,8,9,10,11,15,14,13,12];
+  return fallback.slice(0,length);
+}
+function renderRaidGrid(){
+  const s=raidState,grid=$('#raidGrid');if(!grid)return;
+  grid.innerHTML=Array.from({length:16},(_,i)=>{
+    const p=s&&s.path?s.path.indexOf(i):-1,show=!!(s&&s.revealing&&p>=0&&p<s.revealCount),selected=!!(s&&s.path&&p>=0&&p<s.pathStep&&!s.revealing);
+    const classes=['raid-node'];if(show)classes.push('route-show');if(selected)classes.push('route-selected');
+    let label=show?String(p+1):selected?'✓':String(i+1).padStart(2,'0');
+    return `<button type="button" class="${classes.join(' ')}" data-raid-node="${i}" ${!s||!s.inputEnabled?'disabled':''}>${label}</button>`;
+  }).join('');
+  grid.querySelectorAll('[data-raid-node]').forEach(b=>b.addEventListener('click',()=>raidNodeClick(Number(b.dataset.raidNode))));
+}
+function raidBeginRound(){
+  const s=raidState;if(!s||s.finished)return;
+  s.path=makeRaidPath(s.round+2);s.pathStep=0;s.revealing=true;s.revealCount=0;s.inputEnabled=false;
+  $('#raidRound').textContent=`${s.round}/${s.total}`;$('#raidScore').textContent=s.score;
+  $('#raidHint').textContent=`Маршрут из ${s.path.length} узлов. Запомни порядок переходов.`;
+  $('#raidFeedback').className='pro-game-feedback';$('#raidFeedback').textContent='Сканирование маршрута…';
+  renderRaidGrid();
+  clearTimeout(raidRevealTimer);
+  let step=0;
+  const reveal=()=>{
+    if(!raidState||raidState!==s||s.finished)return;
+    if(step<s.path.length){s.revealCount=step+1;renderRaidGrid();step++;raidRevealTimer=setTimeout(reveal,260);}
+    else{raidRevealTimer=setTimeout(()=>{
+      if(!raidState||raidState!==s||s.finished)return;
+      s.revealing=false;s.revealCount=0;s.inputEnabled=true;renderRaidGrid();
+      $('#raidFeedback').textContent='Маршрут скрыт. Повтори переходы в том же порядке.';
+    },550);}
+  };
+  raidRevealTimer=setTimeout(reveal,180);
+}
+function raidStart(){
+  if(!requireAuth())return;
+  if(raidState)return;
+  if(!proGameAccess(100)){renderProGameGates();toast('Для «Киберрейда» нужен доход сборки от 100 кр./мин.','err');return;}
+  $('#raidArea').classList.add('on');$('#raidBtn').dataset.completed='0';$('#raidTime').textContent='50';$('#raidRound').textContent='0/6';$('#raidScore').textContent='0';
+  raidState={round:1,total:6,score:0,deadline:Date.now()+50000,path:[],pathStep:0,inputEnabled:false,revealing:false,revealCount:0,mistakes:0,finished:false,completed:0};
+  renderProGameGates();raidBeginRound();renderRaidGrid();
+  if(raidTimer)clearInterval(raidTimer);
+  raidTimer=setInterval(()=>{
+    const s=raidState;if(!s||s.finished)return;
+    const left=Math.max(0,Math.ceil((s.deadline-Date.now())/1000));$('#raidTime').textContent=left;
+    if(left<=0)raidFinish(false);
+  },250);
+}
+function raidNodeClick(index){
+  const s=raidState;if(!s||s.finished||!s.inputEnabled||s.revealing)return;
+  if(index!==s.path[s.pathStep]){
+    s.mistakes++;s.score=Math.max(0,s.score-35);s.pathStep=0;s.inputEnabled=false;
+    $('#raidScore').textContent=s.score;$('#raidFeedback').className='pro-game-feedback bad';$('#raidFeedback').textContent='Маршрут сбит: −35 кр. Попробуй этот этап ещё раз.';
+    renderRaidGrid();const b=$(`[data-raid-node="${index}"]`);if(b)b.classList.add('wrong');
+    raidAdvanceTimer=setTimeout(()=>{if(!raidState||raidState!==s||s.finished)return;s.inputEnabled=true;renderRaidGrid();$('#raidFeedback').textContent='Начни маршрут сначала и повтори все узлы.';},350);
+    return;
+  }
+  s.pathStep++;renderRaidGrid();
+  if(s.pathStep>=s.path.length){
+    const stageReward=120+s.path.length*25+(s.mistakes===0?50:0);s.score+=stageReward;s.completed++;
+    $('#raidScore').textContent=s.score;$('#raidFeedback').className='pro-game-feedback good';$('#raidFeedback').textContent=`Маршрут принят! +${stageReward} кр.`;
+    s.inputEnabled=false;
+    if(s.round>=s.total){raidFinish(true);return;}
+    clearTimeout(raidAdvanceTimer);raidAdvanceTimer=setTimeout(()=>{if(!raidState||raidState!==s||s.finished)return;s.round++;s.mistakes=0;raidBeginRound();},500);
+  }else{
+    $('#raidFeedback').className='pro-game-feedback good';$('#raidFeedback').textContent=`Переход ${s.pathStep}/${s.path.length} принят.`;
+  }
+}
+async function raidFinish(completed){
+  const s=raidState;if(!s||s.finished)return;s.finished=true;s.inputEnabled=false;
+  if(raidTimer){clearInterval(raidTimer);raidTimer=null;}clearTimeout(raidRevealTimer);clearTimeout(raidAdvanceTimer);
+  const timeBonus=completed?Math.min(200,Math.max(0,Math.floor((s.deadline-Date.now())/1000))*4):0;
+  const reward=Math.max(0,s.score+timeBonus);
+  renderRaidGrid();$('#raidScore').textContent=reward;
+  $('#raidFeedback').className='pro-game-feedback '+(reward?'good':'bad');
+  $('#raidFeedback').textContent=completed?`Дата-центр защищён! Бонус за скорость: +${timeBonus} кр.`:`Рейд завершён. Этапов пройдено: ${s.completed}/${s.total}.`;
+  renderProGameGates();
+  let ok=true;if(reward>0)ok=await addCredits(reward);
+  if(ok&&reward>0){$('#raidFeedback').textContent=`Киберрейд завершён: начислено ${fmt(reward)} кр.`;toast(`Киберрейд: +${fmt(reward)} кр.`,'ok');}
+  else if(!ok){$('#raidFeedback').className='pro-game-feedback bad';$('#raidFeedback').textContent='Не удалось подтвердить награду. Попробуй позже.';}
+  else{$('#raidFeedback').textContent='Ни одного этапа не завершено — награда не начислена.';}
+  raidState=null;renderRaidGrid();$('#raidBtn').dataset.completed='1';renderProGameGates();
+}
+$('#raidBtn').addEventListener('click',raidStart);
+renderRaidGrid();
+renderProGameGates();
+setInterval(renderProGameGates,800);
 </script>
 
 <script>
