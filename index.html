@@ -160,6 +160,8 @@ input::placeholder{color:#5b6478}
 .roulette::before{left:0;background:linear-gradient(90deg,#0a0c12,transparent)}
 .roulette::after{right:0;background:linear-gradient(270deg,#0a0c12,transparent)}
 .roulette-strip{display:flex;gap:8px;align-items:center;height:100%;will-change:transform}
+.roulette-strip{transform-origin:left center;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.rou-item{box-sizing:border-box;flex:0 0 142px;width:142px}
 .rou-item{flex:0 0 142px;height:146px;border-radius:14px;background:linear-gradient(180deg,#1a2030,#111520);border:1px solid rgba(255,255,255,.07);border-bottom:3px solid var(--rc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;text-align:center;transition:.3s}
 .rou-item .item-visual{width:70px;height:70px}
 .rou-item .ri-nm{font-size:9.5px;font-weight:700;color:#b9c2d6;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -286,7 +288,7 @@ nav{min-width:0}
   .modal-box{max-height:calc(100vh - 20px);padding:20px 16px}
   .modal-box.wide{max-width:100%}
   .roulette{height:145px}
-  .rou-item{flex-basis:108px;height:120px}
+  .rou-item{flex:0 0 108px;width:108px;height:120px}
   .hack-grid{gap:6px}
   .rou-item .item-visual{width:54px;height:54px;flex-basis:54px}
 }
@@ -992,27 +994,99 @@ function weightedItem(pool){
  for(const it of arr){r-=RARITIES[it.rar].weight;if(r<=0)return it}return arr[arr.length-1]
 }
 function rouHTML(it){return `<div class="rou-item" style="--rc:${RARITIES[it.rar].color}"><div class="item-visual">${itemArt(it)}</div><div class="ri-nm">${esc(it.name)}</div></div>`}
+function getRouletteGeometry(strip){
+ const box=document.querySelector('.roulette'),first=strip.querySelector('.rou-item');
+ if(!box||!first)return null;
+ const boxRect=box.getBoundingClientRect(),firstRect=first.getBoundingClientRect(),cs=getComputedStyle(strip);
+ const gap=parseFloat(cs.columnGap||cs.gap)||0,pad=parseFloat(cs.paddingLeft)||0;
+ const card=firstRect.width||142;
+ const target=pad+24*(card+gap)+card/2-boxRect.width/2;
+ return {box,boxRect,card,gap,pad,target};
+}
+function getRouletteWinner(strip){
+ const box=document.querySelector('.roulette');
+ const nodes=[...strip.querySelectorAll('.rou-item')];
+ if(!box||!nodes.length)return null;
+ const br=box.getBoundingClientRect();
+ const center=br.left+br.width/2;
+ let best=null,bestDist=Infinity;
+ nodes.forEach((node,index)=>{
+   const r=node.getBoundingClientRect();
+   const c=r.left+r.width/2;
+   const d=Math.abs(c-center);
+   if(d<bestDist){bestDist=d;best={node,index,dist:d};}
+ });
+ return best;
+}
+function getTransformX(el){
+ const t=getComputedStyle(el).transform;
+ if(!t||t==='none')return 0;
+ const m3=t.match(/^matrix3d\((.+)\)$/);
+ if(m3){const v=m3[1].split(',');return parseFloat(v[12])||0}
+ const m2=t.match(/^matrix\((.+)\)$/);
+ if(m2){const v=m2[1].split(',');return parseFloat(v[4])||0}
+ return 0;
+}
+function settleRouletteWinner(strip){
+ const pick=getRouletteWinner(strip),box=document.querySelector('.roulette');
+ if(!pick||!box)return null;
+ const br=box.getBoundingClientRect(),nr=pick.node.getBoundingClientRect();
+ const delta=(nr.left+nr.width/2)-(br.left+br.width/2);
+ if(Math.abs(delta)>0.05){
+   const x=getTransformX(strip);
+   strip.style.transition='none';
+   strip.style.transform=`translate3d(${x-delta}px,0,0)`;
+ }
+ return pick;
+}
+function snapRouletteWinner(strip,index,target){
+ const node=strip.querySelectorAll('.rou-item')[index],box=document.querySelector('.roulette');
+ if(!node||!box)return;
+ const br=box.getBoundingClientRect(),nr=node.getBoundingClientRect();
+ const delta=(nr.left+nr.width/2)-(br.left+br.width/2);
+ if(Math.abs(delta)>0.1){
+   const x=getTransformX(strip);
+   strip.style.transition='none';
+   strip.style.transform=`translate3d(${x-delta}px,0,0)`;
+ }
+}
 function startCase(id){
  closeModal('casePreviewModal');
  if(!requireAuth())return;if(spinning)return;const c=CASES.find(x=>x.id===id),u=user();if(!c)return;if(u.credits<c.price){toast('Недостаточно кредитов','err');return}
  addCredits(-c.price);activeCase=c;spinning=true;caseSfx();
  if(caseTimer)clearInterval(caseTimer);
  $('#caseTitle').textContent=c.name+' кейс';$('#caseSub').textContent='Система анализирует содержимое…';$('#result').innerHTML='';$('#caseLiveText').textContent='СКАНИРОВАНИЕ ПРИЗОВ';$('#caseLiveTimer').textContent='6.4s';$('#caseProgressBar').style.width='0%';openModal('caseModal');
- const win=weightedItem(c.pool),items=[];for(let i=0;i<30;i++)items.push(weightedItem(c.pool));items[24]=win;
- const strip=$('#strip');strip.style.transition='none';strip.style.transform='translateX(0)';strip.innerHTML=items.map(rouHTML).join('');
- const totalMs=6400,started=performance.now();
+ const items=[];for(let i=0;i<30;i++)items.push(weightedItem(c.pool));
+ const strip=$('#strip');strip.style.transition='none';strip.style.transform='translate3d(0,0,0)';strip.innerHTML=items.map(rouHTML).join('');
+ const totalMs=6400,transitionMs=6050,started=performance.now();let finalized=false,target=0;
+ const finalize=()=>{
+   if(finalized)return;
+   settleRouletteWinner(strip);
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     if(finalized)return;
+     finalized=true;
+     if(caseTimer){clearInterval(caseTimer);caseTimer=null}
+     const actual=getRouletteWinner(strip)||{index:24,node:null,dist:Infinity};
+     const win=items[actual.index]||items[24];
+     const nodes=$$('#strip .rou-item');
+     nodes.forEach((n,i)=>n.classList.toggle('win',i===actual.index));
+     addItem(win.id);$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
+     $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
+     $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
+     $('#sellWinBtn').onclick=()=>{if(takeItem(win.id)){addCredits(win.price);closeModal('caseModal');renderInventory();toast('Предмет продан','ok')}};
+     spinning=false;renderBadges();
+   }));
+ };
  caseTimer=setInterval(()=>{const elapsed=performance.now()-started,p=Math.min(100,elapsed/totalMs*100),left=Math.max(0,(totalMs-elapsed)/1000);$('#caseProgressBar').style.width=p.toFixed(1)+'%';$('#caseLiveTimer').textContent=left.toFixed(1)+'s';if(left<4.7)$('#caseLiveText').textContent='СИНХРОНИЗАЦИЯ…';if(left<2.2)$('#caseLiveText').textContent='ФИКСАЦИЯ РЕЗУЛЬТАТА'},100);
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const rw=$('.roulette').clientWidth;const first=strip.querySelector('.rou-item');const cs=getComputedStyle(strip);const card=first?first.getBoundingClientRect().width:142;const gap=parseFloat(cs.columnGap||cs.gap)||0;const pad=parseFloat(cs.paddingLeft)||0;const target=pad+24*(card+gap)+card/2-rw/2;strip.style.transition='transform 6.05s cubic-bezier(.10,.72,.08,1)';strip.style.transform=`translate3d(${-target}px,0,0)`;}));
- setTimeout(()=>{
-   if(caseTimer){clearInterval(caseTimer);caseTimer=null}
-   addItem(win.id);const nodes=$$('#strip .rou-item');if(nodes[24])nodes[24].classList.add('win');$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
-   $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
-   $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
-   $('#sellWinBtn').onclick=()=>{if(takeItem(win.id)){addCredits(win.price);closeModal('caseModal');renderInventory();toast('Предмет продан','ok')}};
-   spinning=false;renderBadges();
- },totalMs+80);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   const g=getRouletteGeometry(strip);if(!g)return;
+   target=g.target;
+   strip.style.transition=`transform ${transitionMs}ms cubic-bezier(.10,.72,.08,1)`;
+   strip.style.transform=`translate3d(${-target}px,0,0)`;
+   setTimeout(()=>{requestAnimationFrame(finalize)},transitionMs+40);
+ }));
+ setTimeout(finalize,totalMs+160);
 }
-
 /* ==================== INVENTORY ==================== */
 function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inventory).filter(([,n])=>n>0).map(([id,n])=>[ITEM_MAP[id],n]).filter(([it])=>it)}
 function renderInventory(){
