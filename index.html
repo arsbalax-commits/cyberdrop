@@ -887,7 +887,7 @@ const LEGACY_MAP={
 };
 function normalizeUser(u){if(!u||!u.inventory)return u;const inv={};for(const [id,n] of Object.entries(u.inventory)){const nid=LEGACY_MAP[id]||id;if(ITEM_MAP[nid])inv[nid]=(inv[nid]||0)+n}u.inventory=inv;for(const slot of ['cpu','mb','ram','gpu','ssd','psu','cool']){if(u.build && u.build[slot]){const nid=LEGACY_MAP[u.build[slot]]||u.build[slot];if(ITEM_MAP[nid])u.build[slot]=nid;else delete u.build[slot]}}return u}
 function loadDB(){try{const d=JSON.parse(SAFE_STORE.get(DBKEY)||'');if(d&&d.users){for(const k of Object.keys(d.users))d.users[k]=normalizeUser(d.users[k]);return d}}catch{}return{users:{},current:null}}
-function saveDB(){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db))}
+function saveDB(){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){}}
 function user(){return currentUser?db.users[currentUser]:null}
 function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now()}}
 function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
@@ -1193,7 +1193,9 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   var syncing = false;
   var suppressPush = false;
   var pushTimer = null;
-  var baseSaveDB = window.saveDB;
+  var dirty = false;
+  var lastServerUpdatedAt = null;
+  var pollingTimer = null;
 
   window.CYBERDROP_CLOUD = {
     enabled: ready,
@@ -1222,11 +1224,13 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   function cloudUser() { return window.CYBERDROP_CLOUD.userId; }
 
   function schedulePush() {
-    if (suppressPush || !cloudUser() || pushTimer) return;
+    if (suppressPush || !cloudUser()) return;
+    dirty = true;
+    if (pushTimer) return;
     pushTimer = setTimeout(function () {
       pushTimer = null;
       pushState().catch(function (err) { console.warn('CYBERDROP cloud sync:', err); });
-    }, 250);
+    }, 350);
   }
 
   async function pushState() {
@@ -1247,8 +1251,9 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
         last_ad: u.lastAd ? new Date(u.lastAd).toISOString() : null,
         last_income: u.lastIncome ? new Date(u.lastIncome).toISOString() : new Date().toISOString()
       };
-      var pr = await client.from('profiles').upsert(profile, { onConflict: 'id' });
+      var pr = await client.from('profiles').upsert(profile, { onConflict: 'id' }).select('updated_at').single();
       if (pr.error) throw pr.error;
+      lastServerUpdatedAt = pr.data && pr.data.updated_at ? pr.data.updated_at : lastServerUpdatedAt;
 
       var ir = await client.from('inventory').delete().eq('user_id', uid);
       if (ir.error) throw ir.error;
@@ -1266,6 +1271,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
         gpu: b.gpu || null, ssd: b.ssd || null, psu: b.psu || null, cool: b.cool || null
       }, { onConflict: 'user_id' });
       if (br.error) throw br.error;
+      dirty = false;
       window.CYBERDROP_CLOUD.status = 'synced';
     } finally {
       syncing = false;
@@ -1310,7 +1316,10 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       db.users = {};
       db.users[uname] = u;
       currentUser = uname;
-      if (baseSaveDB) baseSaveDB();
+      db.current = currentUser;
+      SAFE_STORE.set(DBKEY, JSON.stringify(db));
+      lastServerUpdatedAt = cloudProfile.updated_at || lastServerUpdatedAt;
+      dirty = false;
       window.renderAll();
       window.CYBERDROP_CLOUD.status = 'synced';
     } finally {
@@ -1392,15 +1401,12 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     setAuthMode(authMode || 'login');
   });
 
-  // Replace saveDB dynamically; existing game functions resolve the global name at call time.
-  window.saveDB = function () {
-    if (baseSaveDB) baseSaveDB();
-    schedulePush();
-  };
+  // Core saveDB calls schedulePush() directly; this hook is exposed for all game mutations.
+  window.CYBERDROP_CLOUD.schedulePush = schedulePush;
 
   // In cloud mode, never treat an old local account as authenticated while the cloud session is loading.
   currentUser = null;
-  if (db && db.current) { db.current = null; if (baseSaveDB) baseSaveDB(); }
+  if (db && db.current) { db.current = null; SAFE_STORE.set(DBKEY, JSON.stringify(db)); }
   window.renderAll();
 
   // Cloud session wins on reload.
@@ -1416,10 +1422,31 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     if (event === 'SIGNED_OUT') {
       window.CYBERDROP_CLOUD.userId = null;
       currentUser = null;
-      if (baseSaveDB) baseSaveDB();
+      db.current = null;
+      dirty = false;
+      lastServerUpdatedAt = null;
+      SAFE_STORE.set(DBKEY, JSON.stringify(db));
       window.renderAll();
     }
   });
+
+  // Cross-device sync: the profile's updated_at is bumped on every save.
+  async function pollRemoteState() {
+    if (!cloudUser() || syncing || dirty || document.visibilityState !== 'visible') return;
+    try {
+      var uid = cloudUser();
+      var res = await client.from('profiles').select('updated_at').eq('id', uid).maybeSingle();
+      if (res.error || !res.data || !res.data.updated_at) return;
+      if (!lastServerUpdatedAt) { lastServerUpdatedAt = res.data.updated_at; return; }
+      if (String(res.data.updated_at) !== String(lastServerUpdatedAt)) {
+        await pullState({ id: uid, email: (user() && user().email) || '' });
+      }
+    } catch (err) {
+      console.warn('CYBERDROP remote sync:', err);
+    }
+  }
+  pollingTimer = setInterval(pollRemoteState, 4000);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') pollRemoteState(); });
 
   // Cloud mode logout.
   document.addEventListener('click', function (e) {
