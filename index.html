@@ -1195,6 +1195,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   var pushTimer = null;
   var dirty = false;
   var lastServerUpdatedAt = null;
+  var lastSyncedSnapshot = null;
   var pollingTimer = null;
 
   window.CYBERDROP_CLOUD = {
@@ -1222,6 +1223,111 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   }
 
   function cloudUser() { return window.CYBERDROP_CLOUD.userId; }
+  function copy(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function snapshotUser(u) {
+    if (!u) return null;
+    var inv = {};
+    Object.keys(u.inventory || {}).forEach(function (id) {
+      var n = Math.floor(Number(u.inventory[id]) || 0);
+      if (n > 0) inv[id] = n;
+    });
+    return {
+      credits: Math.floor(Number(u.credits) || 0),
+      inventory: inv,
+      build: {
+        cpu: u.build && u.build.cpu || '', mb: u.build && u.build.mb || '',
+        ram: u.build && u.build.ram || '', gpu: u.build && u.build.gpu || '',
+        ssd: u.build && u.build.ssd || '', psu: u.build && u.build.psu || '',
+        cool: u.build && u.build.cool || ''
+      },
+      refCode: u.refCode || null,
+      refCount: Number(u.refCount) || 0,
+      refEarned: Math.floor(Number(u.refEarned) || 0),
+      usedRef: !!u.usedRef,
+      lastAd: Number(u.lastAd) || 0,
+      lastIncome: Number(u.lastIncome) || 0
+    };
+  }
+
+  function sameBuild(a, b) {
+    var keys = ['cpu','mb','ram','gpu','ssd','psu','cool'];
+    return keys.every(function(k){ return (a && a[k] || '') === (b && b[k] || ''); });
+  }
+
+  function mergeSnapshots(remote, local, base) {
+    if (!base) return copy(local);
+    var merged = copy(remote);
+    merged.credits = Math.max(0, Math.floor(Number(remote.credits) || 0) + (Math.floor(Number(local.credits) || 0) - Math.floor(Number(base.credits) || 0)));
+
+    var ids = {};
+    Object.keys(remote.inventory || {}).forEach(function(id){ ids[id] = true; });
+    Object.keys(local.inventory || {}).forEach(function(id){ ids[id] = true; });
+    Object.keys(base.inventory || {}).forEach(function(id){ ids[id] = true; });
+    merged.inventory = {};
+    Object.keys(ids).forEach(function(id){
+      var delta = (Number(local.inventory[id]) || 0) - (Number(base.inventory[id]) || 0);
+      var q = Math.floor(Number(remote.inventory[id]) || 0) + delta;
+      if (q > 0) merged.inventory[id] = q;
+    });
+
+    merged.build = sameBuild(local.build, base.build) ? copy(remote.build) : copy(local.build);
+    merged.refCode = local.refCode === base.refCode ? remote.refCode : local.refCode;
+    merged.refCount = Math.max(0, (Number(remote.refCount)||0) + ((Number(local.refCount)||0) - (Number(base.refCount)||0)));
+    merged.refEarned = Math.max(0, (Number(remote.refEarned)||0) + ((Number(local.refEarned)||0) - (Number(base.refEarned)||0)));
+    merged.usedRef = !!remote.usedRef || !!local.usedRef;
+    merged.lastAd = Math.max(Number(remote.lastAd)||0, Number(local.lastAd)||0);
+    merged.lastIncome = Math.max(Number(remote.lastIncome)||0, Number(local.lastIncome)||0);
+    return merged;
+  }
+
+  async function readCloudState(uid) {
+    var results = await Promise.all([
+      client.from('profiles').select('*').eq('id', uid).single(),
+      client.from('inventory').select('item_id,quantity').eq('user_id', uid),
+      client.from('builds').select('*').eq('user_id', uid).maybeSingle()
+    ]);
+    var pr = results[0], ir = results[1], br = results[2];
+    if (pr.error) throw pr.error;
+    if (ir.error) throw ir.error;
+    if (br.error) throw br.error;
+    var p = pr.data;
+    var snap = {
+      credits: Number(p.credits)||0,
+      inventory: {},
+      build: {
+        cpu: br.data ? br.data.cpu || '' : '', mb: br.data ? br.data.mb || '' : '',
+        ram: br.data ? br.data.ram || '' : '', gpu: br.data ? br.data.gpu || '' : '',
+        ssd: br.data ? br.data.ssd || '' : '', psu: br.data ? br.data.psu || '' : '',
+        cool: br.data ? br.data.cool || '' : ''
+      },
+      refCode: p.ref_code || null,
+      refCount: Number(p.ref_count)||0,
+      refEarned: Number(p.ref_earned)||0,
+      usedRef: !!p.used_ref,
+      lastAd: p.last_ad ? new Date(p.last_ad).getTime() : 0,
+      lastIncome: p.last_income ? new Date(p.last_income).getTime() : Date.now()
+    };
+    (ir.data||[]).forEach(function(row){
+      var q = Math.floor(Number(row.quantity)||0);
+      if(q>0) snap.inventory[row.item_id]=q;
+    });
+    return {profile:p, snapshot:snap};
+  }
+
+  function applySnapshotToLocal(snap, authUser, username) {
+    var uname = username || (typeof currentUser !== 'undefined' && currentUser) || ((authUser && authUser.email) ? authUser.email.split('@')[0] : 'player');
+    var u = copy(snap);
+    u.pass = '';
+    u.cloudId = authUser && authUser.id ? authUser.id : cloudUser();
+    u.email = authUser && authUser.email ? authUser.email : (user() && user().email || '');
+    db.users = {};
+    db.users[uname] = u;
+    currentUser = uname;
+    db.current = currentUser;
+    SAFE_STORE.set(DBKEY, JSON.stringify(db));
+    return u;
+  }
 
   function schedulePush() {
     if (suppressPush || !cloudUser()) return;
@@ -1229,8 +1335,61 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     if (pushTimer) return;
     pushTimer = setTimeout(function () {
       pushTimer = null;
-      pushState().catch(function (err) { console.warn('CYBERDROP cloud sync:', err); });
-    }, 350);
+      pushState().catch(function (err) {
+        dirty = true;
+        console.warn('CYBERDROP cloud sync:', err);
+      });
+    }, 250);
+  }
+
+  async function writeCloudState(uid, snap, remoteProfile) {
+    var profile = {
+      id: uid,
+      username: (typeof currentUser !== 'undefined' && currentUser) || remoteProfile.username || uid.slice(0, 8),
+      credits: Math.floor(Number(snap.credits)||0),
+      ref_code: snap.refCode || remoteProfile.ref_code || null,
+      ref_count: Number(snap.refCount)||0,
+      ref_earned: Math.floor(Number(snap.refEarned)||0),
+      used_ref: !!snap.usedRef,
+      last_ad: snap.lastAd ? new Date(snap.lastAd).toISOString() : null,
+      last_income: snap.lastIncome ? new Date(snap.lastIncome).toISOString() : new Date().toISOString()
+    };
+
+    // Optimistic concurrency on the profile row: do not overwrite a newer device state.
+    var pu = await client.from('profiles')
+      .update(profile)
+      .eq('id', uid)
+      .eq('updated_at', remoteProfile.updated_at)
+      .select('updated_at')
+      .single();
+    if (pu.error) throw pu.error;
+
+    var currentInv = await client.from('inventory').select('item_id,quantity').eq('user_id', uid);
+    if (currentInv.error) throw currentInv.error;
+    var remoteIds = {};
+    (currentInv.data||[]).forEach(function(row){ remoteIds[row.item_id]=true; });
+
+    var rows = Object.keys(snap.inventory || {}).map(function(id){
+      return {user_id:uid,item_id:id,quantity:Math.floor(Number(snap.inventory[id])||0)};
+    });
+    if (rows.length) {
+      var ins = await client.from('inventory').upsert(rows, {onConflict:'user_id,item_id'});
+      if (ins.error) throw ins.error;
+    }
+    var toDelete = Object.keys(remoteIds).filter(function(id){ return !Object.prototype.hasOwnProperty.call(snap.inventory || {}, id); });
+    if (toDelete.length) {
+      var del = await client.from('inventory').delete().eq('user_id',uid).in('item_id',toDelete);
+      if (del.error) throw del.error;
+    }
+
+    var b = snap.build || {};
+    var br = await client.from('builds').upsert({
+      user_id: uid, cpu: b.cpu || null, mb: b.mb || null, ram: b.ram || null,
+      gpu: b.gpu || null, ssd: b.ssd || null, psu: b.psu || null, cool: b.cool || null
+    }, { onConflict: 'user_id' });
+    if (br.error) throw br.error;
+
+    return pu.data && pu.data.updated_at ? pu.data.updated_at : remoteProfile.updated_at;
   }
 
   async function pushState() {
@@ -1240,39 +1399,27 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     syncing = true;
     try {
       var uid = cloudUser();
-      var profile = {
-        id: uid,
-        username: window.currentUser || u.username || uid.slice(0, 8),
-        credits: Math.floor(Number(u.credits) || 0),
-        ref_code: u.refCode || null,
-        ref_count: Number(u.refCount) || 0,
-        ref_earned: Math.floor(Number(u.refEarned) || 0),
-        used_ref: !!u.usedRef,
-        last_ad: u.lastAd ? new Date(u.lastAd).toISOString() : null,
-        last_income: u.lastIncome ? new Date(u.lastIncome).toISOString() : new Date().toISOString()
-      };
-      var pr = await client.from('profiles').upsert(profile, { onConflict: 'id' }).select('updated_at').single();
-      if (pr.error) throw pr.error;
-      lastServerUpdatedAt = pr.data && pr.data.updated_at ? pr.data.updated_at : lastServerUpdatedAt;
-
-      var ir = await client.from('inventory').delete().eq('user_id', uid);
-      if (ir.error) throw ir.error;
-      var rows = Object.keys(u.inventory || {}).filter(function (id) { return Number(u.inventory[id]) > 0; }).map(function (id) {
-        return { user_id: uid, item_id: id, quantity: Math.floor(Number(u.inventory[id])) };
-      });
-      if (rows.length) {
-        var ins = await client.from('inventory').insert(rows);
-        if (ins.error) throw ins.error;
+      var localSnap = snapshotUser(u);
+      var remote = await readCloudState(uid);
+      var remoteChanged = !!lastServerUpdatedAt && String(remote.profile.updated_at) !== String(lastServerUpdatedAt);
+      var merged = remoteChanged ? mergeSnapshots(remote.snapshot, localSnap, lastSyncedSnapshot) : copy(localSnap);
+      var newUpdatedAt;
+      try {
+        newUpdatedAt = await writeCloudState(uid, merged, remote.profile);
+      } catch (err) {
+        // Another device may have written between our read and update. Re-read once and merge again.
+        var latest = await readCloudState(uid);
+        var latestMerged = mergeSnapshots(latest.snapshot, merged, remoteChanged ? remote.snapshot : (lastSyncedSnapshot || remote.snapshot));
+        newUpdatedAt = await writeCloudState(uid, latestMerged, latest.profile);
+        merged = latestMerged;
       }
 
-      var b = u.build || {};
-      var br = await client.from('builds').upsert({
-        user_id: uid, cpu: b.cpu || null, mb: b.mb || null, ram: b.ram || null,
-        gpu: b.gpu || null, ssd: b.ssd || null, psu: b.psu || null, cool: b.cool || null
-      }, { onConflict: 'user_id' });
-      if (br.error) throw br.error;
+      applySnapshotToLocal(merged, {id:uid,email:u.email}, window.currentUser || u.username || uid.slice(0,8));
+      lastSyncedSnapshot = snapshotUser(user());
+      lastServerUpdatedAt = newUpdatedAt;
       dirty = false;
       window.CYBERDROP_CLOUD.status = 'synced';
+      window.renderAll();
     } finally {
       syncing = false;
     }
@@ -1282,43 +1429,11 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     suppressPush = true;
     try {
       window.CYBERDROP_CLOUD.userId = authUser.id;
-      var pr = await client.from('profiles').select('*').eq('id', authUser.id).single();
-      if (pr.error) throw pr.error;
-      var ir = await client.from('inventory').select('item_id,quantity').eq('user_id', authUser.id);
-      if (ir.error) throw ir.error;
-      var br = await client.from('builds').select('*').eq('user_id', authUser.id).maybeSingle();
-      if (br.error) throw br.error;
-
-      var cloudProfile = pr.data;
-      var uname = cloudProfile.username;
-      var u = {
-        pass: '',
-        credits: Number(cloudProfile.credits) || 0,
-        inventory: {},
-        build: {
-          cpu: br.data ? br.data.cpu || '' : '', mb: br.data ? br.data.mb || '' : '',
-          ram: br.data ? br.data.ram || '' : '', gpu: br.data ? br.data.gpu || '' : '',
-          ssd: br.data ? br.data.ssd || '' : '', psu: br.data ? br.data.psu || '' : '',
-          cool: br.data ? br.data.cool || '' : ''
-        },
-        refCode: cloudProfile.ref_code,
-        refCount: Number(cloudProfile.ref_count) || 0,
-        refEarned: Number(cloudProfile.ref_earned) || 0,
-        usedRef: !!cloudProfile.used_ref,
-        lastAd: cloudProfile.last_ad ? new Date(cloudProfile.last_ad).getTime() : 0,
-        lastIncome: cloudProfile.last_income ? new Date(cloudProfile.last_income).getTime() : Date.now(),
-        cloudId: authUser.id,
-        email: authUser.email || ''
-      };
-      (ir.data || []).forEach(function (row) {
-        if (Number(row.quantity) > 0) u.inventory[row.item_id] = Number(row.quantity);
-      });
-      db.users = {};
-      db.users[uname] = u;
-      currentUser = uname;
-      db.current = currentUser;
-      SAFE_STORE.set(DBKEY, JSON.stringify(db));
-      lastServerUpdatedAt = cloudProfile.updated_at || lastServerUpdatedAt;
+      var cloud = await readCloudState(authUser.id);
+      var uname = cloud.profile.username;
+      var u = applySnapshotToLocal(cloud.snapshot, authUser, uname);
+      lastSyncedSnapshot = snapshotUser(u);
+      lastServerUpdatedAt = cloud.profile.updated_at || null;
       dirty = false;
       window.renderAll();
       window.CYBERDROP_CLOUD.status = 'synced';
@@ -1401,15 +1516,14 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     setAuthMode(authMode || 'login');
   });
 
-  // Core saveDB calls schedulePush() directly; this hook is exposed for all game mutations.
   window.CYBERDROP_CLOUD.schedulePush = schedulePush;
 
-  // In cloud mode, never treat an old local account as authenticated while the cloud session is loading.
+  // Do not overwrite the previous local session with starter data. The cloud session is authoritative,
+  // but the UI is kept out of the authenticated state until Supabase returns it.
   currentUser = null;
   if (db && db.current) { db.current = null; SAFE_STORE.set(DBKEY, JSON.stringify(db)); }
   window.renderAll();
 
-  // Cloud session wins on reload.
   client.auth.getSession().then(function (res) {
     if (res.error) throw res.error;
     if (res.data && res.data.session && res.data.session.user) return pullState(res.data.session.user);
@@ -1425,12 +1539,12 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       db.current = null;
       dirty = false;
       lastServerUpdatedAt = null;
+      lastSyncedSnapshot = null;
       SAFE_STORE.set(DBKEY, JSON.stringify(db));
       window.renderAll();
     }
   });
 
-  // Cross-device sync: the profile's updated_at is bumped on every save.
   async function pollRemoteState() {
     if (!cloudUser() || syncing || dirty || document.visibilityState !== 'visible') return;
     try {
@@ -1448,7 +1562,6 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   pollingTimer = setInterval(pollRemoteState, 4000);
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') pollRemoteState(); });
 
-  // Cloud mode logout.
   document.addEventListener('click', function (e) {
     var btn = e.target.closest ? e.target.closest('#logoutBtn') : null;
     if (btn && window.CYBERDROP_CLOUD.enabled) {
