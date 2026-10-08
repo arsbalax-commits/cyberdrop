@@ -1873,6 +1873,12 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       window.renderAll();
     } finally {
       syncing = false;
+      // Если локальное изменение произошло во время предыдущей синхронизации,
+      // обязательно запускаем ещё один push после её завершения. Это важно для
+      // продажи предмета: старый push не должен вернуть уже проданный предмет.
+      if (dirty && !suppressPush && cloudUser()) {
+        schedulePush();
+      }
     }
   }
 
