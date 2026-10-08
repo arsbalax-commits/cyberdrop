@@ -1,4 +1,5 @@
-const CACHE = 'cyberdrop-v3';
+const CACHE = 'cyberdrop-v4';
+
 const CORE = [
   './',
   './index.html',
@@ -48,9 +49,26 @@ function isLiveAppRequest(req) {
     var url = new URL(req.url);
 
     return (
-      /\/index\.html$/i.test(url.pathname) ||
-      /\/supabase-config\.js$/i.test(url.pathname) ||
-      /\/manifest\.json$/i.test(url.pathname)
+      url.origin === self.location.origin && (
+        /\/index\.html$/i.test(url.pathname) ||
+        /\/supabase-config\.js$/i.test(url.pathname) ||
+        /\/manifest\.json$/i.test(url.pathname)
+      )
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+function isCloudRequest(req) {
+  try {
+    var url = new URL(req.url);
+
+    // Supabase REST/Auth responses must NEVER be cached by the PWA.
+    // Otherwise a GET can return an old profile balance after reload.
+    return (
+      /(^|\.)supabase\.co$/i.test(url.hostname) ||
+      /(^|\.)supabase\.in$/i.test(url.hostname)
     );
   } catch (e) {
     return false;
@@ -62,6 +80,16 @@ self.addEventListener('fetch', function(event) {
 
   if (req.method !== 'GET') return;
 
+  // Cloud API calls are always network-only.
+  // This prevents stale Supabase data from being served by the service worker.
+  if (isCloudRequest(req)) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' })
+    );
+    return;
+  }
+
+  // Always prefer the current deployed application shell.
   if (isLiveAppRequest(req)) {
     event.respondWith(
       fetch(req, { cache: 'no-store' })
@@ -70,7 +98,7 @@ self.addEventListener('fetch', function(event) {
 
           caches.open(CACHE)
             .then(function(cache) {
-              cache.put(req, copy);
+              return cache.put(req, copy);
             })
             .catch(function() {});
 
@@ -95,6 +123,21 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
+  // Same-origin static assets can use cache-first for fast/offline startup.
+  // Other cross-origin GETs are network-only and are not stored in our cache.
+  var sameOrigin = false;
+
+  try {
+    sameOrigin = new URL(req.url).origin === self.location.origin;
+  } catch (e) {}
+
+  if (!sameOrigin) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req)
       .then(function(cached) {
@@ -106,7 +149,7 @@ self.addEventListener('fetch', function(event) {
 
             caches.open(CACHE)
               .then(function(cache) {
-                cache.put(req, copy);
+                return cache.put(req, copy);
               })
               .catch(function() {});
 
