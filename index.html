@@ -715,7 +715,7 @@ button,.btn,input{touch-action:manipulation}
       <div class="earn-card pro-game-card locked" id="overclockCard" style="--ec:rgba(198,255,61,.55)">
         <div class="earn-ico">⚡</div>
         <h3>Разгон ядра</h3>
-        <p>Поймай частоту в зелёной зоне, не сорви стабильность и пройди 6 раундов. Чем точнее остановка — тем выше награда, <b style="color:var(--lime)">до 1 000 кр.</b></p>
+        <p>Поймай частоту в зелёной зоне за 6 раундов. С каждым раундом зона становится уже. Промах отнимает до <b style="color:var(--lime)">100 кр.</b> из награды текущей игры; ниже нуля счёт не опускается. Максимум — <b style="color:var(--lime)">1 000 кр.</b></p>
         <div class="pro-gate" id="overclockGate" role="status">🔒 Нужна совместимая сборка с доходом от 50 кр./мин.</div>
         <div class="pro-game-area" id="overclockArea">
           <div class="pro-hud"><span>Раунд <b id="overclockRound">0/6</b></span><span>Таймер <b id="overclockTime">4</b> с</span><span>✦ <b id="overclockScore">0</b> кр.</span></div>
@@ -729,7 +729,7 @@ button,.btn,input{touch-action:manipulation}
       <div class="earn-card pro-game-card locked" id="raidCard" style="--ec:rgba(177,74,255,.6)">
         <div class="earn-ico">🛰️</div>
         <h3>Киберрейд: маршрут через firewall</h3>
-        <p>Запомни сетевой маршрут и повтори переходы по соседним узлам. Шесть всё более длинных маршрутов, таймер и бонус за скорость — <b style="color:var(--lime)">до 2 050 кр.</b></p>
+        <p>Запомни сетевой маршрут и повтори переходы по соседним узлам. Шесть всё более длинных маршрутов, таймер и бонус за скорость. Каждая ошибка отнимает до <b style="color:var(--lime)">200 кр.</b> из награды текущего рейда; счёт не опускается ниже нуля. Максимум — <b style="color:var(--lime)">2 050 кр.</b></p>
         <div class="pro-gate" id="raidGate" role="status">🔒 Нужна совместимая сборка с доходом от 100 кр./мин.</div>
         <div class="raid-area" id="raidArea">
           <div class="pro-hud"><span>Этап <b id="raidRound">0/6</b></span><span>Время <b id="raidTime">50</b> с</span><span>✦ <b id="raidScore">0</b> кр.</span></div>
@@ -1873,10 +1873,10 @@ function renderProGameGates(){
 /* Game 4: overclock timing challenge. */
 function overclockSetRound(){
   const s=overclockState;if(!s)return;
-  s.zoneWidth=18+Math.random()*8;s.zoneStart=6+Math.random()*(88-s.zoneWidth);s.roundStartedAt=performance.now();s.position=0;s.resolving=false;
+  const baseWidth=26-(s.round-1)*3.5;s.zoneWidth=Math.max(8.5,baseWidth)+Math.random()*1.4;s.zoneStart=4+Math.random()*(92-s.zoneWidth);s.roundStartedAt=performance.now();s.position=0;s.resolving=false;
   $('#overclockRound').textContent=`${s.round}/${s.total}`;$('#overclockTime').textContent='4';
   $('#overclockZone').style.left=s.zoneStart+'%';$('#overclockZone').style.width=s.zoneWidth+'%';$('#overclockNeedle').style.left='0%';
-  $('#overclockHint').textContent='Останови маркер как можно ближе к центру зелёной зоны.';
+  $('#overclockHint').textContent=`Зона сужается с каждым раундом. Промах вне зелёной зоны: −100 кр. (не ниже 0).`;
   $('#overclockFeedback').className='pro-game-feedback';$('#overclockFeedback').textContent='Частота нестабильна — зафиксируй её вовремя.';
   $('#overclockScore').textContent=s.score;
 }
@@ -1900,16 +1900,15 @@ function overclockTick(){
 }
 function overclockResolve(timeout){
   const s=overclockState;if(!s||s.finished||s.resolving)return;
-  s.resolving=true;let points=10,label='Маркер ушёл в красную зону: +10 кр.';
-  if(!timeout){
+  s.resolving=true;let points=0,label='';
+  if(timeout){points=10;s.streak=0;label='Тайм-аут стабилизации: +10 кр.';}
+  else{
     const center=s.zoneStart+s.zoneWidth/2,ratio=Math.abs(s.position-center)/(s.zoneWidth/2);
     if(ratio<=.24){s.streak++;points=150+Math.min(25,(s.streak-1)*5);label=`ИДЕАЛЬНО! Точная частота: +${points} кр.`;}
     else if(ratio<=1){s.streak++;points=110+Math.min(20,(s.streak-1)*4);label=`Стабильный разгон: +${points} кр.`;}
-    else if(ratio<=1.65){s.streak=0;points=65;label='Частота почти стабильна: +65 кр.';}
-    else if(ratio<=2.4){s.streak=0;points=30;label='Нестабильная частота: +30 кр.';}
-    else{s.streak=0;points=10;label='Переразгон! Только +10 кр.';}
-  }else{s.streak=0;}
-  s.score+=points;$('#overclockScore').textContent=s.score;$('#overclockFeedback').className='pro-game-feedback '+(points>=100?'good':points<=30?'bad':'');$('#overclockFeedback').textContent=timeout?'Тайм-аут стабилизации: +10 кр.':label;
+    else{s.streak=0;const penalty=Math.min(100,s.score);s.score-=penalty;label=penalty?`Промах! −${penalty} кр. из награды этой игры.`:'Промах! В награде уже 0 кр. — списания нет.';}
+  }
+  s.score+=points;$('#overclockScore').textContent=s.score;$('#overclockFeedback').className='pro-game-feedback '+(label.startsWith('Промах')?'bad':points>=100?'good':points<=30?'bad':'');$('#overclockFeedback').textContent=label;
   clearTimeout(overclockAdvanceTimer);
   overclockAdvanceTimer=setTimeout(()=>{
     if(!overclockState||overclockState!==s||s.finished)return;
@@ -1995,8 +1994,8 @@ function raidStart(){
 function raidNodeClick(index){
   const s=raidState;if(!s||s.finished||!s.inputEnabled||s.revealing)return;
   if(index!==s.path[s.pathStep]){
-    s.mistakes++;s.score=Math.max(0,s.score-35);s.pathStep=0;s.inputEnabled=false;
-    $('#raidScore').textContent=s.score;$('#raidFeedback').className='pro-game-feedback bad';$('#raidFeedback').textContent='Маршрут сбит: −35 кр. Попробуй этот этап ещё раз.';
+    s.mistakes++;const penalty=Math.min(200,s.score);s.score-=penalty;s.pathStep=0;s.inputEnabled=false;
+    $('#raidScore').textContent=s.score;$('#raidFeedback').className='pro-game-feedback bad';$('#raidFeedback').textContent=penalty?`Маршрут сбит: −${penalty} кр. из награды этого рейда. Повтори этап.`:'Маршрут сбит, но награда уже 0 кр. — списания нет. Повтори этап.';
     renderRaidGrid();const b=$(`[data-raid-node="${index}"]`);if(b)b.classList.add('wrong');
     raidAdvanceTimer=setTimeout(()=>{if(!raidState||raidState!==s||s.finished)return;s.inputEnabled=true;renderRaidGrid();$('#raidFeedback').textContent='Начни маршрут сначала и повтори все узлы.';},350);
     return;
