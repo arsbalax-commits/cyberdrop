@@ -501,6 +501,28 @@ button,.btn,input{touch-action:manipulation}
   .case-preview-grid{max-height:58dvh}
 }
 
+
+/* ===== SHOP ===== */
+.shop-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;overflow-x:auto;padding-bottom:3px}
+.shop-tab{padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.025);color:var(--muted);font-weight:800;font-size:12px;white-space:nowrap}
+.shop-tab.active{color:var(--txt);border-color:var(--acc);box-shadow:0 0 18px rgba(0,229,255,.1);background:rgba(0,229,255,.07)}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.shop-card{position:relative;display:flex;flex-direction:column;min-width:0;padding:14px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));overflow:hidden}
+.shop-card:hover{border-color:rgba(0,229,255,.35);transform:translateY(-1px)}
+.shop-card .item-visual{height:120px;margin-bottom:8px}
+.shop-rar{font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:var(--rc);margin-bottom:4px}
+.shop-name{font-size:12px;font-weight:850;line-height:1.25;min-height:32px}
+.shop-price{margin-top:8px;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.shop-price b{font-size:17px;color:var(--lime)}
+.shop-case-price{font-size:10px;color:var(--muted);font-weight:400}
+.shop-buy{margin-top:10px;width:100%}
+.shop-note{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding:13px 15px;border:1px solid rgba(198,255,61,.18);border-radius:14px;background:rgba(198,255,61,.035)}
+.shop-note>span{color:var(--lime);font-size:20px;line-height:1}
+.shop-note b{display:block;font-size:12px}
+.shop-note small{display:block;color:var(--muted);font-size:11px;line-height:1.45;margin-top:3px}
+@media(max-width:620px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.shop-card{padding:10px}.shop-card .item-visual{height:95px}.shop-name{font-size:11px}.shop-price b{font-size:15px}.shop-tab{padding:9px 11px}}
+@media(max-width:390px){.shop-grid{grid-template-columns:1fr}}
+
 #bootError{display:none;position:fixed;inset:0;z-index:9999;background:#08090e;color:#e9edf7;place-items:center;padding:24px;text-align:center;font-family:system-ui,sans-serif}body[data-app-error='1'] #bootError{display:grid}
 </style>
 </head>
@@ -515,6 +537,7 @@ button,.btn,input{touch-action:manipulation}
       <button class="nav-btn" data-tab="inventory">Инвентарь <span class="badge" id="invBadge" style="display:none">0</span></button>
       <button class="nav-btn" data-tab="build">Сборка <span class="badge" id="buildBadge" style="display:none">!</span></button>
       <button class="nav-btn" data-tab="earn">Заработать</button>
+      <button class="nav-btn" data-tab="shop">Магазин</button>
     </nav>
     <div class="header-right">
       <button class="icon-btn theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">☼</button>
@@ -532,6 +555,16 @@ button,.btn,input{touch-action:manipulation}
       <p>Большинство призов не окупают стоимость кейса — только редкие и легендарные предметы дают прибыль. Зато из выигранного можно собрать ПК и получать пассивный доход.</p>
     </div>
     <div class="cases-grid" id="casesGrid"></div>
+  </section>
+
+  <section id="tab-shop">
+    <div class="page-head">
+      <h1>Магазин <em>комплектующих</em></h1>
+      <p>Покупай конкретный компонент для своей сборки. Цены в магазине на <b style="color:var(--lime)">20% выше</b> его базовой стоимости — кейсы остаются самым выгодным способом добывать технику.</p>
+    </div>
+    <div class="shop-note"><span>◆</span><div><b>Магазин = точность</b><small>Нужен конкретный компонент — покупай его напрямую. Хочешь сэкономить и получить шанс на редкий приз — открывай кейсы.</small></div></div>
+    <div class="shop-tabs" id="shopTabs"></div>
+    <div class="shop-grid" id="shopGrid"></div>
   </section>
 
   <section id="tab-inventory">
@@ -603,7 +636,7 @@ button,.btn,input{touch-action:manipulation}
         <div class="socket-area" id="socketArea">
           <div class="socket-top">
             <span>Раунд <b id="socketRound">0/10</b></span>
-            <span>⏱ <b id="socketTime">25</b> с</span>
+            <span>⏱ <b id="socketTime">30</b> с</span>
             <span>✦ <b id="socketScore">0</b> кр.</span>
           </div>
           <div class="socket-progress"><i id="socketProgressBar"></i></div>
@@ -686,7 +719,7 @@ button,.btn,input{touch-action:manipulation}
     <form id="authForm" autocomplete="off">
       <div class="field"><label id="authNameLabel">Логин</label><input type="text" id="authName" placeholder="Минимум 3 символа" maxlength="32" autocomplete="username"></div>
       <div class="field hidden" id="authEmailWrap"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com" maxlength="120" autocomplete="email"></div>
-      <div class="field"><label>Пароль</label><input type="password" id="authPass" placeholder="Минимум 4 символа" maxlength="72" autocomplete="current-password"></div>
+      <div class="field"><label>Пароль</label><input type="password" id="authPass" placeholder="Минимум 6 символов" maxlength="72" autocomplete="current-password"></div>
       <div class="field hidden" id="refField"><label>Код друга (необязательно)</label><input type="text" id="authRef" placeholder="Например: A1B2C3" maxlength="8"></div>
       <div class="auth-err" id="authErr"></div>
       <button class="btn primary full" type="submit" id="authSubmit">Войти</button>
@@ -1047,7 +1080,7 @@ function requireAuth(){
  openModal('authModal');return false
 }
 function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn" type="button">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();if(typeof window.logoutAccount==='function')window.logoutAccount();else{currentUser=null;db.current=null;saveDB(false);renderAll();}})}
-function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));const target=$('#tab-'+tab);if(!target)return;target.classList.add('active');if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn();if(tab==='profile')renderProfile()}
+function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));const target=$('#tab-'+tab);if(!target)return;target.classList.add('active');if(tab==='shop')renderShop();if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn();if(tab==='profile')renderProfile()}
 $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
 $$('.modal').forEach(m=>m.addEventListener('mousedown',e=>{if(e.target===m&&m.id!=='adModal')closeModal(m.id)}));
@@ -1247,6 +1280,69 @@ async function startCase(id){
  }));
  setTimeout(finalize,totalMs+160);
 }
+/* ==================== SHOP ==================== */
+const SHOP_CATEGORIES=[
+  ['gpu','Видеокарты'],
+  ['cpu_intel','Процессоры Intel'],
+  ['cpu_amd','Процессоры AMD'],
+  ['mb_amd','Материнские платы AMD'],
+  ['mb_intel','Материнские платы Intel'],
+  ['psu','Блоки питания'],
+  ['cool','Системы охлаждения'],
+  ['ssd','Накопители'],
+  ['ram','Оперативная память'],
+  ['pc_case','Корпуса']
+];
+let shopCategory='gpu';
+const shopLocks=new Set();
+function shopPrice(it){return Math.ceil(Number(it.price||0)*1.20)}
+function shopItems(){return ITEMS.filter(it=>{
+  if(shopCategory==='cpu_intel')return it.cat==='cpu'&&it.brand==='intel';
+  if(shopCategory==='cpu_amd')return it.cat==='cpu'&&it.brand==='amd';
+  if(shopCategory==='mb_amd')return it.cat==='mb'&&it.platform==='amd';
+  if(shopCategory==='mb_intel')return it.cat==='mb'&&it.platform==='intel';
+  return it.cat===shopCategory;
+})}
+function renderShopTabs(){
+  $('#shopTabs').innerHTML=SHOP_CATEGORIES.map(([id,label])=>`<button class="shop-tab ${id===shopCategory?'active':''}" data-shop-cat="${id}">${label}</button>`).join('');
+  $$('[data-shop-cat]').forEach(b=>b.onclick=()=>{shopCategory=b.dataset.shopCat;renderShop()});
+}
+function renderShop(){
+  if(!$('#shopGrid'))return;
+  renderShopTabs();
+  const list=shopItems();
+  $('#shopGrid').innerHTML=list.map(it=>{const price=shopPrice(it),locked=shopLocks.has(it.id);return `<div class="shop-card" style="--rc:${RARITIES[it.rar].color}"><div class="item-visual">${itemArt(it)}</div><div class="shop-rar">${RARITIES[it.rar].name}</div><div class="shop-name">${esc(it.name)}</div><div class="shop-price"><b>${fmt(price)} кр.</b><span class="shop-case-price">(Цена в кейсе: ${fmt(it.price)} кр.)</span></div><button class="btn primary sm shop-buy" data-shop-buy="${it.id}" ${locked?'disabled':''}>${locked?'Покупка…':'Купить'}</button></div>`}).join('');
+  $$('[data-shop-buy]').forEach(b=>b.onclick=()=>buyShopItem(b.dataset.shopBuy));
+}
+async function buyShopItem(id){
+  if(shopLocks.has(id))return;
+  if(!requireAuth())return;
+  const it=ITEM_MAP[id];if(!it)return;
+  const price=shopPrice(it),u=user();if(!u)return;
+  if(Number(u.credits||0)<price)return toast('Недостаточно кредитов','err');
+  shopLocks.add(id);renderShop();
+  const cloud=window.CYBERDROP_CLOUD;
+  try{
+    let balance;
+    if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){
+      balance=await cloud.changeCredits(-price);
+    }else{
+      u.credits=Math.max(0,Math.floor(Number(u.credits||0)-price));
+      balance=u.credits;
+    }
+    u.credits=Math.max(0,Math.floor(Number(balance)||0));
+    addItem(id,1);
+    renderHeader();renderInventory();renderBuild();
+    toast(`Куплено: ${it.name}`,'ok');
+  }catch(err){
+    console.warn('CYBERDROP shop purchase:',err);
+    toast('Не удалось совершить покупку','err');
+  }finally{
+    shopLocks.delete(id);
+    renderShop();
+  }
+}
+
 /* ==================== INVENTORY ==================== */
 const sellLocks=new Set();
 let sellAllBusy=false;
@@ -1542,7 +1638,7 @@ async function localAuthSubmit(){
   const name=$('#authName').value.trim(),pass=$('#authPass').value,err=$('#authErr');
   err.textContent='';
   if(name.length<3)return err.textContent='Логин должен содержать минимум 3 символа.';
-  if(pass.length<4)return err.textContent='Пароль должен содержать минимум 4 символа.';
+  if(pass.length<6)return err.textContent='Пароль должен содержать минимум 6 символов.';
   if(authMode==='reg'){
     if(db.users[name])return err.textContent='Такой логин уже существует.';
     db.users[name]=newUser(name,pass);currentUser=name;saveDB();
