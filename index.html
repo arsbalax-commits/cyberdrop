@@ -887,13 +887,34 @@ const LEGACY_MAP={
 };
 function normalizeUser(u){if(!u||!u.inventory)return u;const inv={};for(const [id,n] of Object.entries(u.inventory)){const nid=LEGACY_MAP[id]||id;if(ITEM_MAP[nid])inv[nid]=(inv[nid]||0)+n}u.inventory=inv;for(const slot of ['cpu','mb','ram','gpu','ssd','psu','cool']){if(u.build && u.build[slot]){const nid=LEGACY_MAP[u.build[slot]]||u.build[slot];if(ITEM_MAP[nid])u.build[slot]=nid;else delete u.build[slot]}}return u}
 function loadDB(){try{const d=JSON.parse(SAFE_STORE.get(DBKEY)||'');if(d&&d.users){for(const k of Object.keys(d.users))d.users[k]=normalizeUser(d.users[k]);return d}}catch{}return{users:{},current:null}}
-function saveDB(){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){}}
+function saveDB(syncCloud=true){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));if(syncCloud){try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){}}}
 function user(){return currentUser?db.users[currentUser]:null}
 function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now()}}
 function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
 function addItem(id,n=1){const u=user();if(!u)return;u.inventory[id]=(u.inventory[id]||0)+n;saveDB()}
 function takeItem(id,n=1){const u=user();if(!u||!(u.inventory[id]>=n))return false;u.inventory[id]-=n;if(u.inventory[id]<=0)delete u.inventory[id];saveDB();return true}
-function addCredits(n){const u=user();if(!u)return;u.credits=Math.max(0,Math.floor(u.credits+n));saveDB();renderHeader()}
+function addCredits(n){
+  const u=user();
+  if(!u)return Promise.resolve(false);
+  const amount=Math.trunc(Number(n)||0);
+  if(!amount)return Promise.resolve(true);
+  const cloud=window.CYBERDROP_CLOUD;
+  if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){
+    const target=u;
+    return cloud.changeCredits(amount).then(balance=>{
+      if(user()===target){target.credits=Math.max(0,Math.floor(Number(balance)||0));saveDB(false);renderHeader()}
+      return true;
+    }).catch(err=>{
+      console.warn('CYBERDROP credit operation:',err);
+      toast('Не удалось изменить баланс в облаке','err');
+      return false;
+    });
+  }
+  u.credits=Math.max(0,Math.floor(u.credits+amount));
+  saveDB();
+  renderHeader();
+  return Promise.resolve(true);
+}
 
 /* ==================== UI CORE ==================== */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -1050,10 +1071,26 @@ function snapRouletteWinner(strip,index,target){
    strip.style.transform=`translate3d(${x-delta}px,0,0)`;
  }
 }
-function startCase(id){
+async function startCase(id){
  closeModal('casePreviewModal');
- if(!requireAuth())return;if(spinning)return;const c=CASES.find(x=>x.id===id),u=user();if(!c)return;if(u.credits<c.price){toast('Недостаточно кредитов','err');return}
- addCredits(-c.price);activeCase=c;spinning=true;caseSfx();
+ if(!requireAuth())return;
+ if(spinning)return;
+ const c=CASES.find(x=>x.id===id),u=user();
+ if(!c||!u)return;
+ if(u.credits<c.price){toast('Недостаточно кредитов','err');return}
+ 
+ const cloud=window.CYBERDROP_CLOUD;
+ if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){
+   const balance=await cloud.changeCredits(-c.price).catch(err=>{console.warn('CYBERDROP case debit:',err);toast('Не удалось списать кредиты в облаке','err');return null});
+   if(balance===null)return;
+   u.credits=Math.max(0,Math.floor(Number(balance)||0));
+   saveDB(false);
+ }else{
+   u.credits-=c.price;
+   saveDB();
+ }
+ renderHeader();
+ activeCase=c;spinning=true;caseSfx();
  if(caseTimer)clearInterval(caseTimer);
  $('#caseTitle').textContent=c.name+' кейс';$('#caseSub').textContent='Система анализирует содержимое…';$('#result').innerHTML='';$('#caseLiveText').textContent='СКАНИРОВАНИЕ ПРИЗОВ';$('#caseLiveTimer').textContent='6.4s';$('#caseProgressBar').style.width='0%';openModal('caseModal');
  const items=[];for(let i=0;i<30;i++)items.push(weightedItem(c.pool));
@@ -1062,7 +1099,7 @@ function startCase(id){
  const finalize=()=>{
    if(finalized)return;
    settleRouletteWinner(strip);
-   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   requestAnimationFrame(()=>requestAnimationFrame(async()=>{
      if(finalized)return;
      finalized=true;
      if(caseTimer){clearInterval(caseTimer);caseTimer=null}
@@ -1073,7 +1110,7 @@ function startCase(id){
      addItem(win.id);$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
      $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
      $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
-     $('#sellWinBtn').onclick=()=>{if(takeItem(win.id)){addCredits(win.price);closeModal('caseModal');renderInventory();toast('Предмет продан','ok')}};
+     $('#sellWinBtn').onclick=async()=>{if(takeItem(win.id)){const ok=await addCredits(win.price);if(ok){closeModal('caseModal');renderInventory();toast('Предмет продан','ok')}}};
      spinning=false;renderBadges();
    }));
  };
@@ -1083,24 +1120,10 @@ function startCase(id){
    target=g.target;
    strip.style.transition=`transform ${transitionMs}ms cubic-bezier(.10,.72,.08,1)`;
    strip.style.transform=`translate3d(${-target}px,0,0)`;
-   setTimeout(()=>{requestAnimationFrame(finalize)},transitionMs+40);
+   setTimeout(finalize,totalMs-transitionMs+80);
  }));
- setTimeout(finalize,totalMs+160);
-}
-/* ==================== INVENTORY ==================== */
-function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inventory).filter(([,n])=>n>0).map(([id,n])=>[ITEM_MAP[id],n]).filter(([it])=>it)}
-function renderInventory(){
- const u=user();if(!u){$('#invCount').textContent='0';$('#invValue').textContent='0';$('#invGrid').innerHTML='<div class="inv-empty"><span class="big">🔒</span>Войдите, чтобы увидеть инвентарь.</div>';return}
- const e=invEntries(),count=e.reduce((s,[,n])=>s+n,0),value=e.reduce((s,[it,n])=>s+it.price*n,0);$('#invCount').textContent=count;$('#invValue').textContent=fmt(value);
- $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}">Продать</button></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
- $$('[data-sell]').forEach(b=>b.onclick=()=>{const it=ITEM_MAP[b.dataset.sell];if(takeItem(it.id)){addCredits(it.price);renderInventory();renderBadges();toast(`Продано: ${it.name}`,'ok')}});
-}
-$('#sellAllBtn').addEventListener('click',()=>{if(!requireAuth())return;const e=invEntries();if(!e.length)return toast('Инвентарь пуст');const sum=e.reduce((s,[it,n])=>s+it.price*n,0);user().inventory={};addCredits(sum);saveDB();renderInventory();renderBadges();toast(`Продано на ${fmt(sum)} кр.`,'ok')});
+} 
 
-/* ==================== BUILD ==================== */
-function socketLabel(s){return ({lga1155:'LGA 1155',lga1200:'LGA 1200',lga1700:'LGA 1700',am3plus:'AM3+',am4:'AM4',am5:'AM5'})[s]||String(s||'').toUpperCase()}
-function buildIssues(){const u=user();if(!u)return[];const b=u.build,issues=[],cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],psu=ITEM_MAP[b.psu];if(cpu&&mb&&cpu.socket!==mb.socket)issues.push(`Сокет процессора ${socketLabel(cpu.socket)} не совместим с платой ${socketLabel(mb.socket)}.`);if(ram&&mb&&ram.type!==mb.mem)issues.push(`Память ${ram.type.toUpperCase()} не совместима с платой ${mb.mem.toUpperCase()}.`);if(psu){const draw=((cpu&&cpu.tdp)||0)+((gpu&&gpu.tdp)||0)+120;if(psu.watts<draw)issues.push(`БП ${psu.watts}W слабее рекомендуемой мощности ${draw}W.`)}return issues}
-function buildIncome(){const u=user();if(!u)return 0;const ids=SLOTS.map(([s])=>u.build[s]);if(ids.some(x=>!x)||buildIssues().length)return 0;const value=ids.reduce((s,id)=>s+(ITEM_MAP[id] ? ITEM_MAP[id].price : undefined||0),0);return Math.max(20,Math.floor(value/1500))}
 function renderBuild(){
  const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML='<div class="item">Статус<b class="err">Нужен вход</b></div>';$('#buildGrid').innerHTML='';$('#buildIncome').innerHTML='';return}
  const issues=buildIssues(),filled=SLOTS.filter(([s])=>u.build[s]).length,income=buildIncome();$('#buildIncompat').innerHTML=issues.length?`<div class="incompat"><b>Есть проблемы совместимости:</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
@@ -1112,7 +1135,29 @@ function renderBuild(){
 function openPicker(slot){if(!requireAuth())return;const foundSlot=SLOTS.find(x=>x[0]===slot);const label=(foundSlot?foundSlot[1]:slot);$('#pickTitle').textContent='Выбери: '+label;const list=invEntries().filter(([it])=>it.cat===slot);$('#pickSub').textContent=list.length?'Выбери предмет из инвентаря.':'Подходящих предметов в инвентаре нет.';$('#pickList').innerHTML=list.length?list.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn primary sm" data-install="${it.id}" data-slot="${slot}">Установить</button></div>`).join(''):'<div class="inv-empty">Нет подходящих компонентов.</div>';$$('[data-install]').forEach(b=>b.onclick=()=>installToBuild(b.dataset.slot,b.dataset.install));openModal('pickModal')}
 function installToBuild(slot,id){const u=user(),old=u.build[slot];if(!takeItem(id))return toast('Предмет уже недоступен','err');if(old)addItem(old);u.build[slot]=id;saveDB();closeModal('pickModal');renderBuild();renderInventory();toast('Компонент установлен','ok')}
 function removeFromBuild(slot){const u=user(),id=u.build[slot];if(!id)return;addItem(id);delete u.build[slot];saveDB();renderBuild();renderInventory();toast('Компонент возвращён в инвентарь')}
-function tickIncome(){const u=user();if(!u)return;const now=Date.now(),income=buildIncome();u.lastIncome=u.lastIncome||now;const mins=Math.floor((now-u.lastIncome)/60000);if(mins>0){if(income){u.credits+=income*mins;toast(`Пассивный доход: +${fmt(income*mins)} кр.`,'ok')}u.lastIncome+=mins*60000;saveDB();renderHeader();if($('#tab-build').classList.contains('active'))renderBuild()}}
+let incomeSyncing=false;
+async function tickIncome(){
+ const u=user();if(!u||incomeSyncing)return;
+ const now=Date.now(),income=buildIncome();u.lastIncome=u.lastIncome||now;
+ const mins=Math.floor((now-u.lastIncome)/60000);
+ if(mins<=0)return;
+ const amount=income*mins;
+ const cloud=window.CYBERDROP_CLOUD;
+ if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){
+   incomeSyncing=true;
+   try{
+     const balance=await cloud.changeCredits(amount);
+     u.credits=Math.max(0,Math.floor(Number(balance)||0));
+     u.lastIncome+=mins*60000;
+     saveDB();renderHeader();
+     if(income)toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok');
+     if($('#tab-build').classList.contains('active'))renderBuild();
+   }catch(err){console.warn('CYBERDROP passive income:',err)}finally{incomeSyncing=false}
+   return;
+ }
+ if(income){u.credits+=amount;toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok')}
+ u.lastIncome+=mins*60000;saveDB();renderHeader();if($('#tab-build').classList.contains('active'))renderBuild()
+}
 setInterval(tickIncome,5000);
 
 /* ==================== EARN ==================== */
@@ -1120,7 +1165,7 @@ function renderEarn(){const u=user();$('#refCode').textContent=u?u.refCode:'—�
 function updateAdButton(){const b=$('#adBtn'),u=user();if(!u){b.disabled=false;b.textContent='Смотреть рекламу';return}const left=Math.max(0,45000-(Date.now()-u.lastAd));if(left){b.disabled=true;b.textContent=`Доступно через ${Math.ceil(left/1000)} с`}else{b.disabled=false;b.textContent='Смотреть рекламу'}}
 setInterval(updateAdButton,1000);
 $('#adBtn').onclick=()=>{if(!requireAuth())return;const u=user();if(Date.now()-u.lastAd<45000)return updateAdButton();openModal('adModal');const ads=[['🚀','Ускорь свой ПК','Термопаста нового поколения — минус 12°C под нагрузкой'],['🛰️','Сеть без лагов','Игровой роутер для стабильного соединения'],['⌨️','Нажимай быстрее','Механические переключатели для киберспорта']];const a=ads[Math.floor(Math.random()*ads.length)];$('#adEmoji').textContent=a[0];$('#adHead').textContent=a[1];$('#adText').textContent=a[2];$('#adBar').style.width='0';$('#adClaim').disabled=true;$('#adClaim').textContent='Подождите…';let p=0;const t=setInterval(()=>{p+=4;$('#adBar').style.width=Math.min(100,p)+'%';if(p>=100){clearInterval(t);$('#adClaim').disabled=false;$('#adClaim').textContent='Получить награду'}},200)};
-$('#adClaim').onclick=()=>{const u=user();if(!u)return;const reward=120+Math.floor(Math.random()*181);u.lastAd=Date.now();u.credits+=reward;saveDB();closeModal('adModal');renderHeader();updateAdButton();toast(`За рекламу: +${reward} кр.`,'ok')};
+$('#adClaim').onclick=async()=>{const u=user();if(!u)return;const reward=120+Math.floor(Math.random()*181);const cloud=window.CYBERDROP_CLOUD;let balance=null;if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){balance=await cloud.changeCredits(reward).catch(err=>{console.warn('CYBERDROP ad reward:',err);toast('Не удалось начислить награду в облаке','err');return null});if(balance===null)return}else{balance=Math.max(0,Math.floor(u.credits+reward))}u.credits=Math.floor(Number(balance)||0);u.lastAd=Date.now();saveDB();closeModal('adModal');renderHeader();updateAdButton();toast(`За рекламу: +${reward} кр.`,'ok')};
 $('#copyRef').onclick=async()=>{if(!requireAuth())return;try{await navigator.clipboard.writeText(user().refCode);toast('Реферальный код скопирован','ok')}catch{toast('Код: '+user().refCode)}};
 function applyRef(code){const u=user();if(!u||u.usedRef)return false;code=String(code||'').trim().toUpperCase();const ownerName=Object.keys(db.users).find(n=>n!==currentUser&&db.users[n].refCode===code);if(!ownerName)return false;u.usedRef=true;u.credits+=400;db.users[ownerName].credits+=800;db.users[ownerName].refCount=(db.users[ownerName].refCount||0)+1;db.users[ownerName].refEarned=(db.users[ownerName].refEarned||0)+800;saveDB();renderHeader();renderEarn();toast('Код активирован: +400 кр.','ok');return true}
 $('#applyRef').onclick=()=>{if(!requireAuth())return;if(!applyRef($('#refInput').value))toast('Код не найден или уже использован','err')};
@@ -1129,7 +1174,7 @@ $('#applyRef').onclick=()=>{if(!requireAuth())return;if(!applyRef($('#refInput')
 function renderGameGrid(){$('#gameGrid').innerHTML=Array.from({length:9},(_,i)=>`<button class="chip ${i===hotChip?'hot':''}" data-chip="${i}">${i===hotChip?'⚡':'·'}</button>`).join('');$$('[data-chip]').forEach(b=>b.onclick=()=>hitChip(+b.dataset.chip))}
 function moveHot(){hotChip=Math.floor(Math.random()*9);renderGameGrid()}
 function hitChip(i){if(!gameTimer||i!==hotChip)return;const sc=$('#gameScore');sc.textContent=(+sc.textContent||0)+15;moveHot()}
-$('#gameBtn').onclick=()=>{if(!requireAuth())return;if(gameTimer)return;let left=20;$('#gameArea').classList.add('on');$('#gameTime').textContent=left;$('#gameScore').textContent='0';$('#gameBtn').disabled=true;$('#gameNote').textContent='Кликай по подсвеченному чипу!';moveHot();gameTimer=setInterval(()=>{left--;$('#gameTime').textContent=left;if(left<=0){clearInterval(gameTimer);gameTimer=null;hotChip=-1;renderGameGrid();const score=+$('#gameScore').textContent;addCredits(score);$('#gameBtn').disabled=false;$('#gameNote').textContent=`Игра окончена. Получено ${score} кр.`;toast(`Кибер-кликер: +${score} кр.`,'ok')}else moveHot()},1000)};
+$('#gameBtn').onclick=()=>{if(!requireAuth())return;if(gameTimer)return;let left=20;$('#gameArea').classList.add('on');$('#gameTime').textContent=left;$('#gameScore').textContent='0';$('#gameBtn').disabled=true;$('#gameNote').textContent='Кликай по подсвеченному чипу!';moveHot();gameTimer=setInterval(async()=>{left--;$('#gameTime').textContent=left;if(left<=0){clearInterval(gameTimer);gameTimer=null;hotChip=-1;renderGameGrid();const score=+$('#gameScore').textContent;const ok=await addCredits(score);$('#gameBtn').disabled=false;$('#gameNote').textContent=ok?`Игра окончена. Получено ${score} кр.`:'Игра окончена. Награда не подтверждена.';if(ok)toast(`Кибер-кликер: +${score} кр.`,'ok')}else moveHot()},1000)};
 renderGameGrid();
 
 /* ==================== PROTOCOL HACK ==================== */
@@ -1154,9 +1199,9 @@ function hackClick(v){
   hackState.used.add(v);hackState.index++;tone(420+hackState.index*55,.11,'square',.028);renderHackGrid();
   if(hackState.index===hackState.seq.length){const left=Math.max(1,+$('#hackTime').textContent||1),score=Math.min(180,120+left*4);$('#hackScore').textContent=score;hackFinish(true,`Протокол взломан. Получено ${score} кр.` ,score)}
 }
-function hackFinish(ok,msg,score=0){
+async function hackFinish(ok,msg,score=0){
   if(!hackState||hackState.finished)return;hackState.finished=true;if(hackTimer){clearInterval(hackTimer);hackTimer=null}
-  if(ok){addCredits(score);$('#hackDisplay').textContent='ACCESS';$('#hackDisplay').className='hack-display success';tone(784,.2,'triangle',.05);tone(1046,.24,'triangle',.045,.12);$('#hackNote').textContent=msg;toast(`Взлом протокола: +${score} кр.`,'ok')}
+  if(ok){const credited=await addCredits(score);if(credited){$('#hackDisplay').textContent='ACCESS';$('#hackDisplay').className='hack-display success';tone(784,.2,'triangle',.05);tone(1046,.24,'triangle',.045,.12);$('#hackNote').textContent=msg;toast(`Взлом протокола: +${score} кр.`,'ok')}else{$('#hackDisplay').textContent='ERROR';$('#hackDisplay').className='hack-display fail';$('#hackNote').textContent='Протокол взломан, но награду не удалось подтвердить.';toast('Награда не подтверждена','err')}}
   else{$('#hackDisplay').textContent='LOCKED';$('#hackDisplay').className='hack-display fail';$('#hackScore').textContent='0';$('#hackNote').textContent=msg;tone(170,.18,'sawtooth',.035);tone(100,.25,'sawtooth',.03,.16);toast('Взлом не удался','err')}
   $('#hackBtn').disabled=false;$('#hackBtn').textContent='Новая попытка';renderHackGrid();
   setTimeout(()=>{if(hackState&&hackState.finished){hackState=null;$('#hackBtn').textContent='Начать взлом';$('#hackDisplay').textContent='READY';$('#hackDisplay').className='hack-display ready';$('#hackTime').textContent='18';$('#hackScore').textContent='0';$('#hackNote').textContent='Сначала появятся 5 цифр. Не моргай.';renderHackGrid()}},2200);
@@ -1260,7 +1305,6 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
 
   function sameSnapshot(a, b) {
     if (!a || !b) return false;
-    if (Math.floor(Number(a.credits)||0) !== Math.floor(Number(b.credits)||0)) return false;
     if (!sameBuild(a.build, b.build)) return false;
     if ((a.refCode||null) !== (b.refCode||null)) return false;
     if ((Number(a.refCount)||0) !== (Number(b.refCount)||0)) return false;
@@ -1354,6 +1398,22 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     return u;
   }
 
+  async function changeCredits(amount) {
+    amount = Math.trunc(Number(amount)||0);
+    if (!amount) {
+      var local = user && user();
+      return Math.floor(Number(local && local.credits)||0);
+    }
+    var uid = cloudUser();
+    if (!uid) throw new Error('Облачная сессия не активна.');
+    var res = await client.rpc('change_credits', { p_amount: amount });
+    if (res.error) throw res.error;
+    var balance = Array.isArray(res.data) ? (res.data[0] && (res.data[0].credits ?? res.data[0])) : res.data;
+    balance = Math.floor(Number(balance));
+    if (!Number.isFinite(balance)) throw new Error('Supabase вернул некорректный баланс.');
+    return balance;
+  }
+
   function schedulePush() {
     if (suppressPush || !cloudUser()) return;
     dirty = true;
@@ -1372,7 +1432,6 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     var profile = {
       id: uid,
       username: localUsername(remoteProfile && remoteProfile.username) || uid.slice(0,8),
-      credits: Math.floor(Number(snap.credits)||0),
       ref_code: snap.refCode || remoteProfile.ref_code || null,
       ref_count: Number(snap.refCount)||0,
       ref_earned: Math.floor(Number(snap.refEarned)||0),
@@ -1436,6 +1495,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       for (var attempt = 0; attempt < 4; attempt++) {
         var remote = await readCloudState(uid);
         merged = mergeSnapshots(remote.snapshot, localSnap, base);
+        merged.credits = remote.snapshot.credits;
         saved = await writeCloudState(uid, merged, remote.profile);
 
         // Verify what is actually in Supabase. This also makes two open devices
@@ -1553,6 +1613,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     setAuthMode(authMode || 'login');
   });
 
+  window.CYBERDROP_CLOUD.changeCredits = changeCredits;
   window.CYBERDROP_CLOUD.schedulePush = schedulePush;
 
   currentUser = null;
