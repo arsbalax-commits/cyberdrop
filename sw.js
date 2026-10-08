@@ -1,5 +1,4 @@
-const CACHE = 'cyberdrop-v4';
-
+const CACHE = 'cyberdrop-v5';
 const CORE = [
   './',
   './index.html',
@@ -28,12 +27,8 @@ self.addEventListener('activate', function(event) {
       .then(function(keys) {
         return Promise.all(
           keys
-            .filter(function(key) {
-              return key !== CACHE;
-            })
-            .map(function(key) {
-              return caches.delete(key);
-            })
+            .filter(function(key) { return key !== CACHE; })
+            .map(function(key) { return caches.delete(key); })
         );
       })
       .then(function() {
@@ -44,10 +39,8 @@ self.addEventListener('activate', function(event) {
 
 function isLiveAppRequest(req) {
   if (req.mode === 'navigate') return true;
-
   try {
     var url = new URL(req.url);
-
     return (
       url.origin === self.location.origin && (
         /\/index\.html$/i.test(url.pathname) ||
@@ -63,13 +56,9 @@ function isLiveAppRequest(req) {
 function isCloudRequest(req) {
   try {
     var url = new URL(req.url);
-
     // Supabase REST/Auth responses must NEVER be cached by the PWA.
     // Otherwise a GET can return an old profile balance after reload.
-    return (
-      /(^|\.)supabase\.co$/i.test(url.hostname) ||
-      /(^|\.)supabase\.in$/i.test(url.hostname)
-    );
+    return /(^|\.)supabase\.co$/i.test(url.hostname) || /(^|\.)supabase\.in$/i.test(url.hostname);
   } catch (e) {
     return false;
   }
@@ -77,15 +66,12 @@ function isCloudRequest(req) {
 
 self.addEventListener('fetch', function(event) {
   var req = event.request;
-
   if (req.method !== 'GET') return;
 
-  // Cloud API calls are always network-only.
-  // This prevents stale Supabase data from being served by the service worker.
+  // Cloud API calls are always network-only. This is critical for credits,
+  // inventory and auth state: never serve stale Supabase data from the SW cache.
   if (isCloudRequest(req)) {
-    event.respondWith(
-      fetch(req, { cache: 'no-store' })
-    );
+    event.respondWith(fetch(req, { cache: 'no-store' }));
     return;
   }
 
@@ -95,46 +81,28 @@ self.addEventListener('fetch', function(event) {
       fetch(req, { cache: 'no-store' })
         .then(function(res) {
           var copy = res.clone();
-
           caches.open(CACHE)
-            .then(function(cache) {
-              return cache.put(req, copy);
-            })
+            .then(function(cache) { return cache.put(req, copy); })
             .catch(function() {});
-
           return res;
         })
         .catch(function() {
           return caches.match(req).then(function(cached) {
             if (cached) return cached;
-
-            if (req.mode === 'navigate') {
-              return caches.match('./index.html');
-            }
-
-            return new Response('', {
-              status: 503,
-              statusText: 'Offline'
-            });
+            if (req.mode === 'navigate') return caches.match('./index.html');
+            return new Response('', { status: 503, statusText: 'Offline' });
           });
         })
     );
-
     return;
   }
 
   // Same-origin static assets can use cache-first for fast/offline startup.
   // Other cross-origin GETs are network-only and are not stored in our cache.
   var sameOrigin = false;
-
-  try {
-    sameOrigin = new URL(req.url).origin === self.location.origin;
-  } catch (e) {}
-
+  try { sameOrigin = new URL(req.url).origin === self.location.origin; } catch (e) {}
   if (!sameOrigin) {
-    event.respondWith(
-      fetch(req, { cache: 'no-store' })
-    );
+    event.respondWith(fetch(req, { cache: 'no-store' }));
     return;
   }
 
@@ -142,24 +110,16 @@ self.addEventListener('fetch', function(event) {
     caches.match(req)
       .then(function(cached) {
         if (cached) return cached;
-
         return fetch(req)
           .then(function(res) {
             var copy = res.clone();
-
             caches.open(CACHE)
-              .then(function(cache) {
-                return cache.put(req, copy);
-              })
+              .then(function(cache) { return cache.put(req, copy); })
               .catch(function() {});
-
             return res;
           })
           .catch(function() {
-            return new Response('', {
-              status: 503,
-              statusText: 'Offline'
-            });
+            return new Response('', { status: 503, statusText: 'Offline' });
           });
       })
   );

@@ -987,6 +987,7 @@ const SAFE_STORE={
 };
 let db=loadDB();
 let currentUser=db.current&&db.users[db.current]?db.current:null;
+let cloudAuthReady=false;
 let authMode='login',activeCase=null,spinning=false,gameTimer=null,hotChip=-1,caseTimer=null,hackTimer=null,hackState=null;
 const LEGACY_MAP={
   ssd_a400:'sata240',ssd_green240:'sata240',ssd_lexar256:'sata256',ssd_nv2_500:'nvme500',ssd_nv2_1t:'nvme1t',ssd_p3_1t:'nvme1t_fast',ssd_980_1t:'nvme1t_fast',ssd_sn770:'nvme1t_fast',ssd_990_1t:'nvme1t_pro',ssd_sn850x:'nvme2t',ssd_t700:'nvme2t_gen5',
@@ -1045,7 +1046,7 @@ function requireAuth(){
  }catch(_){}
  openModal('authModal');return false
 }
-function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();currentUser=null;db.current=null;saveDB();renderAll();toast('Вы вышли из аккаунта')})}
+function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn" type="button">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();if(typeof window.logoutAccount==='function')window.logoutAccount();else{currentUser=null;db.current=null;saveDB(false);renderAll();}})}
 function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));const target=$('#tab-'+tab);if(!target)return;target.classList.add('active');if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn();if(tab==='profile')renderProfile()}
 $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
@@ -1275,7 +1276,7 @@ function buildIssues(){const u=user();if(!u)return[];const b=u.build,issues=[],c
 function buildStats(){const u=user();if(!u)return null;const b=u.build,cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],ssd=ITEM_MAP[b.ssd],cool=ITEM_MAP[b.cool],pcCase=ITEM_MAP[b.pc_case];const cpuTemp=cpuTemperature(cpu,cool),gpuTemp=gpuTemperature(gpu,pcCase),cpuFactor=thermalFactor(cpuTemp,'cpu'),gpuFactor=thermalFactor(gpuTemp,'gpu');const cpuPts=cpu?logScore(cpu.price,650,92000,4,28):0;const gpuPts=gpu?logScore(gpu.price,2200,195000,5,42):0;const mbPts=mb?logScore(mb.price,700,30000,2,10)+(mb.mem==='ddr5'?.8:0)+(mbSupportsNvme(mb)?.5:0):0;const ramEff=ram?Math.max(2,(Number(ram.capacity)||2)*(ram.type==='ddr5'?1.25:ram.type==='ddr4'?1:.8)):0;const ramPts=ram?logScore(ramEff,2,320,1.5,9):0;const ssdEff=ssd?storageCapacity(ssd)*(ssd.form==='nvme'?1.18:1):0;const ssdPts=ssd?logScore(ssdEff,128,2400,1.5,8):0;const complete=!!(cpu&&mb&&ram&&gpu&&ssd&&cool&&pcCase&&psu),compatible=!buildIssues().length;const raw=cpuPts+gpuPts+mbPts+ramPts+ssdPts;const multiplier=cpuFactor*gpuFactor;const income=complete&&compatible?Math.max(10,Math.floor(raw*1.35*multiplier)):0;return{cpu,gpu,mb,ram,ssd,cool,pcCase,cpuTemp,gpuTemp,cpuFactor,gpuFactor,multiplier,income,cpuPts,gpuPts,mbPts,ramPts,ssdPts,complete,compatible,raw}}
 function buildIncome(){const stats=buildStats();return stats?stats.income:0}
 function renderBuild(){
- const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML='<div class="item">Статус<b class="err">Нужен вход</b></div>';$('#buildGrid').innerHTML='';$('#buildIncome').innerHTML='';return}
+ const u=user();if(!u){$('#buildIncompat').innerHTML='';$('#buildStatus').innerHTML=`<div class="item">Статус<b class="${cloudAuthReady?'err':'ok'}">${cloudAuthReady?'Нужен вход':'Синхронизация…'}</b></div>`;$('#buildGrid').innerHTML='';$('#buildIncome').innerHTML='';return}
  const issues=buildIssues(),filled=SLOTS.filter(([s])=>u.build[s]).length,income=buildIncome(),st=buildStats();
  $('#buildIncompat').innerHTML=issues.length?`<div class="incompat"><b>Есть проблемы совместимости:</b><ul>${issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
  $('#buildStatus').innerHTML=`<div class="item">Компонентов<b>${filled}/${SLOTS.length}</b></div><div class="item">Совместимость<b class="${issues.length?'err':'ok'}">${issues.length?'Ошибка':'ОК'}</b></div><div class="item">Доход/мин<b class="${income?'ok':''}">${fmt(income)} кр.</b></div>`;
@@ -1469,9 +1470,52 @@ $('#socketBtn').onclick=socketStart;
 
 
 /* ==================== AUTH ==================== */
-function setAuthMode(mode){authMode=mode;$$('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.authTab===mode));$('#refField').classList.toggle('hidden',mode!=='reg');$('#authSubmit').textContent=mode==='login'?'Войти':'Создать аккаунт';$('#authErr').textContent=''}
+function setAuthMode(mode){
+  authMode=mode;
+  $$('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.authTab===mode));
+  $('#refField').classList.toggle('hidden',mode!=='reg');
+  $('#authSubmit').textContent=mode==='login'?'Войти':'Создать аккаунт';
+  $('#authErr').textContent='';
+  const nameLabel=$('#authNameLabel'),nameEl=$('#authName'),emailWrap=$('#authEmailWrap'),emailEl=$('#authEmail'),passEl=$('#authPass');
+  if(window.CYBERDROP_CLOUD&&window.CYBERDROP_CLOUD.enabled){
+    if(mode==='login'){
+      nameLabel.textContent='Email';nameEl.type='email';nameEl.placeholder='you@example.com';nameEl.autocomplete='email';
+      emailWrap.classList.add('hidden');emailEl.value='';passEl.autocomplete='current-password';
+    }else{
+      nameLabel.textContent='Логин';nameEl.type='text';nameEl.placeholder='Ваш никнейм';nameEl.autocomplete='username';
+      emailWrap.classList.remove('hidden');emailEl.value='';passEl.autocomplete='new-password';
+    }
+  }else{
+    nameLabel.textContent='Логин';nameEl.type='text';nameEl.placeholder='Минимум 3 символа';nameEl.autocomplete='username';
+    emailWrap.classList.add('hidden');
+  }
+}
 $$('.auth-tab').forEach(b=>b.onclick=()=>setAuthMode(b.dataset.authTab));
-$('#authForm').addEventListener('submit',e=>{e.preventDefault();const name=$('#authName').value.trim(),pass=$('#authPass').value,err=$('#authErr');err.textContent='';if(name.length<3)return err.textContent='Логин должен содержать минимум 3 символа.';if(pass.length<4)return err.textContent='Пароль должен содержать минимум 4 символа.';if(authMode==='reg'){if(db.users[name])return err.textContent='Такой логин уже существует.';db.users[name]=newUser(name,pass);currentUser=name;saveDB();const ref=$('#authRef').value.trim();if(ref)applyRef(ref);closeModal('authModal');renderAll();toast('Аккаунт создан. Начислено 2000 кредитов!','ok')}else{if(!db.users[name]||db.users[name].pass!==pass)return err.textContent='Неверный логин или пароль.';currentUser=name;saveDB();closeModal('authModal');renderAll();toast('Вход выполнен','ok')}});
+
+async function localAuthSubmit(){
+  const name=$('#authName').value.trim(),pass=$('#authPass').value,err=$('#authErr');
+  err.textContent='';
+  if(name.length<3)return err.textContent='Логин должен содержать минимум 3 символа.';
+  if(pass.length<4)return err.textContent='Пароль должен содержать минимум 4 символа.';
+  if(authMode==='reg'){
+    if(db.users[name])return err.textContent='Такой логин уже существует.';
+    db.users[name]=newUser(name,pass);currentUser=name;saveDB();
+    const ref=$('#authRef').value.trim();if(ref)applyRef(ref);
+    closeModal('authModal');renderAll();toast('Аккаунт создан. Начислено 2000 кредитов!','ok');return;
+  }
+  if(!db.users[name]||db.users[name].pass!==pass)return err.textContent='Неверный логин или пароль.';
+  currentUser=name;saveDB();closeModal('authModal');renderAll();toast('Вход выполнен','ok');
+}
+
+$('#authForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const cloud=window.CYBERDROP_CLOUD;
+  if(cloud&&cloud.enabled&&typeof cloud.authSubmit==='function'){
+    await cloud.authSubmit();
+  }else{
+    await localAuthSubmit();
+  }
+});
 
 /* ==================== BADGES / INIT ==================== */
 function renderBadges(){const u=user(),cnt=u?Object.values(u.inventory).reduce((a,b)=>a+b,0):0;$('#invBadge').textContent=cnt;$('#invBadge').style.display=cnt?'inline-block':'none';const issues=u?buildIssues().length:0;$('#buildBadge').style.display=issues?'inline-block':'none'}
@@ -1502,17 +1546,23 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   var lastServerUpdatedAt = null;
   var lastSyncedSnapshot = null;
   var pollingTimer = null;
+  var explicitAuthSync = false;
+  var authBusy = false;
 
   window.CYBERDROP_CLOUD = {
     enabled: ready,
     configured: ready,
     client: null,
     userId: null,
-    status: ready ? 'ready' : 'local'
+    status: ready ? 'ready' : 'local',
+    authSubmit: null
   };
 
   if (!ready) {
+    cloudAuthReady = true;
+    window.CYBERDROP_CLOUD.status = 'local';
     console.info('CYBERDROP: Supabase is not configured; local mode is active.');
+    if (typeof window.renderAll === 'function') window.renderAll();
     return;
   }
 
@@ -1524,6 +1574,9 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   } catch (err) {
     console.error('CYBERDROP Supabase init failed:', err);
     window.CYBERDROP_CLOUD.enabled = false;
+    window.CYBERDROP_CLOUD.status = 'init-error';
+    cloudAuthReady = true;
+    if (typeof window.renderAll === 'function') window.renderAll();
     return;
   }
 
@@ -1531,6 +1584,11 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   function copy(obj) { return JSON.parse(JSON.stringify(obj)); }
   function localUsername(fallback) {
     return (typeof currentUser !== 'undefined' && currentUser) || fallback || 'player';
+  }
+  function setAuthBusy(busy){
+    authBusy=!!busy;
+    var b=document.querySelector('#authSubmit');
+    if(b){b.disabled=!!busy;b.textContent=busy?'Подождите…':(authMode==='login'?'Войти':'Создать аккаунт');}
   }
 
   function snapshotUser(u) {
@@ -1587,7 +1645,6 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       Math.floor(Number(remote.credits) || 0) +
       (Math.floor(Number(local.credits) || 0) - Math.floor(Number(base.credits) || 0))
     );
-
     var ids = {};
     Object.keys(remote.inventory || {}).forEach(function(id){ ids[id] = true; });
     Object.keys(local.inventory || {}).forEach(function(id){ ids[id] = true; });
@@ -1598,7 +1655,6 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       var q = Math.floor(Number(remote.inventory[id]) || 0) + delta;
       if (q > 0) merged.inventory[id] = q;
     });
-
     merged.build = sameBuild(local.build, base.build) ? copy(remote.build) : copy(local.build);
     merged.refCode = local.refCode === base.refCode ? remote.refCode : local.refCode;
     merged.refCount = Math.max(0, (Number(remote.refCount)||0) + ((Number(local.refCount)||0) - (Number(base.refCount)||0)));
@@ -1609,18 +1665,30 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     return merged;
   }
 
-  async function readCloudState(uid) {
+  async function ensureProfile(uid, authUser) {
+    var existing = await client.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (existing.error) throw existing.error;
+    if (existing.data) return existing.data;
+    var email = authUser && authUser.email ? authUser.email : '';
+    var username = (authUser && authUser.user_metadata && authUser.user_metadata.username) || (email ? email.split('@')[0] : 'player');
+    var refCode = (authUser && authUser.user_metadata && authUser.user_metadata.ref_code) || null;
+    var payload = {id:uid, username:username, credits:2000, ref_code:refCode, ref_count:0, ref_earned:0, used_ref:false, last_ad:null, last_income:null};
+    var ins = await client.from('profiles').upsert(payload, {onConflict:'id'}).select('*').single();
+    if (ins.error) throw ins.error;
+    return ins.data;
+  }
+
+  async function readCloudState(uid, authUser) {
+    var profileRes = await client.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (profileRes.error) throw profileRes.error;
+    var p = profileRes.data || await ensureProfile(uid, authUser);
     var results = await Promise.all([
-      client.from('profiles').select('*').eq('id', uid).single(),
       client.from('inventory').select('item_id,quantity').eq('user_id', uid),
       client.from('builds').select('*').eq('user_id', uid).maybeSingle()
     ]);
-    var pr = results[0], ir = results[1], br = results[2];
-    if (pr.error) throw pr.error;
+    var ir = results[0], br = results[1];
     if (ir.error) throw ir.error;
     if (br.error) throw br.error;
-
-    var p = pr.data;
     var snap = {
       credits: Number(p.credits)||0,
       inventory: {},
@@ -1645,7 +1713,7 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
   }
 
   function applySnapshotToLocal(snap, authUser, username) {
-    var uname = localUsername(username || ((authUser && authUser.email) ? authUser.email.split('@')[0] : 'player'));
+    var uname = username || ((authUser && authUser.user_metadata && authUser.user_metadata.username) || ((authUser && authUser.email) ? authUser.email.split('@')[0] : 'player'));
     var u = copy(snap);
     u.pass = '';
     u.cloudId = authUser && authUser.id ? authUser.id : cloudUser();
@@ -1699,23 +1767,13 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       last_ad: snap.lastAd ? new Date(snap.lastAd).toISOString() : null,
       last_income: snap.lastIncome ? new Date(snap.lastIncome).toISOString() : null
     };
-
-    // Important: the previous version used an exact updated_at condition here.
-    // On some Supabase/RLS configurations that can return 0 rows and silently
-    // leave the reward only in local storage. We now merge from a fresh server
-    // snapshot before every write and verify the result afterwards.
-    var pu = await client.from('profiles')
-      .update(profile)
-      .eq('id', uid)
-      .select('updated_at')
-      .single();
+    var pu = await client.from('profiles').update(profile).eq('id', uid).select('updated_at').single();
     if (pu.error) throw pu.error;
 
     var currentInv = await client.from('inventory').select('item_id,quantity').eq('user_id', uid);
     if (currentInv.error) throw currentInv.error;
     var remoteIds = {};
     (currentInv.data||[]).forEach(function(row){ remoteIds[row.item_id]=true; });
-
     var rows = Object.keys(snap.inventory || {}).map(function(id){
       return {user_id:uid,item_id:id,quantity:Math.floor(Number(snap.inventory[id])||0)};
     });
@@ -1723,14 +1781,11 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       var ins = await client.from('inventory').upsert(rows, {onConflict:'user_id,item_id'});
       if (ins.error) throw ins.error;
     }
-    var toDelete = Object.keys(remoteIds).filter(function(id){
-      return !Object.prototype.hasOwnProperty.call(snap.inventory || {}, id);
-    });
+    var toDelete = Object.keys(remoteIds).filter(function(id){ return !Object.prototype.hasOwnProperty.call(snap.inventory || {}, id); });
     if (toDelete.length) {
       var del = await client.from('inventory').delete().eq('user_id',uid).in('item_id',toDelete);
       if (del.error) throw del.error;
     }
-
     var b = snap.build || {};
     var br = await client.from('builds').upsert({
       user_id: uid, cpu: b.cpu || null, mb: b.mb || null, ram: b.ram || null,
@@ -1751,27 +1806,20 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
       var base = lastSyncedSnapshot ? copy(lastSyncedSnapshot) : copy(localSnap);
       var merged = null;
       var saved = null;
-
       for (var attempt = 0; attempt < 4; attempt++) {
-        var remote = await readCloudState(uid);
+        var remote = await readCloudState(uid, {id:uid,email:u.email});
         merged = mergeSnapshots(remote.snapshot, localSnap, base);
         merged.credits = remote.snapshot.credits;
         saved = await writeCloudState(uid, merged, remote.profile);
-
-        // Verify what is actually in Supabase. This also makes two open devices
-        // converge without relying on the fragile updated_at equality check.
-        var verify = await readCloudState(uid);
+        var verify = await readCloudState(uid, {id:uid,email:u.email});
         if (sameSnapshot(verify.snapshot, merged)) {
           merged = verify.snapshot;
           saved = verify.profile.updated_at || saved;
           break;
         }
-        if (attempt === 3) {
-          throw new Error('Не удалось подтвердить запись данных в облако.');
-        }
+        if (attempt === 3) throw new Error('Не удалось подтвердить запись данных в облако.');
       }
-
-      applySnapshotToLocal(merged, {id:uid,email:u.email}, localUsername(merged.username || null));
+      applySnapshotToLocal(merged, {id:uid,email:u.email}, localUsername((merged.username || null)));
       lastSyncedSnapshot = snapshotUser(user());
       lastServerUpdatedAt = saved || null;
       dirty = false;
@@ -1786,14 +1834,15 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     suppressPush = true;
     try {
       window.CYBERDROP_CLOUD.userId = authUser.id;
-      var cloud = await readCloudState(authUser.id);
-      var uname = cloud.profile.username || ((authUser.email||'player').split('@')[0]);
+      var cloud = await readCloudState(authUser.id, authUser);
+      var uname = cloud.profile.username || ((authUser.user_metadata && authUser.user_metadata.username) || ((authUser.email||'player').split('@')[0]));
       var u = applySnapshotToLocal(cloud.snapshot, authUser, uname);
       lastSyncedSnapshot = snapshotUser(u);
       lastServerUpdatedAt = cloud.profile.updated_at || null;
       dirty = false;
-      window.renderAll();
       window.CYBERDROP_CLOUD.status = 'synced';
+      window.renderAll();
+      return true;
     } finally {
       suppressPush = false;
     }
@@ -1806,145 +1855,123 @@ try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.
     console.error('CYBERDROP cloud auth:', err);
   }
 
-  async function cloudAuthSubmit(e) {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    var nameEl = document.querySelector('#authName');
-    var emailEl = document.querySelector('#authEmail');
-    var passEl = document.querySelector('#authPass');
-    var refEl = document.querySelector('#authRef');
-    var errEl = document.querySelector('#authErr');
-    if (!nameEl || !passEl || !errEl) return;
-    errEl.textContent = '';
-    var username = nameEl.value.trim();
-    var email = (emailEl && emailEl.value.trim()) ? emailEl.value.trim() : username;
-    var pass = passEl.value;
-    if (authMode === 'reg') {
-      if (username.length < 3) { errEl.textContent = 'Логин должен содержать минимум 3 символа.'; return; }
-      if (!email || !email.includes('@')) { errEl.textContent = 'Укажите корректный email.'; return; }
-      if (pass.length < 6) { errEl.textContent = 'Пароль должен содержать минимум 6 символов.'; return; }
-      var sign = await client.auth.signUp({ email: email, password: pass, options: { data: { username: username, ref_code: refEl ? refEl.value.trim() : '' } } });
-      if (sign.error) { showCloudError(sign.error); return; }
-      if (!sign.data.session) {
-        errEl.textContent = 'Регистрация создана. Проверьте почту и подтвердите email, затем войдите.';
-        return;
+  async function cloudAuthSubmit() {
+    if(authBusy)return;
+    var nameEl=document.querySelector('#authName'), emailEl=document.querySelector('#authEmail'), passEl=document.querySelector('#authPass'), refEl=document.querySelector('#authRef'), errEl=document.querySelector('#authErr');
+    if(!nameEl||!passEl||!errEl)return;
+    errEl.textContent='';
+    var username=nameEl.value.trim();
+    var email=(authMode==='login'?username:(emailEl&&emailEl.value.trim())||'');
+    var pass=passEl.value;
+    if(authMode==='reg'){
+      if(username.length<3){errEl.textContent='Логин должен содержать минимум 3 символа.';return;}
+      if(!email||!email.includes('@')){errEl.textContent='Укажите корректный email.';return;}
+      if(pass.length<6){errEl.textContent='Пароль должен содержать минимум 6 символов.';return;}
+    }else{
+      if(!email||!email.includes('@')){errEl.textContent='Укажите email аккаунта.';return;}
+      if(pass.length<6){errEl.textContent='Пароль должен содержать минимум 6 символов.';return;}
+    }
+    setAuthBusy(true);
+    explicitAuthSync=true;
+    try{
+      if(authMode==='reg'){
+        var sign=await client.auth.signUp({email:email,password:pass,options:{data:{username:username,ref_code:refEl?refEl.value.trim():''}}});
+        if(sign.error)throw sign.error;
+        if(!sign.data||!sign.data.user){throw new Error('Supabase не вернул пользователя после регистрации.');}
+        if(!sign.data.session){errEl.textContent='Регистрация создана. Подтвердите email по письму, затем войдите.';return;}
+        await pullState(sign.data.user);
+        closeModal('authModal');
+        renderAll();
+        toast('Аккаунт создан и сохранён в облаке!','ok');
+      }else{
+        var login=await client.auth.signInWithPassword({email:email,password:pass});
+        if(login.error)throw login.error;
+        if(!login.data||!login.data.user)throw new Error('Supabase не вернул пользователя после входа.');
+        await pullState(login.data.user);
+        closeModal('authModal');
+        renderAll();
+        toast('Вход выполнен. Данные синхронизированы.','ok');
       }
-      await pullState(sign.data.user);
-      window.closeModal('authModal');
-      window.renderAll();
-      window.toast('Аккаунт создан и сохранён в облаке!','ok');
-    } else {
-      if (!email || !email.includes('@')) { errEl.textContent = 'Укажите email аккаунта.'; return; }
-      if (pass.length < 6) { errEl.textContent = 'Пароль должен содержать минимум 6 символов.'; return; }
-      var login = await client.auth.signInWithPassword({ email: email, password: pass });
-      if (login.error) { showCloudError(login.error); return; }
-      await pullState(login.data.user);
-      window.closeModal('authModal');
-      window.renderAll();
-      window.toast('Вход выполнен. Данные синхронизированы.','ok');
+    }catch(err){
+      window.CYBERDROP_CLOUD.status='auth-error';
+      showCloudError(err);
+    }finally{
+      explicitAuthSync=false;
+      setAuthBusy(false);
     }
   }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var emailWrap = document.querySelector('#authEmailWrap');
-    var nameLabel = document.querySelector('#authNameLabel');
-    var nameEl = document.querySelector('#authName');
-    var form = document.querySelector('#authForm');
-    if (form) form.addEventListener('submit', cloudAuthSubmit, true);
-
-    window.setAuthMode = function (mode) {
-      authMode = mode;
-      Array.prototype.forEach.call(document.querySelectorAll('.auth-tab'), function (x) { x.classList.toggle('active', x.dataset.authTab === mode); });
-      var ref = document.querySelector('#refField');
-      if (ref) ref.classList.toggle('hidden', mode !== 'reg');
-      var submit = document.querySelector('#authSubmit');
-      if (submit) submit.textContent = mode === 'login' ? 'Войти' : 'Создать аккаунт';
-      if (document.querySelector('#authErr')) document.querySelector('#authErr').textContent = '';
-      if (ready) {
-        if (emailWrap) emailWrap.classList.remove('hidden');
-        if (nameLabel) nameLabel.textContent = mode === 'reg' ? 'Логин' : 'Email';
-        if (nameEl) { nameEl.placeholder = mode === 'reg' ? 'Ваш никнейм' : 'you@example.com'; nameEl.type = mode === 'reg' ? 'text' : 'email'; }
-        if (emailWrap && mode === 'login') emailWrap.classList.add('hidden');
-      }
-    };
-    Array.prototype.forEach.call(document.querySelectorAll('.auth-tab'), function (b) {
-      b.onclick = function () { window.setAuthMode(b.dataset.authTab); };
-    });
-    setAuthMode(authMode || 'login');
-  });
 
   window.CYBERDROP_CLOUD.changeCredits = changeCredits;
   window.CYBERDROP_CLOUD.schedulePush = schedulePush;
+  window.CYBERDROP_CLOUD.authSubmit = cloudAuthSubmit;
 
-  // Не сбрасываем локального пользователя до восстановления Supabase-сессии.
-  // Иначе renderBuild() успевает увидеть currentUser=null и показывает «Нужен вход»,
-  // даже когда сессия уже существует.
+  window.logoutAccount = async function(){
+    if(authBusy)return;
+    try{
+      if(client && window.CYBERDROP_CLOUD.userId){
+        await client.auth.signOut();
+      }
+    }catch(err){showCloudError(err);return;}
+    window.CYBERDROP_CLOUD.userId=null;
+    window.CYBERDROP_CLOUD.status='signed-out';
+    currentUser=null;db.current=null;dirty=false;lastServerUpdatedAt=null;lastSyncedSnapshot=null;
+    SAFE_STORE.set(DBKEY,JSON.stringify(db));
+    window.renderAll();
+    toast('Вы вышли из аккаунта','ok');
+  };
+
+  // Apply the current form layout immediately; no DOMContentLoaded race.
+  setAuthMode(authMode || 'login');
   window.renderAll();
 
-  client.auth.getSession().then(async function (res) {
-    if (res.error) throw res.error;
-    if (res.data && res.data.session && res.data.session.user) {
-      await pullState(res.data.session.user);
-    } else {
-      window.CYBERDROP_CLOUD.userId = null;
-      window.CYBERDROP_CLOUD.status = 'signed-out';
-      currentUser = null;
-      db.current = null;
-      SAFE_STORE.set(DBKEY, JSON.stringify(db));
-      window.renderAll();
+  client.auth.getSession().then(async function(res){
+    if(res.error)throw res.error;
+    if(res.data&&res.data.session&&res.data.session.user){
+      explicitAuthSync=true;
+      try{await pullState(res.data.session.user);}finally{explicitAuthSync=false;}
+    }else{
+      window.CYBERDROP_CLOUD.userId=null;
+      window.CYBERDROP_CLOUD.status='signed-out';
+      currentUser=null;db.current=null;SAFE_STORE.set(DBKEY,JSON.stringify(db));
     }
-  }).catch(function (err) {
-    console.warn('CYBERDROP session restore:', err);
-    window.CYBERDROP_CLOUD.status = 'auth-error';
-    // Локальную сессию не уничтожаем при временной ошибке сети.
+  }).catch(function(err){
+    console.warn('CYBERDROP session restore:',err);
+    window.CYBERDROP_CLOUD.status='auth-error';
+  }).finally(function(){
+    cloudAuthReady=true;
     window.renderAll();
   });
 
-  client.auth.onAuthStateChange(function (event, session) {
-    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-      if (session && session.user && !syncing) {
-        pullState(session.user).catch(function (err) { console.warn('CYBERDROP auth sync:', err); });
+  client.auth.onAuthStateChange(function(event,session){
+    if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED'){
+      if(session&&session.user&&!syncing&&!explicitAuthSync){
+        setTimeout(function(){pullState(session.user).catch(function(err){console.warn('CYBERDROP auth sync:',err);});},0);
       }
       return;
     }
-    if (event === 'SIGNED_OUT') {
-      window.CYBERDROP_CLOUD.userId = null;
-      currentUser = null;
-      db.current = null;
-      dirty = false;
-      lastServerUpdatedAt = null;
-      lastSyncedSnapshot = null;
-      SAFE_STORE.set(DBKEY, JSON.stringify(db));
+    if(event==='SIGNED_OUT'){
+      window.CYBERDROP_CLOUD.userId=null;
+      currentUser=null;db.current=null;dirty=false;lastServerUpdatedAt=null;lastSyncedSnapshot=null;
+      SAFE_STORE.set(DBKEY,JSON.stringify(db));
       window.renderAll();
     }
   });
 
-  async function pollRemoteState() {
-    if (!cloudUser() || syncing || dirty || document.visibilityState !== 'visible') return;
-    try {
-      var uid = cloudUser();
-      var res = await client.from('profiles').select('updated_at').eq('id', uid).maybeSingle();
-      if (res.error || !res.data || !res.data.updated_at) return;
-      if (!lastServerUpdatedAt) { lastServerUpdatedAt = res.data.updated_at; return; }
-      if (String(res.data.updated_at) !== String(lastServerUpdatedAt)) {
-        await pullState({ id: uid, email: (user() && user().email) || '' });
-      }
-    } catch (err) {
-      console.warn('CYBERDROP remote sync:', err);
-    }
+  async function pollRemoteState(){
+    if(!cloudUser()||syncing||dirty||document.visibilityState!=='visible')return;
+    try{
+      var uid=cloudUser();
+      var res=await client.from('profiles').select('updated_at').eq('id',uid).maybeSingle();
+      if(res.error||!res.data||!res.data.updated_at)return;
+      if(!lastServerUpdatedAt){lastServerUpdatedAt=res.data.updated_at;return;}
+      if(String(res.data.updated_at)!==String(lastServerUpdatedAt))await pullState({id:uid,email:(user()&&user().email)||''});
+    }catch(err){console.warn('CYBERDROP remote sync:',err);}
   }
-  pollingTimer = setInterval(pollRemoteState, 2000);
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') pollRemoteState(); });
-
-  document.addEventListener('click', function (e) {
-    var btn = e.target.closest ? e.target.closest('#logoutBtn') : null;
-    if (btn && window.CYBERDROP_CLOUD.enabled) {
-      e.preventDefault();
-      client.auth.signOut().then(function () { window.toast('Вы вышли из аккаунта','ok'); }).catch(showCloudError);
-    }
-  }, true);
+  pollingTimer=setInterval(pollRemoteState,2000);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')pollRemoteState();});
 })();
 </script>
+
 
 </body>
 </html>
