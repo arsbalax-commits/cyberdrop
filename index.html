@@ -1233,7 +1233,7 @@ async function startCase(id){
      addItem(win.id);$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
      $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
      $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
-     $('#sellWinBtn').onclick=async()=>{if(takeItem(win.id)){const ok=await addCredits(win.price);if(ok){closeModal('caseModal');renderInventory();toast('Предмет продан','ok')}}};
+     $('#sellWinBtn').onclick=async()=>{if(sellLocks.has(win.id))return;sellLocks.add(win.id);const btn=$('#sellWinBtn');if(btn){btn.disabled=true;btn.textContent='Продажа…'}if(takeItem(win.id)){renderInventory();renderBadges();const ok=await addCredits(win.price);if(ok){closeModal('caseModal');toast('Предмет продан','ok')}else{addItem(win.id,1);toast('Продажа отменена: не удалось изменить баланс','err')}}sellLocks.delete(win.id)};
      spinning=false;renderBadges();
    }));
  };
@@ -1248,14 +1248,60 @@ async function startCase(id){
  setTimeout(finalize,totalMs+160);
 }
 /* ==================== INVENTORY ==================== */
+const sellLocks=new Set();
+let sellAllBusy=false;
 function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inventory).filter(([,n])=>n>0).map(([id,n])=>[ITEM_MAP[id],n]).filter(([it])=>it)}
 function renderInventory(){
  const u=user();if(!u){$('#invCount').textContent='0';$('#invValue').textContent='0';$('#invGrid').innerHTML='<div class="inv-empty"><span class="big">🔒</span>Войдите, чтобы увидеть инвентарь.</div>';return}
  const e=invEntries(),count=e.reduce((s,[,n])=>s+n,0),value=e.reduce((s,[it,n])=>s+it.price*n,0);$('#invCount').textContent=count;$('#invValue').textContent=fmt(value);
- $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}">Продать</button></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
- $$('[data-sell]').forEach(b=>b.onclick=()=>{const it=ITEM_MAP[b.dataset.sell];if(takeItem(it.id)){addCredits(it.price);renderInventory();renderBadges();toast(`Продано: ${it.name}`,'ok')}});
+ $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card" style="--rc:${RARITIES[it.rar].color}">${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}" ${sellLocks.has(it.id)?'disabled':''}>${sellLocks.has(it.id)?'Продажа…':'Продать'}</button></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
+ $$('[data-sell]').forEach(b=>b.onclick=async()=>{
+   const id=b.dataset.sell,it=ITEM_MAP[id];
+   if(!it||sellLocks.has(id))return;
+   sellLocks.add(id);
+   b.disabled=true;b.textContent='Продажа…';
+   if(!takeItem(id)){
+     sellLocks.delete(id);
+     renderInventory();
+     return;
+   }
+   // Убираем предмет из интерфейса сразу, до завершения сетевого запроса.
+   renderInventory();renderBadges();
+   const ok=await addCredits(it.price);
+   if(ok){
+     toast(`Продано: ${it.name}`,'ok');
+   }else{
+     // Транзакция не прошла — возвращаем ровно одну проданную единицу.
+     addItem(id,1);
+     toast(`Продажа отменена: ${it.name}`,'err');
+   }
+   sellLocks.delete(id);
+   renderInventory();renderBadges();
+ });
 }
-$('#sellAllBtn').addEventListener('click',()=>{if(!requireAuth())return;const e=invEntries();if(!e.length)return toast('Инвентарь пуст');const sum=e.reduce((s,[it,n])=>s+it.price*n,0);user().inventory={};addCredits(sum);saveDB();renderInventory();renderBadges();toast(`Продано на ${fmt(sum)} кр.`,'ok')});
+$('#sellAllBtn').addEventListener('click',async()=>{
+ if(sellAllBusy)return;
+ if(!requireAuth())return;
+ const u=user(),e=invEntries();
+ if(!u||!e.length)return toast('Инвентарь пуст');
+ const sum=e.reduce((s,[it,n])=>s+it.price*n,0);
+ const backup={...u.inventory};
+ sellAllBusy=true;
+ $('#sellAllBtn').disabled=true;$('#sellAllBtn').textContent='Продажа…';
+ // Очищаем инвентарь немедленно, чтобы повторное нажатие не запустило вторую продажу.
+ u.inventory={};
+ saveDB();renderInventory();renderBadges();
+ const ok=await addCredits(sum);
+ if(ok){
+   toast(`Продано на ${fmt(sum)} кр.`,'ok');
+ }else{
+   u.inventory=backup;
+   saveDB();renderInventory();renderBadges();
+   toast('Продажа отменена: не удалось изменить баланс','err');
+ }
+ sellAllBusy=false;
+ $('#sellAllBtn').disabled=false;$('#sellAllBtn').textContent='Продать всё';
+});
 
 /* ==================== BUILD ==================== */
 function socketLabel(s){return ({lga1155:'LGA 1155',lga1200:'LGA 1200',lga1700:'LGA 1700',am3plus:'AM3+',am4:'AM4',am5:'AM5'})[s]||String(s||'').toUpperCase()}
