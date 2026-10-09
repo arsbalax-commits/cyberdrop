@@ -579,6 +579,44 @@ button,.btn,input{touch-action:manipulation}
 @media(max-width:620px){.build-power{grid-template-columns:1fr}.component-detail-row{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}.component-details-title{font-size:12px}}
 
 #bootError{display:none;position:fixed;inset:0;z-index:9999;background:#08090e;color:#e9edf7;place-items:center;padding:24px;text-align:center;font-family:system-ui,sans-serif}body[data-app-error='1'] #bootError{display:grid}
+
+/* ===== PLAYER LEADERBOARDS ===== */
+.leaderboard-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 15px}
+.leaderboard-switch{display:flex;gap:7px;padding:5px;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:14px;max-width:100%;flex-wrap:wrap}
+.rank-tab{padding:11px 15px;border:1px solid transparent;border-radius:10px;color:var(--muted);background:transparent;font-size:13px;font-weight:850;transition:.18s;white-space:nowrap}
+.rank-tab:hover{color:var(--txt);background:rgba(255,255,255,.035)}
+.rank-tab.active{color:#061017;background:linear-gradient(110deg,var(--acc),#72f1ff);box-shadow:0 0 20px rgba(0,229,255,.17)}
+.leaderboard-refresh{min-height:40px;white-space:nowrap}
+.leaderboard-caption{color:var(--muted);font-size:12px;line-height:1.5;margin:0 0 13px}
+.leaderboard-list{display:grid;gap:10px}
+.leaderboard-row{--rank-color:var(--line);position:relative;display:grid;grid-template-columns:54px 46px minmax(0,1fr) auto;align-items:center;gap:13px;padding:14px 17px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(110deg,rgba(255,255,255,.045),rgba(255,255,255,.012));overflow:hidden;min-width:0;transition:border-color .18s,transform .18s}
+.leaderboard-row::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--rank-color);opacity:.85}
+.leaderboard-row:hover{border-color:rgba(0,229,255,.32);transform:translateY(-1px)}
+.leaderboard-row.rank-pos-1{--rank-color:#ffd66b;background:linear-gradient(110deg,rgba(255,214,107,.12),rgba(255,255,255,.018))}
+.leaderboard-row.rank-pos-2{--rank-color:#c6d4e5}
+.leaderboard-row.rank-pos-3{--rank-color:#d99362}
+.leaderboard-row.is-me{box-shadow:inset 0 0 0 1px rgba(198,255,61,.35)}
+.rank-position{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;color:var(--rank-color);font-weight:950}
+.rank-position b{font-size:23px;line-height:1}
+.rank-position small{font-size:9px;letter-spacing:1px;text-transform:uppercase;opacity:.75}
+.rank-avatar{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;border:1px solid color-mix(in srgb,var(--rank-color) 48%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--rank-color) 21%,transparent),rgba(255,255,255,.025));color:var(--rank-color);font-size:18px;font-weight:950;text-transform:uppercase;flex-shrink:0}
+.rank-player{min-width:0;display:flex;flex-direction:column;gap:4px}
+.rank-player strong{font-size:15px;font-weight:900;color:var(--txt);overflow-wrap:anywhere}
+.rank-player small{font-size:11px;color:var(--muted)}
+.rank-you{display:inline-flex;margin-left:7px;padding:3px 6px;border-radius:6px;background:rgba(198,255,61,.13);color:var(--lime);font-size:9px;letter-spacing:.4px;vertical-align:2px}
+.rank-score{text-align:right;min-width:100px;max-width:180px}
+.rank-score b{display:block;color:var(--lime);font-size:clamp(16px,2.3vw,20px);font-weight:950;white-space:nowrap}
+.rank-score small{display:block;margin-top:3px;font-size:10px;color:var(--muted)}
+.leaderboard-state{min-height:190px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:28px 18px;border:1px dashed var(--line);border-radius:18px;text-align:center;color:var(--txt)}
+.leaderboard-state small{font-size:12px;line-height:1.5;color:var(--muted);max-width:440px}
+.leaderboard-state .state-icon{font-size:29px;opacity:.85}
+.rank-loader{width:22px;height:22px;border:2px solid rgba(0,229,255,.2);border-top-color:var(--acc);border-radius:50%;animation:rankSpin .8s linear infinite}
+@keyframes rankSpin{to{transform:rotate(360deg)}}
+.leaderboard-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px;color:var(--muted);font-size:10px}
+.leaderboard-foot span:last-child{margin-left:auto}
+.rank-live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px rgba(198,255,61,.4)}
+@media(max-width:580px){.leaderboard-switch{width:100%;display:grid;grid-template-columns:1fr 1fr}.rank-tab{padding:10px 8px;font-size:11px}.leaderboard-toolbar{align-items:stretch}.leaderboard-refresh{width:100%}.leaderboard-row{grid-template-columns:36px 38px minmax(0,1fr) auto;gap:9px;padding:12px 11px;border-radius:14px}.rank-position b{font-size:20px}.rank-position small{font-size:8px}.rank-avatar{width:36px;height:36px;border-radius:10px;font-size:15px}.rank-player strong{font-size:13px}.rank-player small{font-size:10px}.rank-score{min-width:76px;max-width:120px}.rank-score b{font-size:14px}.rank-score small{font-size:9px}.rank-you{font-size:8px;margin-left:3px}}
+
 </style>
 </head>
 <body>
@@ -593,6 +631,7 @@ button,.btn,input{touch-action:manipulation}
       <button class="nav-btn" data-tab="build">Сборка <span class="badge" id="buildBadge" style="display:none">!</span></button>
       <button class="nav-btn" data-tab="earn">Заработать</button>
       <button class="nav-btn" data-tab="shop">Магазин</button>
+      <button class="nav-btn" data-tab="ranking">Рейтинг</button>
     </nav>
     <div class="header-right">
       <button class="icon-btn theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">☼</button>
@@ -620,6 +659,25 @@ button,.btn,input{touch-action:manipulation}
     <div class="shop-note"><span>◆</span><div><b>Магазин = точность</b><small>Нужен конкретный компонент — покупай его напрямую. Хочешь сэкономить и получить шанс на редкий приз — открывай кейсы.</small></div></div>
     <div class="shop-tabs" id="shopTabs"></div>
     <div class="shop-grid" id="shopGrid"></div>
+  </section>
+
+  <section id="tab-ranking">
+    <div class="page-head">
+      <h1>Рейтинг <em>игроков</em></h1>
+      <p>Сравни сборки и балансы игроков CYBERDROP. Рейтинг обновляется из облачной базы.</p>
+    </div>
+    <div class="leaderboard-toolbar">
+      <div class="leaderboard-switch" role="tablist" aria-label="Тип рейтинга">
+        <button class="rank-tab active" type="button" data-rank="income" role="tab" aria-selected="true">⚡ Доход сборки</button>
+        <button class="rank-tab" type="button" data-rank="credits" role="tab" aria-selected="false">◆ Баланс кредитов</button>
+      </div>
+      <button class="btn ghost leaderboard-refresh" id="leaderboardRefresh" type="button">↻ Обновить</button>
+    </div>
+    <div class="leaderboard-caption" id="leaderboardCaption">Топ-5 совместимых компьютеров по доходу в кредитах за минуту.</div>
+    <div class="leaderboard-list" id="leaderboardList" aria-live="polite">
+      <div class="leaderboard-state"><span class="rank-loader"></span><b>Подключение к рейтингу…</b><small>Загружаем свежие данные игроков</small></div>
+    </div>
+    <div class="leaderboard-foot"><span class="rank-live-dot"></span><span id="leaderboardUpdated">Данные ещё не загружены</span><span>Топ 5 игроков</span></div>
   </section>
 
   <section id="tab-inventory">
@@ -1242,7 +1300,130 @@ function requireAuth(){
  openModal('authModal');return false
 }
 function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn" type="button">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();if(typeof window.logoutAccount==='function')window.logoutAccount();else{currentUser=null;db.current=null;saveDB(false);renderAll();}})}
-function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));const target=$('#tab-'+tab);if(!target)return;target.classList.add('active');if(tab==='shop')renderShop();if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn();if(tab==='profile')renderProfile()}
+
+/* ==================== PLAYER LEADERBOARDS ==================== */
+let leaderboardMode='income';
+let leaderboardSnapshot=null;
+let leaderboardLoadedAt=0;
+let leaderboardLoading=false;
+
+// Mirrors the main build income formula but accepts any player's cloud build.
+function computeLeaderboardIncome(build){
+  const b=build||{};
+  const slots=['cpu','mb','ram','gpu','ssd','psu','cool','pc_case'];
+  if(!slots.every(k=>b[k]&&ITEM_MAP[b[k]]))return 0;
+  const cpu=ITEM_MAP[b.cpu],mb=ITEM_MAP[b.mb],ram=ITEM_MAP[b.ram],gpu=ITEM_MAP[b.gpu],ssd=ITEM_MAP[b.ssd],psu=ITEM_MAP[b.psu],cool=ITEM_MAP[b.cool],pcCase=ITEM_MAP[b.pc_case];
+  if(cpu.socket!==mb.socket||ram.type!==mb.mem)return 0;
+  if(ssd.form==='nvme'&&!mbSupportsNvme(mb))return 0;
+  const draw=['cpu','mb','ram','gpu','ssd','cool','pc_case'].reduce((sum,k)=>sum+componentPowerDraw(ITEM_MAP[b[k]]),0);
+  const recommended=draw?Math.max(450,Math.ceil(draw*1.2/50)*50):0;
+  if(psu&&recommended&&Number(psu.watts)<recommended)return 0;
+  const cpuTemp=cpuTemperature(cpu,cool),gpuTemp=gpuTemperature(gpu,pcCase);
+  const cpuFactor=thermalFactor(cpuTemp,'cpu'),gpuFactor=thermalFactor(gpuTemp,'gpu');
+  const cpuPts=logScore(cpu.price,650,92000,4,28);
+  const gpuPts=logScore(gpu.price,2200,195000,5,42);
+  const mbPts=logScore(mb.price,700,30000,2,10)+(mb.mem==='ddr5'?.8:0)+(mbSupportsNvme(mb)?.5:0);
+  const ramEff=Math.max(2,(Number(ram.capacity)||2)*(ram.type==='ddr5'?1.25:ram.type==='ddr4'?1:.8));
+  const ramPts=logScore(ramEff,2,320,1.5,9);
+  const ssdEff=storageCapacity(ssd)*(ssd.form==='nvme'?1.18:1);
+  const ssdPts=logScore(ssdEff,128,2400,1.5,8);
+  return Math.max(10,Math.floor((cpuPts+gpuPts+mbPts+ramPts+ssdPts)*1.35*cpuFactor*gpuFactor));
+}
+
+function renderLeaderboardRows(){
+  const list=document.querySelector('#leaderboardList');
+  const caption=document.querySelector('#leaderboardCaption');
+  if(!list||!caption)return;
+  document.querySelectorAll('.rank-tab').forEach(btn=>{
+    const active=btn.dataset.rank===leaderboardMode;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-selected',active?'true':'false');
+  });
+  if(leaderboardMode==='income'){
+    caption.textContent='Топ-5 совместимых компьютеров по доходу сборки в кредитах за минуту.';
+  }else{
+    caption.textContent='Топ-5 игроков с самым большим текущим балансом кредитов.';
+  }
+  if(!leaderboardSnapshot){
+    list.innerHTML='<div class="leaderboard-state"><span class="state-icon">⌁</span><b>Рейтинг пока не загружен</b><small>Нажми «Обновить», чтобы получить свежие данные из облачной базы.</small></div>';
+    return;
+  }
+  const rows=leaderboardMode==='income'?leaderboardSnapshot.incomeTop:leaderboardSnapshot.balanceTop;
+  if(!rows||!rows.length){
+    list.innerHTML='<div class="leaderboard-state"><span class="state-icon">⌘</span><b>'+ (leaderboardMode==='income'?'Пока нет готовых компьютеров':'Пока нет игроков в рейтинге') +'</b><small>'+(leaderboardMode==='income'?'Собери полностью совместимый ПК — его доход появится в этом рейтинге.':'Когда появятся профили игроков, они отобразятся здесь.')+'</small></div>';
+    return;
+  }
+  const mine=String(currentUser||'').toLocaleLowerCase('ru-RU');
+  list.innerHTML=rows.slice(0,5).map((r,i)=>{
+    const name=String(r.username||'Игрок');
+    const isMe=!!mine&&name.toLocaleLowerCase('ru-RU')===mine;
+    const value=leaderboardMode==='income'?Number(r.income)||0:Number(r.credits)||0;
+    const score=leaderboardMode==='income'?fmt(value)+' кр.':fmt(value)+' кр.';
+    const secondary=leaderboardMode==='income'?'доход за минуту':'на балансе';
+    const crown=i===0?'♛':String(i+1);
+    return '<article class="leaderboard-row rank-pos-'+(i+1)+(isMe?' is-me':'')+'">'+
+      '<div class="rank-position"><b>'+crown+'</b><small>ТОП</small></div>'+
+      '<div class="rank-avatar">'+esc(name.trim().charAt(0)||'?')+'</div>'+
+      '<div class="rank-player"><strong>'+esc(name)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок CYBERDROP')+'</small></div>'+
+      '<div class="rank-score"><b>'+score+'</b><small>'+secondary+'</small></div></article>';
+  }).join('');
+}
+
+async function renderLeaderboard(force){
+  const list=document.querySelector('#leaderboardList');
+  const updated=document.querySelector('#leaderboardUpdated');
+  const refresh=document.querySelector('#leaderboardRefresh');
+  if(leaderboardLoading)return;
+  if(!force&&leaderboardSnapshot&&Date.now()-leaderboardLoadedAt<20000){renderLeaderboardRows();return;}
+  const cloud=window.CYBERDROP_CLOUD;
+  if(!cloud||!cloud.enabled||!cloud.client){
+    if(list)list.innerHTML='<div class="leaderboard-state"><span class="state-icon">☁</span><b>Облачный рейтинг недоступен</b><small>Для общего рейтинга игроков нужна активная конфигурация Supabase.</small></div>';
+    if(updated)updated.textContent='Нет соединения с облачной базой';
+    return;
+  }
+  leaderboardLoading=true;
+  if(refresh){refresh.disabled=true;refresh.textContent='↻ Загружаем…';}
+  if(list)list.innerHTML='<div class="leaderboard-state"><span class="rank-loader"></span><b>Обновляем рейтинг</b><small>Получаем актуальные данные игроков из Supabase.</small></div>';
+  try{
+    const result=await cloud.client.rpc('get_player_leaderboards');
+    if(result.error)throw result.error;
+    const data=result.data||{};
+    const builds=Array.isArray(data.builds)?data.builds:[];
+    const incomeTop=builds.map(player=>({username:player.username||'Игрок',income:computeLeaderboardIncome(player)}))
+      .filter(player=>player.income>0)
+      .sort((a,b)=>b.income-a.income||String(a.username).localeCompare(String(b.username),'ru'))
+      .slice(0,5);
+    const balanceTop=(Array.isArray(data.balance_top)?data.balance_top:[])
+      .map(player=>({username:player.username||'Игрок',credits:Math.max(0,Math.floor(Number(player.credits)||0))}))
+      .sort((a,b)=>b.credits-a.credits||String(a.username).localeCompare(String(b.username),'ru'))
+      .slice(0,5);
+    leaderboardSnapshot={incomeTop,balanceTop};
+    leaderboardLoadedAt=Date.now();
+    renderLeaderboardRows();
+    if(updated)updated.textContent='Обновлено в '+new Date(leaderboardLoadedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  }catch(err){
+    console.warn('CYBERDROP leaderboard:',err);
+    const message=String(err&&err.message||err||'Неизвестная ошибка');
+    if(list)list.innerHTML='<div class="leaderboard-state"><span class="state-icon">⚠</span><b>Не удалось загрузить рейтинг</b><small>'+esc(message)+'<br>Проверь, что SQL-миграция рейтинга выполнена в Supabase.</small></div>';
+    if(updated)updated.textContent='Ошибка обновления рейтинга';
+  }finally{
+    leaderboardLoading=false;
+    if(refresh){refresh.disabled=false;refresh.textContent='↻ Обновить';}
+  }
+}
+
+document.querySelectorAll('.rank-tab').forEach(btn=>btn.addEventListener('click',()=>{
+  leaderboardMode=btn.dataset.rank==='credits'?'credits':'income';
+  renderLeaderboardRows();
+}));
+const leaderboardRefreshButton=document.querySelector('#leaderboardRefresh');
+if(leaderboardRefreshButton)leaderboardRefreshButton.addEventListener('click',()=>renderLeaderboard(true));
+setInterval(()=>{
+  const section=document.querySelector('#tab-ranking');
+  if(section&&section.classList.contains('active')&&document.visibilityState==='visible')renderLeaderboard(true);
+},30000);
+
+function showTab(tab){$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$$('section').forEach(s=>s.classList.remove('active'));const target=$('#tab-'+tab);if(!target)return;target.classList.add('active');if(tab==='shop')renderShop();if(tab==='inventory')renderInventory();if(tab==='build')renderBuild();if(tab==='earn')renderEarn();if(tab==='profile')renderProfile();if(tab==='ranking')renderLeaderboard(false)}
 $$('.nav-btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
 $$('.modal').forEach(m=>m.addEventListener('mousedown',e=>{if(e.target===m&&m.id!=='adModal')closeModal(m.id)}));

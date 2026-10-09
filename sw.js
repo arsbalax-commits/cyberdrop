@@ -1,4 +1,4 @@
-const CACHE = 'cyberdrop-v8';
+const CACHE = 'cyberdrop-v9';
 const CORE = [
   './',
   './index.html',
