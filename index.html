@@ -662,7 +662,7 @@ button,.btn,input{touch-action:manipulation}
       <div class="earn-card" style="--ec:rgba(198,255,61,.55)">
         <div class="earn-ico">🎮</div>
         <h3>Кибер-кликер</h3>
-        <p>20 секунд — успей кликнуть по подсвеченному чипу. Каждое попадание: <b style="color:var(--lime)">+15</b> кредитов.</p>
+        <p>20 секунд — успей кликнуть по подсвеченному чипу. Каждое попадание: <b style="color:var(--lime)">+10</b> кредитов.</p>
         <div class="game-area" id="gameArea">
           <div class="game-hud">
             <span>⏱ <b id="gameTime">20</b> с</span>
@@ -688,7 +688,7 @@ button,.btn,input{touch-action:manipulation}
       <div class="earn-card" style="--ec:rgba(255,122,36,.55)">
         <div class="earn-ico">🔌</div>
         <h3>Охота за сокетом</h3>
-        <p>Перед тобой модель процессора. Определи его <b style="color:var(--lime)">правильный сокет</b> из 4 вариантов. 10 раундов — до <b style="color:var(--lime)">300 кр.</b></p>
+        <p>Перед тобой модель процессора. Определи его <b style="color:var(--lime)">правильный сокет</b> из 4 вариантов. 10 раундов — до <b style="color:var(--lime)">500 кр.</b></p>
         <div class="socket-area" id="socketArea">
           <div class="socket-top">
             <span>Раунд <b id="socketRound">0/10</b></span>
@@ -1129,8 +1129,10 @@ const CASES=[
 {id:'ram4_case',name:'RAM: DDR3 / DDR4',icon:'🧠',tag:'Бюджетная память',price:4500,color:'#b14aff',pool:['ram2_3','ram4_3','ram8_3','ram16_3','ram2_4','ram4_4','ram8_4','ram16_4','ram32_4','ram64_4']},
 {id:'ram5_case',name:'RAM: DDR5',icon:'🧠',tag:'Новое поколение',price:8000,color:'#d05cff',pool:['ram4_5','ram8_5','ram16_5','ram32_5','ram64_5','ram128_5']},
 {id:'ram_extreme',name:'RAM: Extreme',icon:'💠',tag:'128–256 GB',price:25000,color:'#c6ff3d',pool:['ram64_4','ram128_4','ram64_5','ram128_5','ram256_5']},
-{id:'intel_cpu_case',name:'Intel CPU',icon:'🔷',tag:'Core i3 → Core i9',price:42000,color:'#0071c5',pool:['i3_10100f','i5_10400f','i3_12100f','i3_14100f','i5_12400f','i5_14400f','i7_10700f','i7_12700f','i9_10900f','i7_14700f','i9_12900f','i9_14900f']},
-{id:'amd_cpu_case',name:'AMD CPU',icon:'🔴',tag:'Ryzen 3 → Ryzen 9',price:48000,color:'#e53935',pool:['r3_3200','r5_2600','r5_3600','r5_5500','r5_5600','r7_2700','r7_3700','r7_5800','r9_3950','r9_5900','r9_5950x','r5_7500f','r5_8400f','r5_9600x','r7_7700','r7_7800x3d','r7_9800x3d','r9_9950x3d']},
+{id:'intel_budget_cpu_case',name:'Бюджетные CPU Intel',icon:'🔷',tag:'LGA 1155 / LGA 1200',price:16000,color:'#0071c5',pool:['celeron','pentium','i3_10100f','i5_10400f','i7_10700f','i9_10900f']},
+{id:'intel_cpu_case',name:'Intel CPU',icon:'🔷',tag:'LGA 1700 • Core i3 → Core i9',price:42000,color:'#0071c5',pool:['i3_12100f','i3_14100f','i5_12400f','i5_14400f','i7_12700f','i7_14700f','i9_12900f','i9_14900f']},
+{id:'amd_budget_cpu_case',name:'Бюджетные CPU AMD',icon:'🔴',tag:'AM3+ / AM4',price:20000,color:'#e53935',pool:['athlon2','fx','r3_3200','r5_2600','r5_3600','r5_5500','r5_5600','r7_2700','r7_3700','r7_5800','r9_3950','r9_5900','r9_5950x']},
+{id:'amd_cpu_case',name:'AMD CPU',icon:'🔴',tag:'AM5 • Ryzen 5 → Ryzen 9',price:48000,color:'#e53935',pool:['r5_7500f','r5_8400f','r5_9600x','r7_7700','r7_7800x3d','r7_9800x3d','r9_9950x3d']},
 {id:'intel_mb_case',name:'Intel Motherboards',icon:'🔷',tag:'LGA 1155 / 1200 / 1700',price:17000,color:'#00a7c4',pool:['mb_b75','mb_h410','mb_b460','mb_z490','mb_h610','mb_b660','mb_z690','mb_z790']},
 {id:'amd_mb_case',name:'AMD Motherboards',icon:'🔴',tag:'AM3+ / AM4 / AM5',price:20000,color:'#e85b68',pool:['mb_am3_990','mb_a320','mb_b450','mb_b550','mb_b650','mb_x670','mb_x870']},
 {id:'psu_case',name:'Блоки питания',icon:'🔌',tag:'450–1000W',price:11000,color:'#ffd166',pool:['psu_450','psu_500','psu_550','psu_600','psu_650','psu_700','psu_750','psu_850','psu_1000']},
@@ -1640,7 +1642,7 @@ $$('[data-profile-back]').forEach(b=>b.addEventListener('click',()=>showTab('ear
 /* ==================== CLICKER ==================== */
 function renderGameGrid(){$('#gameGrid').innerHTML=Array.from({length:9},(_,i)=>`<button class="chip ${i===hotChip?'hot':''}" data-chip="${i}">${i===hotChip?'⚡':'·'}</button>`).join('');$$('[data-chip]').forEach(b=>b.onclick=()=>hitChip(+b.dataset.chip))}
 function moveHot(){hotChip=Math.floor(Math.random()*9);renderGameGrid()}
-function hitChip(i){if(!gameTimer||i!==hotChip)return;const sc=$('#gameScore');sc.textContent=(+sc.textContent||0)+15;moveHot()}
+function hitChip(i){if(!gameTimer||i!==hotChip)return;const sc=$('#gameScore');sc.textContent=(+sc.textContent||0)+10;moveHot()}
 $('#gameBtn').onclick=()=>{if(!requireAuth())return;if(gameTimer)return;let left=20;$('#gameArea').classList.add('on');$('#gameTime').textContent=left;$('#gameScore').textContent='0';$('#gameBtn').disabled=true;$('#gameNote').textContent='Кликай по подсвеченному чипу!';moveHot();gameTimer=setInterval(async()=>{left--;$('#gameTime').textContent=left;if(left<=0){clearInterval(gameTimer);gameTimer=null;hotChip=-1;renderGameGrid();const score=+$('#gameScore').textContent;const ok=await addCredits(score);$('#gameBtn').disabled=false;$('#gameNote').textContent=ok?`Игра окончена. Получено ${score} кр.`:'Игра окончена. Награда не подтверждена.';if(ok)toast(`Кибер-кликер: +${score} кр.`,'ok')}else moveHot()},1000)};
 renderGameGrid();
 
@@ -1724,8 +1726,7 @@ async function socketAnswer(answer,btn){
   const correct=answer===socketGame.cpu.socket;
   if(correct){
     socketGame.streak++;
-    const bonus=Math.min(10,(socketGame.streak-1)*2);
-    const gain=20+bonus;
+    const gain=50;
     socketGame.score+=gain;
     btn.classList.add('correct');
     $('#socketNote').className='socket-note ok';
@@ -1757,7 +1758,7 @@ async function socketAnswer(answer,btn){
 async function socketGameFinish(completed){
   if(!socketGame)return;
   const game=socketGame;
-  const score=Math.min(300,Math.max(0,game.score||0));
+  const score=Math.min(500,Math.max(0,game.score||0));
   socketGame=null;
   if(socketGameTimer){clearInterval(socketGameTimer);socketGameTimer=null}
   $('#socketOptions').querySelectorAll('button').forEach(b=>b.disabled=true);
