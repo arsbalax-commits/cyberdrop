@@ -1,7 +1,8 @@
-const CACHE = 'cyberdrop-v9';
+const CACHE = 'cyberdrop-v11-requisites';
 const CORE = [
   './',
   './index.html',
+  './requisites.html',
   './manifest.json',
   './icon.svg',
   './icon-192.png',

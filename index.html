@@ -283,6 +283,7 @@ input::placeholder{color:#5b6478}
 .toast.err{border-color:rgba(255,90,90,.5);color:#ff7676}
 .toast.info{border-color:rgba(0,229,255,.45);color:var(--acc)}
 footer{text-align:center;padding:34px 20px 0;font-size:12.5px;color:#4d5568;border-top:1px solid var(--line);margin-top:60px}
+.legal-footer-links{margin-top:10px}.legal-footer-links a,.donation-legal-note a{color:var(--acc);text-decoration:underline;text-underline-offset:3px}.legal-footer-links a:hover,.donation-legal-note a:hover{color:var(--lime)}
 @media(max-width:600px){.wrap{padding:0 14px 60px}.cases-grid{grid-template-columns:1fr}.inv-grid{grid-template-columns:repeat(auto-fill,minmax(146px,1fr))}.modal-box{padding:22px 18px;border-radius:20px}.rou-item{flex:0 0 116px;height:126px}.rou-item .item-visual{width:54px;height:54px}.roulette{height:150px}.build-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
 
 
@@ -617,6 +618,30 @@ button,.btn,input{touch-action:manipulation}
 .rank-live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px rgba(198,255,61,.4)}
 @media(max-width:580px){.leaderboard-switch{width:100%;display:grid;grid-template-columns:1fr 1fr}.rank-tab{padding:10px 8px;font-size:11px}.leaderboard-toolbar{align-items:stretch}.leaderboard-refresh{width:100%}.leaderboard-row{grid-template-columns:36px 38px minmax(0,1fr) auto;gap:9px;padding:12px 11px;border-radius:14px}.rank-position b{font-size:20px}.rank-position small{font-size:8px}.rank-avatar{width:36px;height:36px;border-radius:10px;font-size:15px}.rank-player strong{font-size:13px}.rank-player small{font-size:10px}.rank-score{min-width:76px;max-width:120px}.rank-score b{font-size:14px}.rank-score small{font-size:9px}.rank-you{font-size:8px;margin-left:3px}}
 
+
+/* ===== YOOKASSA DONATION PACKAGES ===== */
+.donation-security-note{display:flex;gap:13px;align-items:center;padding:15px 17px;margin:0 0 18px;border:1px solid rgba(0,229,255,.22);border-radius:15px;background:linear-gradient(100deg,rgba(0,229,255,.07),rgba(177,74,255,.045))}
+.donation-lock{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:12px;color:var(--acc);background:rgba(0,229,255,.1);font-size:19px}
+.donation-security-note b,.donation-security-note small{display:block}.donation-security-note b{font-size:13px;letter-spacing:.02em}.donation-security-note small{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.55}
+.donation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.donation-card{position:relative;overflow:hidden;display:flex;flex-direction:column;min-width:0;padding:22px 20px 20px;border:1px solid color-mix(in srgb,var(--donor-color) 32%,var(--line));border-radius:18px;background:linear-gradient(155deg,color-mix(in srgb,var(--donor-color) 8%,var(--panel)),var(--panel) 54%);box-shadow:0 10px 35px rgba(0,0,0,.11)}
+.donation-card:before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--donor-color);box-shadow:0 0 18px var(--donor-color);opacity:.9}
+.donation-card.featured{border-color:color-mix(in srgb,var(--donor-color) 55%,var(--line));transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,.18),inset 0 0 30px color-mix(in srgb,var(--donor-color) 4%,transparent)}
+.donation-card-kicker{font-size:10px;font-weight:900;letter-spacing:.16em;color:var(--donor-color);opacity:.95}
+.donation-symbol{display:grid;place-items:center;width:48px;height:48px;margin:16px 0 12px;border:1px solid color-mix(in srgb,var(--donor-color) 40%,transparent);border-radius:15px;background:color-mix(in srgb,var(--donor-color) 10%,transparent);color:var(--donor-color);font-size:26px;text-shadow:0 0 18px var(--donor-color)}
+.donation-card h3{margin:0;min-height:38px;font-size:17px;letter-spacing:.015em}
+.donation-price{margin-top:10px;font-size:34px;font-weight:950;letter-spacing:-.04em;color:var(--txt)}.donation-price small{font-size:17px;color:var(--muted);font-weight:800}
+.donation-credits{margin-top:7px;color:var(--donor-color);font-size:22px;font-weight:950}.donation-credits small{font-size:11px;font-weight:800;color:var(--muted)}
+.donation-perks{display:grid;gap:10px;min-height:104px;margin:19px 0 20px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.45;color:var(--muted)}.donation-perks b{color:var(--donor-color)}
+.donation-buy{width:100%;margin-top:auto;color:#081018!important;background:var(--donor-color)!important;border-color:transparent!important;font-weight:900;box-shadow:0 5px 20px color-mix(in srgb,var(--donor-color) 15%,transparent)}.donation-buy:hover{filter:brightness(1.08);transform:translateY(-1px)}.donation-buy:disabled{opacity:.65;cursor:wait;transform:none}
+.donation-ribbon{position:absolute;top:13px;right:-33px;transform:rotate(36deg);width:125px;text-align:center;padding:5px 4px;background:var(--donor-color);color:#120b1d;font-size:8px;font-weight:950;letter-spacing:.08em}
+.donation-status-panel{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:18px;padding:15px 17px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}.donation-status-copy{display:grid;gap:5px;min-width:0}.donation-status-copy b{font-size:12px}.donation-status-copy span{font-size:11px;line-height:1.5;color:var(--muted)}.donation-status-panel.pending{border-color:rgba(0,229,255,.28)}.donation-status-panel.success{border-color:rgba(198,255,61,.4)}.donation-status-panel.success #donationStatusTitle{color:var(--lime)}.donation-status-panel.error{border-color:rgba(255,94,125,.42)}.donation-status-panel.error #donationStatusTitle{color:#ff738f}
+.donation-legal-note{max-width:850px;margin:14px 2px 0;color:var(--muted);font-size:10px;line-height:1.65}
+.supporter-tag{display:inline-flex;align-items:center;max-width:108px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 6px;border:1px solid rgba(0,229,255,.28);border-radius:6px;background:rgba(0,229,255,.07);color:var(--acc);font-size:8px;font-weight:950;letter-spacing:.05em;vertical-align:middle}
+.supporter-tag.badge-supporter{color:#d4a1ff;border-color:rgba(177,74,255,.4);background:rgba(177,74,255,.08)}.supporter-tag.badge-vip{color:#dfff77;border-color:rgba(198,255,61,.38);background:rgba(198,255,61,.08)}
+@media(max-width:900px){.donation-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.donation-card.featured{transform:none}}
+@media(max-width:560px){.donation-grid{grid-template-columns:1fr;gap:12px}.donation-card{padding:19px}.donation-card h3{min-height:0}.donation-perks{min-height:0}.donation-price{font-size:31px}.donation-status-panel{align-items:flex-start;flex-direction:column}.donation-status-panel .btn{width:100%}.supporter-tag{max-width:78px}}
+
 </style>
 </head>
 <body>
@@ -631,6 +656,7 @@ button,.btn,input{touch-action:manipulation}
       <button class="nav-btn" data-tab="build">Сборка <span class="badge" id="buildBadge" style="display:none">!</span></button>
       <button class="nav-btn" data-tab="earn">Заработать</button>
       <button class="nav-btn" data-tab="shop">Магазин</button>
+      <button class="nav-btn" data-tab="donate">Донат</button>
       <button class="nav-btn" data-tab="ranking">Рейтинг</button>
     </nav>
     <div class="header-right">
@@ -678,6 +704,49 @@ button,.btn,input{touch-action:manipulation}
       <div class="leaderboard-state"><span class="rank-loader"></span><b>Подключение к рейтингу…</b><small>Загружаем свежие данные игроков</small></div>
     </div>
     <div class="leaderboard-foot"><span class="rank-live-dot"></span><span id="leaderboardUpdated">Данные ещё не загружены</span><span>Топ 5 игроков</span></div>
+  </section>
+
+  <section id="tab-donate">
+    <div class="page-head">
+      <h1>Поддержи <em>CYBERDROP</em></h1>
+      <p>Выбери цифровой пакет: кредиты, бонусные кредиты и постоянный значок поддержки в профиле.</p>
+    </div>
+    <div class="donation-security-note"><span class="donation-lock">◆</span><div><b>Оплата через ЮKassa</b><small>Кредиты начисляются только после серверного подтверждения успешного платежа. Возврат на сайт сам по себе не подтверждает оплату.</small></div></div>
+    <div class="donation-grid">
+      <article class="donation-card" style="--donor-color:#00e5ff">
+        <div class="donation-card-kicker">STARTER PACKAGE</div>
+        <div class="donation-symbol">✦</div>
+        <h3>NEON SPARK</h3>
+        <div class="donation-price">99 <small>₽</small></div>
+        <div class="donation-credits">10 000 <small>кредитов</small></div>
+        <div class="donation-perks"><div>✓ 9 000 основных кредитов</div><div>＋ 1 000 бонусных кредитов</div><div>✓ Постоянный значок <b>SPARK</b></div></div>
+        <button class="btn donation-buy" type="button" data-donation-package="spark">Получить пакет</button>
+      </article>
+      <article class="donation-card featured" style="--donor-color:#b14aff">
+        <div class="donation-ribbon">ПОПУЛЯРНЫЙ</div>
+        <div class="donation-card-kicker">CYBER PACKAGE</div>
+        <div class="donation-symbol">◈</div>
+        <h3>CYBER SUPPORTER</h3>
+        <div class="donation-price">299 <small>₽</small></div>
+        <div class="donation-credits">35 000 <small>кредитов</small></div>
+        <div class="donation-perks"><div>✓ 30 000 основных кредитов</div><div>＋ 5 000 бонусных кредитов</div><div>✓ Постоянный значок <b>SUPPORTER</b></div></div>
+        <button class="btn donation-buy" type="button" data-donation-package="supporter">Получить пакет</button>
+      </article>
+      <article class="donation-card" style="--donor-color:#c6ff3d">
+        <div class="donation-card-kicker">ELITE PACKAGE</div>
+        <div class="donation-symbol">♛</div>
+        <h3>NEON VIP</h3>
+        <div class="donation-price">599 <small>₽</small></div>
+        <div class="donation-credits">80 000 <small>кредитов</small></div>
+        <div class="donation-perks"><div>✓ 65 000 основных кредитов</div><div>＋ 15 000 бонусных кредитов</div><div>✓ Постоянный значок <b>NEON VIP</b></div></div>
+        <button class="btn donation-buy" type="button" data-donation-package="vip">Получить пакет</button>
+      </article>
+    </div>
+    <div class="donation-status-panel" aria-live="polite">
+      <div class="donation-status-copy"><b id="donationStatusTitle">Готов к оплате</b><span id="donationStatusText">Выдача наград происходит автоматически после подтверждения платежа ЮKassa.</span></div>
+      <button class="btn ghost" id="donationCheckStatus" type="button" style="display:none">Проверить статус</button>
+    </div>
+    <p class="donation-legal-note">Игровые кредиты используются только внутри CYBERDROP, не являются денежными средствами и не выводятся из игры. <a href="./requisites.html">Реквизиты продавца, условия покупки и возврата</a>.</p>
   </section>
 
   <section id="tab-inventory">
@@ -822,6 +891,7 @@ button,.btn,input{touch-action:manipulation}
           <div class="profile-stat"><span>Заработано с рефералов</span><b id="profileRefEarned">0</b></div>
           <div class="profile-stat"><span>Доход сборки</span><b id="profileBuildIncome">0 кр./мин</b></div>
           <div class="profile-stat"><span>Компонентов в сборке</span><b id="profileBuildParts">0/8</b></div>
+          <div class="profile-stat"><span>Статус поддержки</span><b id="profileDonorBadge">Нет</b></div>
         </div>
         <div class="profile-actions">
           <button class="btn ghost" id="profileLogoutBtn" type="button">Выйти из аккаунта</button>
@@ -847,7 +917,7 @@ button,.btn,input{touch-action:manipulation}
     </div>
   </section>
 
-  <footer>CYBERDROP © 2025 — демо-проект. Все призы вымышленные, кредиты тоже 🙂</footer>
+  <footer>CYBERDROP © 2026 — цифровой игровой проект. Игровые кредиты не имеют денежной стоимости вне игры и не выводятся.<div class="legal-footer-links"><a href="./requisites.html">Реквизиты продавца и публичная оферта</a></div></footer>
 </div>
 
 <div class="modal" id="authModal">
@@ -1258,7 +1328,7 @@ function user(){
  try{const uid=window.CYBERDROP_CLOUD&&window.CYBERDROP_CLOUD.userId;if(uid){const name=Object.keys(db.users||{}).find(n=>db.users[n]&&db.users[n].cloudId===uid);if(name){currentUser=name;db.current=name;return db.users[name]}}}catch(_){}
  return null
 }
-function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now()}}
+function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now(),donorBadge:'none'}}
 function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
 function addItem(id,n=1){const u=user();if(!u)return;u.inventory[id]=(u.inventory[id]||0)+n;saveDB()}
 function takeItem(id,n=1){const u=user();if(!u||!(u.inventory[id]>=n))return false;u.inventory[id]-=n;if(u.inventory[id]<=0)delete u.inventory[id];saveDB();return true}
@@ -1299,7 +1369,7 @@ function requireAuth(){
  }catch(_){}
  openModal('authModal');return false
 }
-function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span><button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn" type="button">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();if(typeof window.logoutAccount==='function')window.logoutAccount();else{currentUser=null;db.current=null;saveDB(false);renderAll();}})}
+const DONOR_BADGE_LABELS={none:'Нет',spark:'SPARK',supporter:'SUPPORTER',vip:'NEON VIP'};function donorBadgeLabel(code){return DONOR_BADGE_LABELS[code]||'Нет'}function donorBadgeMarkup(code){if(!code||code==='none'||!DONOR_BADGE_LABELS[code])return '';const cls=code==='vip'?'badge-vip':code==='supporter'?'badge-supporter':'';return `<span class="supporter-tag ${cls}">${esc(DONOR_BADGE_LABELS[code])}</span>`}function renderHeader(){const u=user();$('#creditsVal').textContent=u?fmt(u.credits):'0';$('#userArea').innerHTML=u?`<div class="user-chip"><button class="avatar avatar-trigger" id="avatarTrigger" type="button" title="Открыть профиль" aria-label="Открыть профиль">${esc((currentUser||'?')[0].toUpperCase())}</button><span class="uname">${esc(currentUser)}</span>${donorBadgeMarkup(u.donorBadge)}<button class="icon-btn" id="logoutBtn" title="Выйти" type="button">⎋</button></div>`:`<button class="btn primary sm" id="loginBtn" type="button">Войти</button>`;if($('#loginBtn'))$('#loginBtn').addEventListener('click',()=>openModal('authModal'));if($('#avatarTrigger'))$('#avatarTrigger').addEventListener('click',(e)=>{e.stopPropagation();showTab('profile')});if($('#logoutBtn'))$('#logoutBtn').addEventListener('click',(e)=>{e.stopPropagation();if(typeof window.logoutAccount==='function')window.logoutAccount();else{currentUser=null;db.current=null;saveDB(false);renderAll();}})}
 
 /* ==================== PLAYER LEADERBOARDS ==================== */
 let leaderboardMode='income';
@@ -1809,7 +1879,7 @@ setInterval(tickIncome,5000);
 
 /* ==================== EARN ==================== */
 function renderEarn(){updateAdButton();if(typeof renderProGameGates==='function')renderProGameGates()}
-function renderProfile(){const u=user();const itemCount=u?Object.values(u.inventory||{}).reduce((a,b)=>a+(Number(b)||0),0):0;const income=u?buildIncome():0;const filled=u?SLOTS.filter(([slot])=>u.build&&u.build[slot]).length:0;$('#profileAvatar').textContent=u&&currentUser?(currentUser[0]||'?').toUpperCase():'?';$('#profileName').textContent=u?currentUser:'Гость';$('#profileEmail').textContent=u?(u.email||'CYBERDROP аккаунт'):'Войдите, чтобы открыть профиль';$('#profileCredits').textContent=u?fmt(u.credits):'0';$('#profileItems').textContent=itemCount;$('#profileRefCount').textContent=u?(u.refCount||0):0;$('#profileRefEarned').textContent=u?fmt(u.refEarned||0):0;$('#profileBuildIncome').textContent=u?fmt(income)+' кр./мин':'0 кр./мин';$('#profileBuildParts').textContent=u?`${filled}/${SLOTS.length}`:'0/8';$('#refCode').textContent=u?(u.refCode||'——————'):'——————';$('#refCount').textContent=u?(u.refCount||0):0;$('#refEarned').textContent=u?fmt(u.refEarned||0):0;$('#refInputWrap').style.display=u&&!u.usedRef?'flex':'none'}
+function renderProfile(){const u=user();const itemCount=u?Object.values(u.inventory||{}).reduce((a,b)=>a+(Number(b)||0),0):0;const income=u?buildIncome():0;const filled=u?SLOTS.filter(([slot])=>u.build&&u.build[slot]).length:0;$('#profileAvatar').textContent=u&&currentUser?(currentUser[0]||'?').toUpperCase():'?';$('#profileName').textContent=u?currentUser:'Гость';$('#profileEmail').textContent=u?(u.email||'CYBERDROP аккаунт'):'Войдите, чтобы открыть профиль';$('#profileCredits').textContent=u?fmt(u.credits):'0';$('#profileItems').textContent=itemCount;$('#profileRefCount').textContent=u?(u.refCount||0):0;$('#profileRefEarned').textContent=u?fmt(u.refEarned||0):0;$('#profileBuildIncome').textContent=u?fmt(income)+' кр./мин':'0 кр./мин';$('#profileBuildParts').textContent=u?`${filled}/${SLOTS.length}`:'0/8';$('#profileDonorBadge').textContent=donorBadgeLabel(u&&u.donorBadge);$('#refCode').textContent=u?(u.refCode||'——————'):'——————';$('#refCount').textContent=u?(u.refCount||0):0;$('#refEarned').textContent=u?fmt(u.refEarned||0):0;$('#refInputWrap').style.display=u&&!u.usedRef?'flex':'none'}
 function updateAdButton(){const b=$('#adBtn'),u=user();if(!u){b.disabled=false;b.textContent='Смотреть рекламу';return}const left=Math.max(0,45000-(Date.now()-u.lastAd));if(left){b.disabled=true;b.textContent=`Доступно через ${Math.ceil(left/1000)} с`}else{b.disabled=false;b.textContent='Смотреть рекламу'}}
 setInterval(updateAdButton,1000);
 $('#adBtn').onclick=()=>{if(!requireAuth())return;const u=user();if(Date.now()-u.lastAd<45000)return updateAdButton();openModal('adModal');const ads=[['🚀','Ускорь свой ПК','Термопаста нового поколения — минус 12°C под нагрузкой'],['🛰️','Сеть без лагов','Игровой роутер для стабильного соединения'],['⌨️','Нажимай быстрее','Механические переключатели для киберспорта']];const a=ads[Math.floor(Math.random()*ads.length)];$('#adEmoji').textContent=a[0];$('#adHead').textContent=a[1];$('#adText').textContent=a[2];$('#adBar').style.width='0';$('#adClaim').disabled=true;$('#adClaim').textContent='Подождите…';let p=0;const t=setInterval(()=>{p+=4;$('#adBar').style.width=Math.min(100,p)+'%';if(p>=100){clearInterval(t);$('#adClaim').disabled=false;$('#adClaim').textContent='Получить награду'}},200)};
@@ -2415,7 +2485,10 @@ setInterval(renderProGameGates,800);
 
   function applySnapshotToLocal(snap, authUser, username) {
     var uname = username || ((authUser && authUser.user_metadata && authUser.user_metadata.username) || ((authUser && authUser.email) ? authUser.email.split('@')[0] : 'player'));
+    var previousUser = typeof user === 'function' ? user() : null;
+    var preserveBadge = previousUser && authUser && previousUser.cloudId === authUser.id ? (previousUser.donorBadge || 'none') : 'none';
     var u = copy(snap);
+    u.donorBadge = preserveBadge;
     u.pass = '';
     u.cloudId = authUser && authUser.id ? authUser.id : cloudUser();
     u.email = authUser && authUser.email ? authUser.email : (user() && user().email || '');
@@ -2852,6 +2925,200 @@ setInterval(renderProGameGates,800);
 })();
 </script>
 
+
+<script>
+/* ==================== YOOKASSA DONATION UI ==================== */
+(function(){
+  'use strict';
+  var activeDonationOrder = null;
+  var pollTimer = null;
+  var busy = false;
+  var packageNames = {spark:'NEON SPARK', supporter:'CYBER SUPPORTER', vip:'NEON VIP'};
+
+  function setStatus(title, text, state){
+    var panel = document.querySelector('.donation-status-panel');
+    var titleEl = document.getElementById('donationStatusTitle');
+    var textEl = document.getElementById('donationStatusText');
+    if(!panel||!titleEl||!textEl)return;
+    panel.classList.remove('pending','success','error');
+    if(state)panel.classList.add(state);
+    titleEl.textContent = title;
+    textEl.textContent = text;
+  }
+
+  function setButtonsBusy(isBusy, activeCode){
+    document.querySelectorAll('[data-donation-package]').forEach(function(btn){
+      btn.disabled = !!isBusy;
+      var code = btn.getAttribute('data-donation-package');
+      if(isBusy && code === activeCode)btn.textContent = 'Переход к ЮKassa…';
+      else btn.textContent = 'Получить пакет';
+    });
+  }
+
+  async function startDonation(packageCode){
+    if(busy)return;
+    if(typeof requireAuth === 'function' && !requireAuth())return;
+    var cloud = window.CYBERDROP_CLOUD;
+    if(!cloud || !cloud.enabled || !cloud.client || !cloud.userId){
+      setStatus('Нужен облачный аккаунт','Войди в аккаунт CYBERDROP и попробуй снова. Донат работает только с Supabase-аккаунтом.','error');
+      return;
+    }
+    if(!Object.prototype.hasOwnProperty.call(packageNames,packageCode))return;
+    busy = true;
+    setButtonsBusy(true,packageCode);
+    setStatus('Создаём платёж', 'Подготавливаем безопасную оплату пакета '+packageNames[packageCode]+'…', 'pending');
+    try{
+      var result = await cloud.client.functions.invoke('yookassa-create-payment', {body:{package_code:packageCode}});
+      if(result.error)throw result.error;
+      var data = result.data || {};
+      if(!data.confirmation_url || !/^https:\/\//i.test(data.confirmation_url)){
+        throw new Error(data.error || 'ЮKassa не вернула ссылку на оплату.');
+      }
+      activeDonationOrder = data.order_id || null;
+      setStatus('Переход к ЮKassa', 'Сейчас откроется защищённая страница оплаты. Награда будет выдана после подтверждения платежа.', 'pending');
+      window.location.assign(data.confirmation_url);
+    }catch(err){
+      console.error('CYBERDROP donation start:', err);
+      var message = err && err.message ? String(err.message) : 'Не удалось создать платёж.';
+      if(message.length>180)message='Не удалось создать платёж. Проверь настройки Supabase и ЮKassa.';
+      setStatus('Платёж не создан', message, 'error');
+      busy = false;
+      setButtonsBusy(false, null);
+    }
+  }
+
+  function showCheckButton(show){
+    var btn = document.getElementById('donationCheckStatus');
+    if(btn)btn.style.display = show ? 'inline-flex' : 'none';
+  }
+
+  async function checkOrder(orderId, attempt){
+    attempt = attempt || 0;
+    if(!orderId)return;
+    var cloud = window.CYBERDROP_CLOUD;
+    if(!cloud || !cloud.client || !cloud.userId){
+      if(attempt < 20){
+        setStatus('Ждём вход в аккаунт','После возврата с ЮKassa восстанавливаем сессию CYBERDROP…','pending');
+        pollTimer = setTimeout(function(){checkOrder(orderId, attempt+1);},2500);
+      }else{
+        setStatus('Нужен повторный вход','Войди в тот же аккаунт, с которого оформлялась покупка, затем нажми «Проверить статус».','error');
+        showCheckButton(true);
+      }
+      return;
+    }
+    try{
+      var res = await cloud.client.from('donation_orders')
+        .select('id,status,package_code,credits_awarded,supporter_badge,created_at,fulfilled_at')
+        .eq('id',orderId).maybeSingle();
+      if(res.error)throw res.error;
+      if(!res.data){
+        setStatus('Заказ не найден','Проверь, что вошёл в тот же аккаунт, с которого переходил к оплате.','error');
+        showCheckButton(true);
+        return;
+      }
+      var row = res.data;
+      if(row.status === 'succeeded'){
+        var profileRes = await cloud.client.from('profiles').select('credits').eq('id',cloud.userId).maybeSingle();
+        var badgeRes = await cloud.client.from('player_supporter_status').select('donor_badge').eq('user_id',cloud.userId).maybeSingle();
+        if(typeof user === 'function' && user()){
+          if(profileRes.data)user().credits = Math.max(0, Math.floor(Number(profileRes.data.credits)||0));
+          user().donorBadge = badgeRes.data && badgeRes.data.donor_badge || 'none';
+          if(typeof saveDB === 'function')saveDB(false);
+          if(typeof renderAll === 'function')renderAll();
+        }
+        setStatus('Оплата подтверждена!', 'Начислено '+(Number(row.credits_awarded)||0).toLocaleString('ru-RU')+' кредитов. Значок '+(DONOR_BADGE_LABELS[row.supporter_badge] || donorBadgeLabel(row.supporter_badge))+' сохранён в профиле.', 'success');
+        showCheckButton(false);
+        cleanReturnUrl();
+        return;
+      }
+      if(row.status === 'canceled' || row.status === 'failed'){
+        setStatus('Платёж не завершён', 'Деньги и игровые награды не были изменены. Можно вернуться к выбору пакета и попробовать ещё раз.', 'error');
+        showCheckButton(false);
+        cleanReturnUrl();
+        return;
+      }
+      if(attempt < 24){
+        setStatus('Ожидаем подтверждение ЮKassa','Платёж ещё обрабатывается. Обычно награда появляется вскоре после подтверждения оплаты.', 'pending');
+        pollTimer = setTimeout(function(){checkOrder(orderId,attempt+1);},2500);
+      }else{
+        setStatus('Платёж ещё обрабатывается','Баланс не меняем до подтверждения от ЮKassa. Нажми «Проверить статус» чуть позже.', 'pending');
+        showCheckButton(true);
+      }
+    }catch(err){
+      console.warn('CYBERDROP donation status:', err);
+      setStatus('Не удалось проверить заказ','Проверь, что SQL-миграция выполнена и вошёл в аккаунт. Потом повтори проверку статуса.', 'error');
+      showCheckButton(true);
+    }
+  }
+
+  function cleanReturnUrl(){
+    try{
+      var url = new URL(window.location.href);
+      url.searchParams.delete('donation');
+      url.searchParams.delete('order_id');
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    }catch(_){ }
+  }
+
+  document.querySelectorAll('[data-donation-package]').forEach(function(btn){
+    btn.addEventListener('click', function(){startDonation(btn.getAttribute('data-donation-package'));});
+  });
+
+  var checkBtn = document.getElementById('donationCheckStatus');
+  if(checkBtn)checkBtn.addEventListener('click',function(){
+    if(pollTimer)clearTimeout(pollTimer);
+    showCheckButton(false);
+    if(activeDonationOrder)checkOrder(activeDonationOrder,0);
+    else{
+      var params = new URLSearchParams(window.location.search);
+      var oid = params.get('order_id');
+      if(oid){activeDonationOrder=oid;checkOrder(oid,0);}
+      else setStatus('Нет ожидающего заказа','Оформи пакет и возвращайся после оплаты.','error');
+    }
+  });
+
+  async function loadSupporterStatus(){
+    var cloud = window.CYBERDROP_CLOUD;
+    if(!cloud || !cloud.client || !cloud.userId || typeof user !== 'function' || !user())return false;
+    try{
+      var res = await cloud.client.from('player_supporter_status').select('donor_badge').eq('user_id',cloud.userId).maybeSingle();
+      if(res.error)throw res.error;
+      if(user()){
+        user().donorBadge = res.data && res.data.donor_badge || 'none';
+        if(typeof saveDB === 'function')saveDB(false);
+        if(typeof renderHeader === 'function')renderHeader();
+        if(typeof renderProfile === 'function')renderProfile();
+      }
+      return true;
+    }catch(err){
+      console.warn('CYBERDROP supporter status:', err);
+      return false;
+    }
+  }
+
+  // The initial cloud session may restore asynchronously; retry briefly, then use auth events.
+  window.addEventListener('load', function(){
+    var params = new URLSearchParams(window.location.search);
+    if(params.get('donation') === 'return' && params.get('order_id')){
+      activeDonationOrder = params.get('order_id');
+      if(typeof showTab === 'function')showTab('donate');
+      setStatus('Проверяем оплату','Связываемся с Supabase и ожидаем подтверждение ЮKassa…','pending');
+      checkOrder(activeDonationOrder,0);
+    }
+    var tries = 0;
+    (async function initialBadgeLoad(){
+      if(await loadSupporterStatus())return;
+      if(++tries < 10)setTimeout(initialBadgeLoad,1200);
+    })();
+    var cloud = window.CYBERDROP_CLOUD;
+    if(cloud && cloud.client && cloud.client.auth){
+      cloud.client.auth.onAuthStateChange(function(event, session){
+        if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')setTimeout(loadSupporterStatus,300);
+      });
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
