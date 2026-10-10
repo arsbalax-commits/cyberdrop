@@ -552,6 +552,10 @@ button,.btn,input{touch-action:manipulation}
 .component-card{position:relative}
 .component-info-btn{position:absolute;top:8px;right:8px;z-index:15;width:23px;height:23px;border-radius:50%;display:grid;place-items:center;background:#737b89;border:1px solid #929baa;color:#f7f9fc;font-size:13px;font-weight:900;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:background .15s,transform .15s}
 .component-info-btn:hover{background:#929baa;transform:scale(1.06)}
+.component-condition{position:absolute;top:8px;right:36px;z-index:14;min-width:43px;padding:5px 6px;border-radius:999px;font-size:10px;font-weight:950;line-height:1;text-align:center;letter-spacing:-.2px;background:rgba(10,14,23,.92);border:1px solid rgba(255,255,255,.2);box-shadow:0 3px 12px rgba(0,0,0,.2);pointer-events:auto}
+.component-condition.good{color:#8df7bf;border-color:rgba(75,230,151,.5)}
+.component-condition.mid{color:#ffd36a;border-color:rgba(255,190,65,.58)}
+.component-condition.low{color:#ff858b;border-color:rgba(255,75,95,.62)}
 .component-front{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0;width:100%}
 .component-front.preview-front{align-items:center}
 .component-details{display:none;flex-direction:column;gap:9px;align-self:stretch;min-width:0;width:100%;padding-top:5px}
@@ -1030,7 +1034,7 @@ const ITEMS=[
 {id:'rtx3050',name:'GeForce RTX 3050 8GB',i:'🎮',price:14500,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:130},
 {id:'rtx3060',name:'GeForce RTX 3060 12GB',i:'🎮',price:19000,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:170},
 {id:'rtx3060ti',name:'GeForce RTX 3060 Ti 8GB',i:'🎮',price:24000,rar:'e',cat:'gpu',col:'#76b900',fans:2,tdp:200},
-{id:'rtx4060',name:'GeForce RTX 4060 8GB',i:'🎮',price:27000,rar:'e',cat:'gpu',col:'#76b900',fans:2,tdp:115},
+{id:'rtx4060',name:'GeForce RTX 4060 8GB',i:'🎮',price:27000,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:115},
 {id:'rx6700xt',name:'Radeon RX 6700 XT 12GB',i:'🎮',price:31000,rar:'e',cat:'gpu',col:'#e53935',fans:2,tdp:230},
 {id:'rtx4060ti',name:'GeForce RTX 4060 Ti 8GB',i:'🎮',price:36000,rar:'e',cat:'gpu',col:'#76b900',fans:3,tdp:160},
 {id:'rtx4070',name:'GeForce RTX 4070 12GB',i:'🎮',price:52000,rar:'e',cat:'gpu',col:'#76b900',fans:3,tdp:200},
@@ -1091,7 +1095,7 @@ const ITEMS=[
 {id:'nvme128',name:'Kingston NV2 128GB M.2 NVMe',i:'💾',price:850,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme256',name:'WD Blue SN570 250GB M.2 NVMe',i:'💾',price:1200,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme500',name:'Kingston NV2 500GB M.2 NVMe',i:'💾',price:1900,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
-{id:'nvme1t',name:'Kingston NV2 1TB M.2 NVMe',i:'💾',price:4000,rar:'r',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme1t',name:'Kingston NV2 1TB M.2 NVMe',i:'💾',price:3200,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme1t_fast',name:'WD Black SN770 1TB M.2 NVMe',i:'💾',price:5200,rar:'r',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme1t_pro',name:'Samsung 990 Pro 1TB M.2 NVMe',i:'💾',price:8200,rar:'r',cat:'ssd',col:'#1428a0',form:'nvme'},
 {id:'nvme2t',name:'WD Black SN850X 2TB M.2 NVMe',i:'💾',price:12500,rar:'e',cat:'ssd',col:'#1e88e5',form:'nvme'},
@@ -1330,16 +1334,109 @@ const LEGACY_MAP={
 function normalizeUser(u){if(!u||!u.inventory)return u;const inv={};for(const [id,n] of Object.entries(u.inventory)){const nid=LEGACY_MAP[id]||id;if(ITEM_MAP[nid])inv[nid]=(inv[nid]||0)+n}u.inventory=inv;for(const slot of ['cpu','mb','ram','gpu','ssd','psu','cool','pc_case']){if(u.build && u.build[slot]){const nid=LEGACY_MAP[u.build[slot]]||u.build[slot];if(ITEM_MAP[nid])u.build[slot]=nid;else delete u.build[slot]}}return u}
 function loadDB(){try{const d=JSON.parse(SAFE_STORE.get(DBKEY)||'');if(d&&d.users){for(const k of Object.keys(d.users))d.users[k]=normalizeUser(d.users[k]);return d}}catch{}return{users:{},current:null}}
 function saveDB(syncCloud=true){db.current=currentUser;SAFE_STORE.set(DBKEY,JSON.stringify(db));if(syncCloud){try{if(window.CYBERDROP_CLOUD&&typeof window.CYBERDROP_CLOUD.schedulePush==='function')window.CYBERDROP_CLOUD.schedulePush()}catch(_){} }}
-function user(){
- if(currentUser&&db.users[currentUser])return db.users[currentUser];
- if(db.current&&db.users[db.current]){currentUser=db.current;return db.users[currentUser]}
- try{const uid=window.CYBERDROP_CLOUD&&window.CYBERDROP_CLOUD.userId;if(uid){const name=Object.keys(db.users||{}).find(n=>db.users[n]&&db.users[n].cloudId===uid);if(name){currentUser=name;db.current=name;return db.users[name]}}}catch(_){}
- return null
+const WEAR_INTERVAL_MS=180*60*1000;
+const WEAR_SLOTS=['cpu','mb','ram','gpu','ssd','psu','cool','pc_case'];
+function freshComponentWear(){return{condition:100,activeMs:0}}
+function normalizeWearPiece(piece){
+ const rawCondition=piece&&piece.condition!=null?piece.condition:100;
+ let condition=Math.max(0,Math.min(100,Math.floor(Number(rawCondition))));
+ if(!Number.isFinite(condition))condition=100;
+ let activeMs=Math.max(0,Math.floor(Number(piece&&piece.activeMs)||0));
+ if(activeMs>=WEAR_INTERVAL_MS){condition=Math.max(0,condition-Math.floor(activeMs/WEAR_INTERVAL_MS));activeMs=activeMs%WEAR_INTERVAL_MS}
+ return{condition,activeMs};
 }
-function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now(),donorBadge:'none'}}
+function sortWearPieces(items){items.sort((a,b)=>a.condition-b.condition||b.activeMs-a.activeMs);return items}
+function ensureComponentWear(u){
+ if(!u)return{inventory:{},build:{}};
+ const wear=u.componentWear&&typeof u.componentWear==='object'?u.componentWear:{};
+ if(!wear.inventory||typeof wear.inventory!=='object'||Array.isArray(wear.inventory))wear.inventory={};
+ if(!wear.build||typeof wear.build!=='object'||Array.isArray(wear.build))wear.build={};
+ const ids=new Set([...Object.keys(u.inventory||{}),...Object.keys(wear.inventory)]);
+ ids.forEach(id=>{
+  const quantity=Math.max(0,Math.floor(Number(u.inventory&&u.inventory[id])||0));
+  let pieces=Array.isArray(wear.inventory[id])?wear.inventory[id].map(normalizeWearPiece):[];
+  sortWearPieces(pieces);
+  if(pieces.length>quantity)pieces=pieces.slice(0,quantity);
+  while(pieces.length<quantity)pieces.push(freshComponentWear());
+  sortWearPieces(pieces);
+  if(quantity)wear.inventory[id]=pieces;else delete wear.inventory[id];
+ });
+ WEAR_SLOTS.forEach(slot=>{
+  const id=u.build&&u.build[slot],current=wear.build[slot];
+  if(!id){delete wear.build[slot];return}
+  if(!current||current.id!==id)wear.build[slot]={id,...freshComponentWear()};
+  else wear.build[slot]={id,...normalizeWearPiece(current)};
+ });
+ u.componentWear=wear;
+ return wear;
+}
+function takeInventoryWear(u,id,n=1){
+ if(!u||!id||n<1)return null;
+ const wear=ensureComponentWear(u);
+ if((Number(u.inventory[id])||0)<n)return null;
+ const pieces=wear.inventory[id]||[];
+ sortWearPieces(pieces);
+ const taken=pieces.splice(0,n).map(p=>normalizeWearPiece(p));
+ const quantity=(Number(u.inventory[id])||0)-n;
+ if(quantity>0)u.inventory[id]=quantity;else delete u.inventory[id];
+ if(!pieces.length)delete wear.inventory[id];
+ return taken;
+}
+function putInventoryWear(u,id,piecesToAdd){
+ if(!u||!id)return;
+ const wear=ensureComponentWear(u),pieces=wear.inventory[id]||[];
+ (piecesToAdd||[]).forEach(piece=>pieces.push(normalizeWearPiece(piece)));
+ u.inventory[id]=(Number(u.inventory[id])||0)+(piecesToAdd||[]).length;
+ sortWearPieces(pieces);
+ if(pieces.length)wear.inventory[id]=pieces;else delete wear.inventory[id];
+}
+function removeInventoryWear(u,id,n=1){
+ if(!u||!id||n<1)return;
+ const wear=ensureComponentWear(u),pieces=wear.inventory[id]||[];
+ sortWearPieces(pieces);
+ pieces.splice(0,Math.min(n,pieces.length));
+ if(!pieces.length)delete wear.inventory[id];
+}
+function advanceComponentWear(u,elapsedMs){
+ if(!u||elapsedMs<=0)return false;
+ const wear=ensureComponentWear(u);
+ WEAR_SLOTS.forEach(slot=>{
+  const id=u.build&&u.build[slot];if(!id)return;
+  let piece=wear.build[slot];
+  if(!piece||piece.id!==id){piece={id,...freshComponentWear()};wear.build[slot]=piece}
+  const total=Math.max(0,Number(piece.activeMs)||0)+elapsedMs;
+  const degradation=Math.floor(total/WEAR_INTERVAL_MS);
+  piece.condition=Math.max(0,Math.floor(Number(piece.condition)||0)-degradation);
+  piece.activeMs=total%WEAR_INTERVAL_MS;
+ });
+ return true;
+}
+function componentConditionBadge(kind,key){
+ const u=user();if(!u)return'';
+ const wear=ensureComponentWear(u);let condition=100,title='Состояние комплектующего';
+ if(kind==='build'){
+  const piece=wear.build[key];if(!piece)return'';
+  condition=Math.floor(Number(piece.condition)||0);
+ }else{
+  const pieces=wear.inventory[key]||[];if(!pieces.length)return'';
+  condition=Math.floor(Math.min(...pieces.map(p=>p.condition)));
+  title='Состояние самого изношенного экземпляра в стопке';
+ }
+ const level=condition>=80?'good':condition>=50?'mid':'low';
+ return '<div class="component-condition '+level+'" title="'+title+' · уменьшается на 1% за каждые 3 часа прибыльной работы">'+condition+'%</div>';
+}
+function user(){
+ let active=null;
+ if(currentUser&&db.users[currentUser])active=db.users[currentUser];
+ else if(db.current&&db.users[db.current]){currentUser=db.current;active=db.users[currentUser]}
+ else try{const uid=window.CYBERDROP_CLOUD&&window.CYBERDROP_CLOUD.userId;if(uid){const name=Object.keys(db.users||{}).find(n=>db.users[n]&&db.users[n].cloudId===uid);if(name){currentUser=name;db.current=name;active=db.users[name]}}}catch(_){}
+ if(active)ensureComponentWear(active);
+ return active;
+}
+function newUser(name,pass){return{pass,credits:2000,inventory:{},build:{},componentWear:{inventory:{},build:{}},refCode:makeRef(name),refCount:0,refEarned:0,usedRef:false,lastAd:0,lastIncome:Date.now(),donorBadge:'none'}}
 function makeRef(name){let base=name.toUpperCase().replace(/[^A-ZА-Я0-9]/g,'').slice(0,3);while(base.length<3)base+='X';return(base+Math.random().toString(36).slice(2,7)).toUpperCase().slice(0,8)}
-function addItem(id,n=1){const u=user();if(!u)return;u.inventory[id]=(u.inventory[id]||0)+n;saveDB()}
-function takeItem(id,n=1){const u=user();if(!u||!(u.inventory[id]>=n))return false;u.inventory[id]-=n;if(u.inventory[id]<=0)delete u.inventory[id];saveDB();return true}
+function addItem(id,n=1){const u=user();if(!u)return;putInventoryWear(u,id,Array.from({length:n},()=>freshComponentWear()));saveDB()}
+function takeItem(id,n=1){const u=user();if(!u||!(u.inventory[id]>=n))return false;if(!takeInventoryWear(u,id,n))return false;saveDB();return true}
 function addCredits(n){
   const u=user();
   if(!u)return Promise.resolve(false);
@@ -1442,7 +1539,7 @@ function renderLeaderboardRows(){
     return '<article class="leaderboard-row rank-pos-'+(i+1)+(isMe?' is-me':'')+'">'+
       '<div class="rank-position"><b>'+crown+'</b><small>ТОП</small></div>'+
       '<div class="rank-avatar">'+esc(name.trim().charAt(0)||'?')+'</div>'+
-      '<div class="rank-player"><strong>'+esc(name)+donorBadgeMarkup(r.donorBadge)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок CYBERDROP')+'</small></div>'+
+      '<div class="rank-player"><strong>'+esc(name)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок CYBERDROP')+'</small></div>'+
       '<div class="rank-score"><b>'+score+'</b><small>'+secondary+'</small></div></article>';
   }).join('');
 }
@@ -1467,12 +1564,12 @@ async function renderLeaderboard(force){
     if(result.error)throw result.error;
     const data=result.data||{};
     const builds=Array.isArray(data.builds)?data.builds:[];
-    const incomeTop=builds.map(player=>({username:player.username||'Игрок',income:computeLeaderboardIncome(player),donorBadge:player.donor_badge||'none'}))
+    const incomeTop=builds.map(player=>({username:player.username||'Игрок',income:computeLeaderboardIncome(player)}))
       .filter(player=>player.income>0)
       .sort((a,b)=>b.income-a.income||String(a.username).localeCompare(String(b.username),'ru'))
       .slice(0,5);
     const balanceTop=(Array.isArray(data.balance_top)?data.balance_top:[])
-      .map(player=>({username:player.username||'Игрок',credits:Math.max(0,Math.floor(Number(player.credits)||0)),donorBadge:player.donor_badge||'none'}))
+      .map(player=>({username:player.username||'Игрок',credits:Math.max(0,Math.floor(Number(player.credits)||0))}))
       .sort((a,b)=>b.credits-a.credits||String(a.username).localeCompare(String(b.username),'ru'))
       .slice(0,5);
     leaderboardSnapshot={incomeTop,balanceTop};
@@ -1796,11 +1893,17 @@ async function performSale(items){
  if(cloud&&cloud.enabled){
    if(!cloud.userId)throw new Error('Облачная сессия не активна. Войди в аккаунт и повтори продажу.');
    if(typeof cloud.sellInventory!=='function')throw new Error('Не загружена атомарная продажа. Обнови страницу после установки SQL-миграции.');
-   return await cloud.sellInventory(list);
+   const beforeWear=JSON.parse(JSON.stringify(ensureComponentWear(u)));
+   const result=await cloud.sellInventory(list);
+   u.componentWear=beforeWear;
+   const sold={};list.forEach(x=>{sold[x.item_id]=(sold[x.item_id]||0)+x.quantity});
+   Object.keys(sold).forEach(id=>{const pieces=u.componentWear.inventory[id]||[];sortWearPieces(pieces);pieces.splice(0,Math.min(sold[id],pieces.length));if(!pieces.length)delete u.componentWear.inventory[id]});
+   ensureComponentWear(u);saveDB();
+   return result;
  }
  const grouped={};list.forEach(x=>{if(!grouped[x.item_id])grouped[x.item_id]={quantity:0,unit_price:x.unit_price};grouped[x.item_id].quantity+=x.quantity;if(grouped[x.item_id].unit_price!==x.unit_price)throw new Error('Цена предмета указана неоднозначно.');});
  for(const [id,x] of Object.entries(grouped)){if((Number(u.inventory[id])||0)<x.quantity)throw new Error('Предмет уже продан или его количество изменилось.');}
- let total=0;for(const [id,x] of Object.entries(grouped)){u.inventory[id]-=x.quantity;if(u.inventory[id]<=0)delete u.inventory[id];total+=x.quantity*x.unit_price;}
+ let total=0;for(const [id,x] of Object.entries(grouped)){removeInventoryWear(u,id,x.quantity);u.inventory[id]-=x.quantity;if(u.inventory[id]<=0)delete u.inventory[id];total+=x.quantity*x.unit_price;}
  u.credits=Math.max(0,Math.floor(Number(u.credits||0)+total));saveDB();renderAll();return {credits:u.credits,total};
 }
 const sellLocks=new Set();
@@ -1809,7 +1912,7 @@ function invEntries(){const u=user();if(!u)return[];return Object.entries(u.inve
 function renderInventory(){
  const u=user();if(!u){$('#invCount').textContent='0';$('#invValue').textContent='0';$('#invGrid').innerHTML='<div class="inv-empty"><span class="big">🔒</span>Войдите, чтобы увидеть инвентарь.</div>';return}
  const e=invEntries(),count=e.reduce((s,[,n])=>s+n,0),value=e.reduce((s,[it,n])=>s+it.price*n,0);$('#invCount').textContent=count;$('#invValue').textContent=fmt(value);
- $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}" ${sellLocks.has(it.id)?'disabled':''}>${sellLocks.has(it.id)?'Продажа…':'Продать'}</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
+ $('#invGrid').innerHTML=e.length?e.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${componentConditionBadge('inventory',it.id)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-rar">${RARITIES[it.rar].name}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn ghost sm" data-sell="${it.id}" ${sellLocks.has(it.id)?'disabled':''}>${sellLocks.has(it.id)?'Продажа…':'Продать'}</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty"><span class="big">📦</span>Инвентарь пуст. Открой кейс и получи первый предмет.</div>';
  $$('[data-sell]').forEach(b=>b.onclick=async()=>{
    const id=b.dataset.sell,it=ITEM_MAP[id];
    if(!it||sellAllBusy||sellLocks.has(id))return;
@@ -1873,14 +1976,30 @@ function renderBuild(){
  const power=buildPowerStats();
  $('#buildStatus').innerHTML=`<div class="item">Компонентов<b>${filled}/${SLOTS.length}</b></div><div class="item">Совместимость<b class="${issues.length?'err':'ok'}">${issues.length?'Ошибка':'ОК'}</b></div><div class="item">Доход/мин<b class="${income?'ok':''}">${fmt(income)} кр.</b></div>`;
  $('#buildPower').innerHTML=`<div class="build-power-item"><span>Потребление комплектующих</span><b>${power.draw} Вт</b></div><div class="build-power-item"><span>Рекомендуемый блок питания (+20% запаса)</span><b>${power.recommended?power.recommended+' Вт':'—'}</b></div><div class="build-power-item"><span>Установленный блок питания</span><b class="${power.psu?(power.enough?'ok':'err'):''}">${power.psu?power.psuWatts+' Вт':'Не установлен'}</b></div>`;
- $('#buildGrid').innerHTML=SLOTS.map(([slot,label])=>{const it=ITEM_MAP[u.build[slot]];return `<div class="slot ${it?'filled component-card':''}" style="--rc:${it?RARITIES[it.rar].color:'#242b3d'}">${it?componentInfoButton(it):''}<div class="component-front"><div class="slot-label">${label}</div>${it?`<div class="slot-visual"><div class="item-visual">${itemArt(it)}</div></div><div class="slot-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Заменить</button><button class="btn ghost" data-remove="${slot}">Снять</button></div>`:`<div class="slot-empty">＋</div><div class="slot-name">Пусто</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Установить</button></div>`}</div>${it?`<div class="component-details">${componentDetailsMarkup(it)}</div>`:''}</div>`}).join('');
+ $('#buildGrid').innerHTML=SLOTS.map(([slot,label])=>{const it=ITEM_MAP[u.build[slot]];return `<div class="slot ${it?'filled component-card':''}" style="--rc:${it?RARITIES[it.rar].color:'#242b3d'}">${it?componentInfoButton(it)+componentConditionBadge('build',slot):''}<div class="component-front"><div class="slot-label">${label}</div>${it?`<div class="slot-visual"><div class="item-visual">${itemArt(it)}</div></div><div class="slot-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Заменить</button><button class="btn ghost" data-remove="${slot}">Снять</button></div>`:`<div class="slot-empty">＋</div><div class="slot-name">Пусто</div><div class="slot-actions"><button class="btn ghost" data-pick="${slot}">Установить</button></div>`}</div>${it?`<div class="component-details">${componentDetailsMarkup(it)}</div>`:''}</div>`}).join('');
  const cpuTemp=st&&st.cpuTemp!=null?st.cpuTemp:null,gpuTemp=st&&st.gpuTemp!=null?st.gpuTemp:null,cpuClass=thermalClass(cpuTemp),gpuClass=thermalClass(gpuTemp);
  $('#buildIncome').innerHTML=`<div class="build-thermals"><div class="thermal-card" style="--tc:#00e5ff"><div class="thermal-head"><span>CPU</span><span>${st&&st.cpu?esc(st.cpu.name):'Не установлен'}</span></div><div class="thermal-temp ${cpuClass}">${cpuTemp==null?'—':cpuTemp+'°C'}</div><div class="thermal-sub">TDP/PBP: ${st&&st.cpu?((st.cpu.tdp||0)+'W'):'—'} · нагрузка: ${st&&st.cpu?((st.cpu.loadW||st.cpu.tdp||0)+'W'):'—'} · кулер: ${st&&st.cool?(coolingCapacity(st.cool)+'W'):'—'}</div><div class="thermal-factor"><span>Производительность CPU</span><b>${st&&st.cpuTemp!=null?thermalLabel(st.cpuFactor):'—'}</b></div></div><div class="thermal-card" style="--tc:#b14aff"><div class="thermal-head"><span>GPU</span><span>${st&&st.gpu?esc(st.gpu.name):'Не установлена'}</span></div><div class="thermal-temp ${gpuClass}">${gpuTemp==null?'—':gpuTemp+'°C'}</div><div class="thermal-sub">Теплопакет: ${st&&st.gpu?((st.gpu.tdp||0)+'W'):'—'} · охлаждение корпуса: ${st&&st.pcCase?((st.pcCase.airflow||0)+'W'):'—'}</div><div class="thermal-factor"><span>Производительность GPU</span><b>${st&&st.gpuTemp!=null?thermalLabel(st.gpuFactor):'—'}</b></div></div></div><div class="income-box"><div><div class="lbl">Пассивный доход</div><div class="val">${fmt(income)} кр./мин</div></div><div class="sub">CPU, GPU, материнская плата, RAM и накопитель дают разные вклады в доход.<br>Перегрев CPU/GPU уменьшает итоговую прибыль.</div></div>${st?`<div class="income-breakdown"><div class="income-part"><span>CPU</span><b>+${st.cpuPts.toFixed(1)}</b></div><div class="income-part"><span>GPU</span><b>+${st.gpuPts.toFixed(1)}</b></div><div class="income-part"><span>Плата</span><b>+${st.mbPts.toFixed(1)}</b></div><div class="income-part"><span>RAM</span><b>+${st.ramPts.toFixed(1)}</b></div><div class="income-part"><span>Накопитель</span><b>+${st.ssdPts.toFixed(1)}</b></div></div><div class="income-note">Тепловой множитель: ${st.complete&&st.compatible?Math.round(st.multiplier*100)+'%':'—'}. Хорошее охлаждение снижает температуру CPU, а хороший корпус помогает видеокарте работать холоднее.</div>`:''}`;
  $$('[data-pick]').forEach(b=>b.onclick=()=>openPicker(b.dataset.pick));$$('[data-remove]').forEach(b=>b.onclick=()=>removeFromBuild(b.dataset.remove));renderBadges();
 }
-function openPicker(slot){if(!requireAuth())return;const foundSlot=SLOTS.find(x=>x[0]===slot);const label=(foundSlot?foundSlot[1]:slot);$('#pickTitle').textContent='Выбери: '+label;const list=invEntries().filter(([it])=>it.cat===slot);$('#pickSub').textContent=list.length?'Выбери предмет из инвентаря.':'Подходящих предметов в инвентаре нет.';$('#pickList').innerHTML=list.length?list.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn primary sm" data-install="${it.id}" data-slot="${slot}">Установить</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty">Нет подходящих компонентов.</div>';$$('[data-install]').forEach(b=>b.onclick=()=>installToBuild(b.dataset.slot,b.dataset.install));openModal('pickModal')}
-function installToBuild(slot,id){const u=user(),old=u.build[slot];if(!takeItem(id))return toast('Предмет уже недоступен','err');if(old)addItem(old);u.build[slot]=id;saveDB();closeModal('pickModal');renderBuild();renderInventory();toast('Компонент установлен','ok')}
-function removeFromBuild(slot){const u=user(),id=u.build[slot];if(!id)return;addItem(id);delete u.build[slot];saveDB();renderBuild();renderInventory();toast('Компонент возвращён в инвентарь')}
+function openPicker(slot){if(!requireAuth())return;const foundSlot=SLOTS.find(x=>x[0]===slot);const label=(foundSlot?foundSlot[1]:slot);$('#pickTitle').textContent='Выбери: '+label;const list=invEntries().filter(([it])=>it.cat===slot);$('#pickSub').textContent=list.length?'Выбери предмет из инвентаря.':'Подходящих предметов в инвентаре нет.';$('#pickList').innerHTML=list.length?list.map(([it,n])=>`<div class="inv-card component-card" style="--rc:${RARITIES[it.rar].color}">${componentInfoButton(it)}${componentConditionBadge('inventory',it.id)}${n>1?`<div class="inv-count">×${n}</div>`:''}<div class="component-front"><div class="item-visual">${itemArt(it)}</div><div class="inv-name">${esc(it.name)}</div><div class="component-power">${esc(componentPowerLabel(it))}</div><div class="inv-price">${fmt(it.price)} кр.</div><button class="btn primary sm" data-install="${it.id}" data-slot="${slot}">Установить</button></div><div class="component-details">${componentDetailsMarkup(it)}</div></div>`).join(''):'<div class="inv-empty">Нет подходящих компонентов.</div>';$$('[data-install]').forEach(b=>b.onclick=()=>installToBuild(b.dataset.slot,b.dataset.install));openModal('pickModal')}
+async function installToBuild(slot,id){
+ const u=user();if(!u)return;
+ await tickIncome();
+ const wear=ensureComponentWear(u),picked=takeInventoryWear(u,id,1);
+ if(!picked)return toast('Предмет уже недоступен','err');
+ const oldId=u.build[slot],oldPiece=oldId&&wear.build[slot]&&wear.build[slot].id===oldId?normalizeWearPiece(wear.build[slot]):null;
+ if(oldId){delete wear.build[slot];putInventoryWear(u,oldId,[oldPiece||freshComponentWear()]);}
+ u.build[slot]=id;wear.build[slot]={id,...normalizeWearPiece(picked[0])};
+ u.lastIncome=Date.now();saveDB();closeModal('pickModal');renderBuild();renderInventory();toast('Компонент установлен','ok');
+}
+async function removeFromBuild(slot){
+ const u=user();if(!u)return;
+ await tickIncome();
+ const id=u.build[slot];if(!id)return;
+ const wear=ensureComponentWear(u),piece=wear.build[slot]&&wear.build[slot].id===id?normalizeWearPiece(wear.build[slot]):freshComponentWear();
+ delete u.build[slot];delete wear.build[slot];putInventoryWear(u,id,[piece]);
+ u.lastIncome=Date.now();saveDB();renderBuild();renderInventory();toast('Компонент возвращён в инвентарь');
+}
 let incomeSyncing=false;
 async function tickIncome(){
  const u=user();if(!u||incomeSyncing)return;
@@ -1894,6 +2013,7 @@ async function tickIncome(){
    try{
      const balance=await cloud.changeCredits(amount);
      u.credits=Math.max(0,Math.floor(Number(balance)||0));
+     if(income>0)advanceComponentWear(u,mins*60000);
      u.lastIncome+=mins*60000;
      saveDB();renderHeader();
      if(income)toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok');
@@ -1901,8 +2021,8 @@ async function tickIncome(){
    }catch(err){console.warn('CYBERDROP passive income:',err)}finally{incomeSyncing=false}
    return;
  }
- if(income){u.credits+=amount;toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok')}
- u.lastIncome+=mins*60000;saveDB();renderHeader();if($('#tab-build').classList.contains('active'))renderBuild()
+ if(income){u.credits+=amount;advanceComponentWear(u,mins*60000);toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok')}
+ u.lastIncome+=mins*60000;saveDB();renderHeader();if($('#tab-build').classList.contains('active'))renderBuild();else if($('#tab-inventory').classList.contains('active'))renderInventory()
 }
 setInterval(tickIncome,5000);
 
@@ -2406,13 +2526,19 @@ setInterval(renderProGameGates,800);
       refEarned: Math.floor(Number(u.refEarned) || 0),
       usedRef: !!u.usedRef,
       lastAd: Number(u.lastAd) || 0,
-      lastIncome: Number(u.lastIncome) || 0
+      lastIncome: Number(u.lastIncome) || 0,
+      componentWear: copy(ensureComponentWear(u))
     };
   }
 
   function sameBuild(a, b) {
     var keys = ['cpu','mb','ram','gpu','ssd','psu','cool','pc_case'];
     return keys.every(function (k) { return (a && a[k] || '') === (b && b[k] || ''); });
+  }
+  function stableJson(value) {
+    if (Array.isArray(value)) return '[' + value.map(stableJson).join(',') + ']';
+    if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(function(k){return JSON.stringify(k)+':'+stableJson(value[k]);}).join(',') + '}';
+    return JSON.stringify(value);
   }
 
   function sameSnapshot(a, b) {
@@ -2424,6 +2550,7 @@ setInterval(renderProGameGates,800);
     if (!!a.usedRef !== !!b.usedRef) return false;
     if ((Number(a.lastAd)||0) !== (Number(b.lastAd)||0)) return false;
     if ((Number(a.lastIncome)||0) !== (Number(b.lastIncome)||0)) return false;
+    if (stableJson(a.componentWear || {inventory:{},build:{}}) !== stableJson(b.componentWear || {inventory:{},build:{}})) return false;
     var ids = {};
     Object.keys(a.inventory||{}).forEach(function(id){ids[id]=true;});
     Object.keys(b.inventory||{}).forEach(function(id){ids[id]=true;});
@@ -2450,6 +2577,7 @@ setInterval(renderProGameGates,800);
       if (q > 0) merged.inventory[id] = q;
     });
     merged.build = sameBuild(local.build, base.build) ? copy(remote.build) : copy(local.build);
+    merged.componentWear = stableJson(local.componentWear || {}) === stableJson(base.componentWear || {}) ? copy(remote.componentWear || {inventory:{},build:{}}) : copy(local.componentWear || {inventory:{},build:{}});
     merged.refCode = local.refCode === base.refCode ? remote.refCode : local.refCode;
     merged.refCount = Math.max(0, (Number(remote.refCount)||0) + ((Number(local.refCount)||0) - (Number(base.refCount)||0)));
     merged.refEarned = Math.max(0, (Number(remote.refEarned)||0) + ((Number(local.refEarned)||0) - (Number(base.refEarned)||0)));
@@ -2484,11 +2612,13 @@ setInterval(renderProGameGates,800);
     var p = profileRes.data || await ensureProfile(uid, authUser);
     var results = await Promise.all([
       client.from('inventory').select('item_id,quantity').eq('user_id', uid),
-      client.from('builds').select('*').eq('user_id', uid).maybeSingle()
+      client.from('builds').select('*').eq('user_id', uid).maybeSingle(),
+      client.from('component_wear').select('state').eq('user_id', uid).maybeSingle()
     ]);
-    var ir = results[0], br = results[1];
+    var ir = results[0], br = results[1], wr = results[2];
     if (ir.error) throw ir.error;
     if (br.error) throw br.error;
+    if (wr.error) throw wr.error;
     var snap = {
       credits: Number(p.credits)||0,
       inventory: {},
@@ -2503,12 +2633,14 @@ setInterval(renderProGameGates,800);
       refEarned: Number(p.ref_earned)||0,
       usedRef: !!p.used_ref,
       lastAd: p.last_ad ? new Date(p.last_ad).getTime() : 0,
-      lastIncome: p.last_income ? new Date(p.last_income).getTime() : 0
+      lastIncome: p.last_income ? new Date(p.last_income).getTime() : 0,
+      componentWear: wr.data && wr.data.state && typeof wr.data.state === 'object' ? wr.data.state : {inventory:{},build:{}}
     };
     (ir.data||[]).forEach(function(row){
       var q = Math.floor(Number(row.quantity)||0);
       if(q>0) snap.inventory[row.item_id]=q;
     });
+    ensureComponentWear(snap);
     return {profile:p, snapshot:snap};
   }
 
@@ -2640,6 +2772,12 @@ setInterval(renderProGameGates,800);
     });
     if (saved.error) throw saved.error;
     if (!saved.data) throw new Error('Supabase не подтвердил сохранение прогресса.');
+    var wearSaved = await client.from('component_wear').upsert({
+      user_id: uid,
+      state: snap.componentWear || {inventory:{},build:{}},
+      updated_at: new Date().toISOString()
+    }, {onConflict:'user_id'});
+    if (wearSaved.error) throw wearSaved.error;
     return saved.data;
   }
 
