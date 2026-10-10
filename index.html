@@ -1030,7 +1030,7 @@ const ITEMS=[
 {id:'rtx3050',name:'GeForce RTX 3050 8GB',i:'🎮',price:14500,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:130},
 {id:'rtx3060',name:'GeForce RTX 3060 12GB',i:'🎮',price:19000,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:170},
 {id:'rtx3060ti',name:'GeForce RTX 3060 Ti 8GB',i:'🎮',price:24000,rar:'e',cat:'gpu',col:'#76b900',fans:2,tdp:200},
-{id:'rtx4060',name:'GeForce RTX 4060 8GB',i:'🎮',price:27000,rar:'r',cat:'gpu',col:'#76b900',fans:2,tdp:115},
+{id:'rtx4060',name:'GeForce RTX 4060 8GB',i:'🎮',price:27000,rar:'e',cat:'gpu',col:'#76b900',fans:2,tdp:115},
 {id:'rx6700xt',name:'Radeon RX 6700 XT 12GB',i:'🎮',price:31000,rar:'e',cat:'gpu',col:'#e53935',fans:2,tdp:230},
 {id:'rtx4060ti',name:'GeForce RTX 4060 Ti 8GB',i:'🎮',price:36000,rar:'e',cat:'gpu',col:'#76b900',fans:3,tdp:160},
 {id:'rtx4070',name:'GeForce RTX 4070 12GB',i:'🎮',price:52000,rar:'e',cat:'gpu',col:'#76b900',fans:3,tdp:200},
@@ -1091,7 +1091,7 @@ const ITEMS=[
 {id:'nvme128',name:'Kingston NV2 128GB M.2 NVMe',i:'💾',price:850,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme256',name:'WD Blue SN570 250GB M.2 NVMe',i:'💾',price:1200,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme500',name:'Kingston NV2 500GB M.2 NVMe',i:'💾',price:1900,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
-{id:'nvme1t',name:'Kingston NV2 1TB M.2 NVMe',i:'💾',price:3200,rar:'c',cat:'ssd',col:'#1e88e5',form:'nvme'},
+{id:'nvme1t',name:'Kingston NV2 1TB M.2 NVMe',i:'💾',price:4000,rar:'r',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme1t_fast',name:'WD Black SN770 1TB M.2 NVMe',i:'💾',price:5200,rar:'r',cat:'ssd',col:'#1e88e5',form:'nvme'},
 {id:'nvme1t_pro',name:'Samsung 990 Pro 1TB M.2 NVMe',i:'💾',price:8200,rar:'r',cat:'ssd',col:'#1428a0',form:'nvme'},
 {id:'nvme2t',name:'WD Black SN850X 2TB M.2 NVMe',i:'💾',price:12500,rar:'e',cat:'ssd',col:'#1e88e5',form:'nvme'},
@@ -1442,7 +1442,7 @@ function renderLeaderboardRows(){
     return '<article class="leaderboard-row rank-pos-'+(i+1)+(isMe?' is-me':'')+'">'+
       '<div class="rank-position"><b>'+crown+'</b><small>ТОП</small></div>'+
       '<div class="rank-avatar">'+esc(name.trim().charAt(0)||'?')+'</div>'+
-      '<div class="rank-player"><strong>'+esc(name)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок CYBERDROP')+'</small></div>'+
+      '<div class="rank-player"><strong>'+esc(name)+donorBadgeMarkup(r.donorBadge)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок CYBERDROP')+'</small></div>'+
       '<div class="rank-score"><b>'+score+'</b><small>'+secondary+'</small></div></article>';
   }).join('');
 }
@@ -1467,12 +1467,12 @@ async function renderLeaderboard(force){
     if(result.error)throw result.error;
     const data=result.data||{};
     const builds=Array.isArray(data.builds)?data.builds:[];
-    const incomeTop=builds.map(player=>({username:player.username||'Игрок',income:computeLeaderboardIncome(player)}))
+    const incomeTop=builds.map(player=>({username:player.username||'Игрок',income:computeLeaderboardIncome(player),donorBadge:player.donor_badge||'none'}))
       .filter(player=>player.income>0)
       .sort((a,b)=>b.income-a.income||String(a.username).localeCompare(String(b.username),'ru'))
       .slice(0,5);
     const balanceTop=(Array.isArray(data.balance_top)?data.balance_top:[])
-      .map(player=>({username:player.username||'Игрок',credits:Math.max(0,Math.floor(Number(player.credits)||0))}))
+      .map(player=>({username:player.username||'Игрок',credits:Math.max(0,Math.floor(Number(player.credits)||0)),donorBadge:player.donor_badge||'none'}))
       .sort((a,b)=>b.credits-a.credits||String(a.username).localeCompare(String(b.username),'ru'))
       .slice(0,5);
     leaderboardSnapshot={incomeTop,balanceTop};
