@@ -674,6 +674,7 @@ button,.btn,input{touch-action:manipulation}
       <h1>Открывай кейсы. <em>Забирай технику.</em></h1>
       <p>Большинство призов не окупают стоимость кейса — только редкие и легендарные предметы дают прибыль. Зато из выигранного можно собрать ПК и получать пассивный доход.</p>
     </div>
+    <div class="shop-tabs" id="caseTabs" aria-label="Категории кейсов"></div>
     <div class="cases-grid" id="casesGrid"></div>
   </section>
 
@@ -1139,7 +1140,7 @@ const ITEMS=[
 {id:'mb_x670',name:'Socket AM5 X670',i:'🧩',price:22000,rar:'e',cat:'mb',platform:'amd',col:'#b14aff',socket:'am5',mem:'ddr5'},
 {id:'mb_x870',name:'Socket AM5 X870',i:'🧩',price:30000,rar:'l',cat:'mb',platform:'amd',col:'#c6ff3d',socket:'am5',mem:'ddr5'},
 
-/* PSU — 450–1000W */
+/* PSU — 450–1200W */
 {id:'psu_450',name:'БП 450W Bronze',i:'🔌',price:1200,rar:'c',cat:'psu',col:'#8795a1',watts:450},
 {id:'psu_500',name:'БП 500W Bronze',i:'🔌',price:1500,rar:'c',cat:'psu',col:'#8795a1',watts:500},
 {id:'psu_550',name:'БП 550W Bronze',i:'🔌',price:2100,rar:'c',cat:'psu',col:'#8795a1',watts:550},
@@ -1150,6 +1151,7 @@ const ITEMS=[
 {id:'psu_850',name:'БП 850W Gold',i:'🔌',price:9200,rar:'e',cat:'psu',col:'#b14aff',watts:850},
 {id:'psu_900',name:'БП 900W Gold',i:'🔌',price:10800,rar:'e',cat:'psu',col:'#b14aff',watts:900},
 {id:'psu_1000',name:'БП 1000W Platinum',i:'🔌',price:14500,rar:'l',cat:'psu',col:'#c6ff3d',watts:1000},
+{id:'psu_1200_platinum',name:'БП 1200W Platinum',i:'🔌',price:22000,rar:'l',cat:'psu',col:'#c6ff3d',watts:1200},
 
 /* Cooling */
 {id:'cool_stock',name:'Штатный кулер 65W',i:'❄️',price:450,rar:'c',cat:'cool',col:'#8da1b8',coolType:'air'},
@@ -1263,7 +1265,7 @@ const CASES=[
 {id:'amd_cpu_case',name:'AMD CPU',icon:'🔴',tag:'AM5 • Ryzen 5 → Ryzen 9',price:48000,color:'#e53935',pool:['r5_7500f','r5_8400f','r5_9600x','r7_7700','r7_7800x3d','r7_9800x3d','r9_9950x3d']},
 {id:'intel_mb_case',name:'Intel Motherboards',icon:'🔷',tag:'LGA 1155 / 1200 / 1700',price:17000,color:'#00a7c4',pool:['mb_b75','mb_h410','mb_b460','mb_z490','mb_h610','mb_b660','mb_z690','mb_z790']},
 {id:'amd_mb_case',name:'AMD Motherboards',icon:'🔴',tag:'AM3+ / AM4 / AM5',price:20000,color:'#e85b68',pool:['mb_am3_990','mb_a320','mb_b450','mb_b550','mb_b650','mb_x670','mb_x870']},
-{id:'psu_case',name:'Блоки питания',icon:'🔌',tag:'450–1000W',price:11000,color:'#ffd166',pool:['psu_450','psu_500','psu_550','psu_600','psu_650','psu_700','psu_750','psu_850','psu_1000']},
+{id:'psu_case',name:'Блоки питания',icon:'🔌',tag:'450–1200W',price:11000,color:'#ffd166',pool:['psu_450','psu_500','psu_550','psu_600','psu_650','psu_700','psu_750','psu_850','psu_1000','psu_1200_platinum']},
 {id:'cool_case',name:'Воздушное охлаждение',icon:'🌬️',tag:'Кулеры и вентиляторы',price:3200,color:'#5ce1e6',pool:['cool_stock','fan_120','cool_lowprofile','cool_air_basic','cool_air_4pipe','cool_dual']},
 {id:'water_case',name:'Водяное охлаждение',icon:'💧',tag:'СЖО 120 / 240 / 280 / 360',price:8000,color:'#3aa7ff',pool:['cool_stock','cool_aio120','cool_aio240','cool_aio280','cool_aio360']},
 {id:'gpu_budget',name:'GPU: Бюджет',icon:'🎮',tag:'Начальный уровень',price:10000,color:'#7dffb0',pool:['gt1030','rx550','gtx1050ti','rx580','gtx1060','gtx1650','rtx2060','rx6600']},
@@ -1557,9 +1559,30 @@ window.addEventListener('pointerdown',()=>{if(musicOn)startMusic()},{once:true})
 if(musicOn&&$('#audioToggle')){$('#audioToggle').classList.add('on');$('#audioToggle').textContent='♫';$('#audioToggle').title='Выключить атмосферу';$('#audioToggle').setAttribute('aria-label','Выключить атмосферу');}
 
 /* ==================== CASES ==================== */
+const CASE_CATEGORIES=[
+  {id:'all',label:'Все кейсы',caseIds:null},
+  {id:'cpu',label:'Процессоры',caseIds:['intel_budget_cpu_case','intel_cpu_case','amd_budget_cpu_case','amd_cpu_case']},
+  {id:'gpu',label:'Видеокарты',caseIds:['gpu_budget','gpu_pro','gpu_ultra']},
+  {id:'ssd',label:'Накопители',caseIds:['sata_case','nvme_case']},
+  {id:'mb',label:'Материнские платы',caseIds:['intel_mb_case','amd_mb_case']},
+  {id:'psu',label:'Блоки питания',caseIds:['psu_case']},
+  {id:'cool',label:'Системы охлаждения',caseIds:['cool_case','water_case']},
+  {id:'ram',label:'Оперативная память',caseIds:['ram4_case','ram5_case','ram_extreme']},
+  {id:'pc_case',label:'Корпуса',caseIds:['pc_case_case']}
+];
+let caseCategory='all';
 function caseAboveCount(c){return c.pool.map(id=>ITEM_MAP[id]).filter(it=>it&&it.price>c.price).length}
+function renderCaseTabs(){
+ const current=CASE_CATEGORIES.some(cat=>cat.id===caseCategory)?caseCategory:'all';
+ caseCategory=current;
+ $('#caseTabs').innerHTML=CASE_CATEGORIES.map(cat=>`<button class="shop-tab ${cat.id===caseCategory?'active':''}" type="button" data-case-cat="${cat.id}" aria-pressed="${cat.id===caseCategory?'true':'false'}">${cat.label}</button>`).join('');
+ $$('[data-case-cat]').forEach(btn=>btn.addEventListener('click',()=>{caseCategory=btn.dataset.caseCat;renderCases()}));
+}
 function renderCases(){
- $('#casesGrid').innerHTML=CASES.map(c=>{const prev=c.pool.slice(0,5).map(id=>{const it=ITEM_MAP[id];return `<div class="drop-dot" style="--dc:${RARITIES[it.rar].color}" title="${esc(it.name)}"><div class="item-visual">${itemArt(it)}</div></div>`}).join('');return `<article class="case-card" style="--cc:${c.color}"><div class="case-top"><div class="case-icon">${c.icon}</div><div class="case-tag">${c.tag}</div></div><div class="case-name">${c.name}</div><div class="case-price">Цена: <b>${fmt(c.price)} кр.</b></div><div class="case-drops">${prev}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-preview-case="${c.id}">Содержимое</button><button class="btn primary" data-open-case="${c.id}">Открыть кейс</button></div></article>`}).join('');
+ renderCaseTabs();
+ const selected=CASE_CATEGORIES.find(cat=>cat.id===caseCategory)||CASE_CATEGORIES[0];
+ const visibleCases=selected.caseIds?CASES.filter(c=>selected.caseIds.includes(c.id)):CASES;
+ $('#casesGrid').innerHTML=visibleCases.map(c=>{const prev=c.pool.slice(0,5).map(id=>{const it=ITEM_MAP[id];return `<div class="drop-dot" style="--dc:${RARITIES[it.rar].color}" title="${esc(it.name)}"><div class="item-visual">${itemArt(it)}</div></div>`}).join('');return `<article class="case-card" style="--cc:${c.color}"><div class="case-top"><div class="case-icon">${c.icon}</div><div class="case-tag">${c.tag}</div></div><div class="case-name">${c.name}</div><div class="case-price">Цена: <b>${fmt(c.price)} кр.</b></div><div class="case-drops">${prev}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-preview-case="${c.id}">Содержимое</button><button class="btn primary" data-open-case="${c.id}">Открыть кейс</button></div></article>`}).join('');
  $$('[data-open-case]').forEach(b=>b.addEventListener('click',()=>startCase(b.dataset.openCase)));
  $$('[data-preview-case]').forEach(b=>b.addEventListener('click',()=>openCasePreview(b.dataset.previewCase)));
 }
