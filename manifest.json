@@ -1,6 +1,6 @@
 {
-  "name": "CYBERDROP",
-  "short_name": "CYBERDROP",
+  "name": "COMPDROP",
+  "short_name": "COMPDROP",
   "description": "Кибер-дропы комплектующих: кейсы, инвентарь, сборка ПК и мини-игры.",
   "lang": "ru",
   "start_url": "./index.html",

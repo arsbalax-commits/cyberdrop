@@ -1,4 +1,4 @@
-const CACHE = 'cyberdrop-v11-requisites';
+const CACHE = 'compdrop-v12-branding';
 const CORE = [
   './',
   './index.html',

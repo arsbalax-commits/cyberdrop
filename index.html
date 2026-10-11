@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CYBERDROP — выигрывай технику</title>
+<title>COMPDROP — выигрывай технику</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#08090e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="CYBERDROP">
+<meta name="apple-mobile-web-app-title" content="COMPDROP">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 
@@ -649,11 +649,11 @@ button,.btn,input{touch-action:manipulation}
 </style>
 </head>
 <body>
-<div id="bootError"><div><b style="font-size:20px">CYBERDROP не удалось запустить</b><br><span style="opacity:.7">Обновите страницу. Интерфейс будет доступен после повторной загрузки.</span></div></div>
+<div id="bootError"><div><b style="font-size:20px">COMPDROP не удалось запустить</b><br><span style="opacity:.7">Обновите страницу. Интерфейс будет доступен после повторной загрузки.</span></div></div>
 
 <header>
   <div class="header-in">
-    <div class="logo">CYBER<span>DROP</span></div>
+    <div class="logo">COMP<span>DROP</span></div>
     <nav>
       <button class="nav-btn active" data-tab="cases">Кейсы</button>
       <button class="nav-btn" data-tab="inventory">Инвентарь <span class="badge" id="invBadge" style="display:none">0</span></button>
@@ -695,7 +695,7 @@ button,.btn,input{touch-action:manipulation}
   <section id="tab-ranking">
     <div class="page-head">
       <h1>Рейтинг <em>игроков</em></h1>
-      <p>Сравни сборки и балансы игроков CYBERDROP. Рейтинг обновляется из облачной базы.</p>
+      <p>Сравни сборки и балансы игроков COMPDROP. Рейтинг обновляется из облачной базы.</p>
     </div>
     <div class="leaderboard-toolbar">
       <div class="leaderboard-switch" role="tablist" aria-label="Тип рейтинга">
@@ -713,7 +713,7 @@ button,.btn,input{touch-action:manipulation}
 
   <section id="tab-donate">
     <div class="page-head">
-      <h1>Поддержи <em>CYBERDROP</em></h1>
+      <h1>Поддержи <em>COMPDROP</em></h1>
       <p>Выбери цифровой пакет: кредиты, бонусные кредиты и постоянный значок поддержки в профиле.</p>
     </div>
     <div class="donation-security-note"><span class="donation-lock">◆</span><div><b>Оплата через ЮKassa</b><small>Кредиты начисляются только после серверного подтверждения успешного платежа. Возврат на сайт сам по себе не подтверждает оплату.</small></div></div>
@@ -751,7 +751,7 @@ button,.btn,input{touch-action:manipulation}
       <div class="donation-status-copy"><b id="donationStatusTitle">Готов к оплате</b><span id="donationStatusText">Выдача наград происходит автоматически после подтверждения платежа ЮKassa.</span></div>
       <button class="btn ghost" id="donationCheckStatus" type="button" style="display:none">Проверить статус</button>
     </div>
-    <p class="donation-legal-note">Игровые кредиты используются только внутри CYBERDROP, не являются денежными средствами и не выводятся из игры. <a href="./requisites.html">Реквизиты продавца, условия покупки и возврата</a>.</p>
+    <p class="donation-legal-note">Игровые кредиты используются только внутри COMPDROP, не являются денежными средствами и не выводятся из игры. <a href="./requisites.html">Реквизиты продавца, условия покупки и возврата</a>.</p>
   </section>
 
   <section id="tab-inventory">
@@ -886,7 +886,7 @@ button,.btn,input{touch-action:manipulation}
           <div class="profile-avatar" id="profileAvatar">?</div>
           <div>
             <div class="profile-name" id="profileName">Игрок</div>
-            <div class="profile-email" id="profileEmail">CYBERDROP аккаунт</div>
+            <div class="profile-email" id="profileEmail">COMPDROP аккаунт</div>
           </div>
         </div>
         <div class="profile-stats">
@@ -922,7 +922,7 @@ button,.btn,input{touch-action:manipulation}
     </div>
   </section>
 
-  <footer>CYBERDROP © 2026 — цифровой игровой проект. Игровые кредиты не имеют денежной стоимости вне игры и не выводятся.<div class="legal-footer-links"><a href="./requisites.html">Реквизиты продавца и публичная оферта</a></div></footer>
+  <footer>COMPDROP © 2026 — цифровой игровой проект. Игровые кредиты не имеют денежной стоимости вне игры и не выводятся.<div class="legal-footer-links"><a href="./requisites.html">Реквизиты продавца и публичная оферта</a></div></footer>
 </div>
 
 <div class="modal" id="authModal">
@@ -1290,7 +1290,7 @@ CASES.sort((a,b)=>a.price-b.price || a.name.localeCompare(b.name,'ru'));
 
 /* Every case has 1–2 items above its price; every other item is strictly cheaper. */
 function validateCases(){return CASES.every(c=>{const prices=c.pool.map(id=>ITEM_MAP[id] ? ITEM_MAP[id].price : undefined);if(prices.some(v=>v==null))return false;const above=prices.filter(v=>v>c.price).length;const equal=prices.filter(v=>v===c.price).length;return above>=1&&above<=2&&equal===0})}
-if(!validateCases())console.warn('CYBERDROP: баланс кейсов нарушен');
+if(!validateCases())console.warn('COMPDROP: баланс кейсов нарушен');
 const SLOTS=[
   ['cpu','Процессор'],['mb','Материнская плата'],['ram','Оперативная память'],['gpu','Видеокарта'],['ssd','Накопитель'],['psu','Блок питания'],['cool','Охлаждение'],['pc_case','Корпус']
 ];
@@ -1449,7 +1449,7 @@ function addCredits(n){
       if(user()===target){target.credits=Math.max(0,Math.floor(Number(balance)||0));saveDB(false);renderHeader()}
       return true;
     }).catch(err=>{
-      console.warn('CYBERDROP credit operation:',err);
+      console.warn('COMPDROP credit operation:',err);
       toast('Не удалось изменить баланс в облаке','err');
       return false;
     });
@@ -1539,7 +1539,7 @@ function renderLeaderboardRows(){
     return '<article class="leaderboard-row rank-pos-'+(i+1)+(isMe?' is-me':'')+'">'+
       '<div class="rank-position"><b>'+crown+'</b><small>ТОП</small></div>'+
       '<div class="rank-avatar">'+esc(name.trim().charAt(0)||'?')+'</div>'+
-      '<div class="rank-player"><strong>'+esc(name)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок CYBERDROP')+'</small></div>'+
+      '<div class="rank-player"><strong>'+esc(name)+(isMe?'<span class="rank-you">ВЫ</span>':'')+'</strong><small>'+(leaderboardMode==='income'?'Мощность компьютера':'Игрок COMPDROP')+'</small></div>'+
       '<div class="rank-score"><b>'+score+'</b><small>'+secondary+'</small></div></article>';
   }).join('');
 }
@@ -1577,7 +1577,7 @@ async function renderLeaderboard(force){
     renderLeaderboardRows();
     if(updated)updated.textContent='Обновлено в '+new Date(leaderboardLoadedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
   }catch(err){
-    console.warn('CYBERDROP leaderboard:',err);
+    console.warn('COMPDROP leaderboard:',err);
     const message=String(err&&err.message||err||'Неизвестная ошибка');
     if(list)list.innerHTML='<div class="leaderboard-state"><span class="state-icon">⚠</span><b>Не удалось загрузить рейтинг</b><small>'+esc(message)+'<br>Проверь, что SQL-миграция рейтинга выполнена в Supabase.</small></div>';
     if(updated)updated.textContent='Ошибка обновления рейтинга';
@@ -1776,7 +1776,7 @@ async function startCase(id){
  if(u.credits<c.price){toast('Недостаточно кредитов','err');return}
  const cloud=window.CYBERDROP_CLOUD;
  if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){
-   const balance=await cloud.changeCredits(-c.price).catch(err=>{console.warn('CYBERDROP case debit:',err);toast('Не удалось списать кредиты в облаке','err');return null});
+   const balance=await cloud.changeCredits(-c.price).catch(err=>{console.warn('COMPDROP case debit:',err);toast('Не удалось списать кредиты в облаке','err');return null});
    if(balance===null)return;
    u.credits=Math.max(0,Math.floor(Number(balance)||0));
    saveDB(false);
@@ -1805,7 +1805,7 @@ async function startCase(id){
      addItem(win.id);$('#caseSub').textContent='Результат открытия';$('#caseLiveText').textContent='ПОЛУЧЕН ПРИЗ';$('#caseLiveTimer').textContent='DONE';$('#caseProgressBar').style.width='100%';winSfx(win.rar);
      $('#result').innerHTML=`<div class="result-item" style="--rc:${RARITIES[win.rar].color}"><div class="item-visual">${itemArt(win)}</div><div class="ri-nm">${esc(win.name)}</div><div class="ri-rc">${RARITIES[win.rar].name}</div><div class="ri-pr">${fmt(win.price)} кр.</div></div><div class="result-btns"><button class="btn primary" id="againBtn">Открыть ещё за ${fmt(c.price)}</button><button class="btn ghost" id="sellWinBtn">Продать за ${fmt(win.price)}</button></div>`;
      $('#againBtn').onclick=()=>{closeModal('caseModal');setTimeout(()=>startCase(c.id),120)};
-     $('#sellWinBtn').onclick=async()=>{if(sellAllBusy||sellLocks.has(win.id))return;sellLocks.add(win.id);const btn=$('#sellWinBtn');if(btn){btn.disabled=true;btn.textContent='Продажа…'}try{await performSale([{item_id:win.id,quantity:1,unit_price:win.price}]);closeModal('caseModal');toast('Предмет продан','ok')}catch(err){console.warn('CYBERDROP case prize sale:',err);toast(err&&err.message?err.message:'Продажа не выполнена. Предмет сохранён.','err')}finally{sellLocks.delete(win.id);renderInventory();renderBadges()}};
+     $('#sellWinBtn').onclick=async()=>{if(sellAllBusy||sellLocks.has(win.id))return;sellLocks.add(win.id);const btn=$('#sellWinBtn');if(btn){btn.disabled=true;btn.textContent='Продажа…'}try{await performSale([{item_id:win.id,quantity:1,unit_price:win.price}]);closeModal('caseModal');toast('Предмет продан','ok')}catch(err){console.warn('COMPDROP case prize sale:',err);toast(err&&err.message?err.message:'Продажа не выполнена. Предмет сохранён.','err')}finally{sellLocks.delete(win.id);renderInventory();renderBadges()}};
      spinning=false;renderBadges();
    }));
  };
@@ -1876,7 +1876,7 @@ async function buyShopItem(id){
     renderHeader();renderInventory();renderBuild();
     toast(`Куплено: ${it.name}`,'ok');
   }catch(err){
-    console.warn('CYBERDROP shop purchase:',err);
+    console.warn('COMPDROP shop purchase:',err);
     toast(err&&err.message?err.message:'Покупка отменена. Кредиты и инвентарь не изменены.','err');
   }finally{
     shopLocks.delete(id);
@@ -1921,7 +1921,7 @@ function renderInventory(){
      await performSale([{item_id:id,quantity:1,unit_price:it.price}]);
      toast(`Продано: ${it.name}`,'ok');
    }catch(err){
-     console.warn('CYBERDROP inventory sale:',err);
+     console.warn('COMPDROP inventory sale:',err);
      toast(err&&err.message?err.message:`Продажа отменена: ${it.name}`,'err');
    }finally{
      sellLocks.delete(id);renderInventory();renderBadges();
@@ -1941,7 +1941,7 @@ $('#sellAllBtn').addEventListener('click',async()=>{
    const result=await performSale(items);
    toast(`Продано на ${fmt(result.total)} кр.`,'ok');
  }catch(err){
-   console.warn('CYBERDROP sell all:',err);
+   console.warn('COMPDROP sell all:',err);
    toast(err&&err.message?err.message:'Продажа отменена; инвентарь не изменён.','err');
  }finally{
    sellAllBusy=false;
@@ -2018,7 +2018,7 @@ async function tickIncome(){
      saveDB();renderHeader();
      if(income)toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok');
      if($('#tab-build').classList.contains('active'))renderBuild();
-   }catch(err){console.warn('CYBERDROP passive income:',err)}finally{incomeSyncing=false}
+   }catch(err){console.warn('COMPDROP passive income:',err)}finally{incomeSyncing=false}
    return;
  }
  if(income){u.credits+=amount;advanceComponentWear(u,mins*60000);toast(`Пассивный доход: +${fmt(amount)} кр.`,'ok')}
@@ -2028,11 +2028,11 @@ setInterval(tickIncome,5000);
 
 /* ==================== EARN ==================== */
 function renderEarn(){updateAdButton();if(typeof renderProGameGates==='function')renderProGameGates()}
-function renderProfile(){const u=user();const itemCount=u?Object.values(u.inventory||{}).reduce((a,b)=>a+(Number(b)||0),0):0;const income=u?buildIncome():0;const filled=u?SLOTS.filter(([slot])=>u.build&&u.build[slot]).length:0;$('#profileAvatar').textContent=u&&currentUser?(currentUser[0]||'?').toUpperCase():'?';$('#profileName').textContent=u?currentUser:'Гость';$('#profileEmail').textContent=u?(u.email||'CYBERDROP аккаунт'):'Войдите, чтобы открыть профиль';$('#profileCredits').textContent=u?fmt(u.credits):'0';$('#profileItems').textContent=itemCount;$('#profileRefCount').textContent=u?(u.refCount||0):0;$('#profileRefEarned').textContent=u?fmt(u.refEarned||0):0;$('#profileBuildIncome').textContent=u?fmt(income)+' кр./мин':'0 кр./мин';$('#profileBuildParts').textContent=u?`${filled}/${SLOTS.length}`:'0/8';$('#profileDonorBadge').textContent=donorBadgeLabel(u&&u.donorBadge);$('#refCode').textContent=u?(u.refCode||'——————'):'——————';$('#refCount').textContent=u?(u.refCount||0):0;$('#refEarned').textContent=u?fmt(u.refEarned||0):0;$('#refInputWrap').style.display=u&&!u.usedRef?'flex':'none'}
+function renderProfile(){const u=user();const itemCount=u?Object.values(u.inventory||{}).reduce((a,b)=>a+(Number(b)||0),0):0;const income=u?buildIncome():0;const filled=u?SLOTS.filter(([slot])=>u.build&&u.build[slot]).length:0;$('#profileAvatar').textContent=u&&currentUser?(currentUser[0]||'?').toUpperCase():'?';$('#profileName').textContent=u?currentUser:'Гость';$('#profileEmail').textContent=u?(u.email||'COMPDROP аккаунт'):'Войдите, чтобы открыть профиль';$('#profileCredits').textContent=u?fmt(u.credits):'0';$('#profileItems').textContent=itemCount;$('#profileRefCount').textContent=u?(u.refCount||0):0;$('#profileRefEarned').textContent=u?fmt(u.refEarned||0):0;$('#profileBuildIncome').textContent=u?fmt(income)+' кр./мин':'0 кр./мин';$('#profileBuildParts').textContent=u?`${filled}/${SLOTS.length}`:'0/8';$('#profileDonorBadge').textContent=donorBadgeLabel(u&&u.donorBadge);$('#refCode').textContent=u?(u.refCode||'——————'):'——————';$('#refCount').textContent=u?(u.refCount||0):0;$('#refEarned').textContent=u?fmt(u.refEarned||0):0;$('#refInputWrap').style.display=u&&!u.usedRef?'flex':'none'}
 function updateAdButton(){const b=$('#adBtn'),u=user();if(!u){b.disabled=false;b.textContent='Смотреть рекламу';return}const left=Math.max(0,45000-(Date.now()-u.lastAd));if(left){b.disabled=true;b.textContent=`Доступно через ${Math.ceil(left/1000)} с`}else{b.disabled=false;b.textContent='Смотреть рекламу'}}
 setInterval(updateAdButton,1000);
 $('#adBtn').onclick=()=>{if(!requireAuth())return;const u=user();if(Date.now()-u.lastAd<45000)return updateAdButton();openModal('adModal');const ads=[['🚀','Ускорь свой ПК','Термопаста нового поколения — минус 12°C под нагрузкой'],['🛰️','Сеть без лагов','Игровой роутер для стабильного соединения'],['⌨️','Нажимай быстрее','Механические переключатели для киберспорта']];const a=ads[Math.floor(Math.random()*ads.length)];$('#adEmoji').textContent=a[0];$('#adHead').textContent=a[1];$('#adText').textContent=a[2];$('#adBar').style.width='0';$('#adClaim').disabled=true;$('#adClaim').textContent='Подождите…';let p=0;const t=setInterval(()=>{p+=4;$('#adBar').style.width=Math.min(100,p)+'%';if(p>=100){clearInterval(t);$('#adClaim').disabled=false;$('#adClaim').textContent='Получить награду'}},200)};
-$('#adClaim').onclick=async()=>{const u=user();if(!u)return;const reward=120+Math.floor(Math.random()*181);const cloud=window.CYBERDROP_CLOUD;let balance=null;if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){balance=await cloud.changeCredits(reward).catch(err=>{console.warn('CYBERDROP ad reward:',err);toast('Не удалось начислить награду в облаке','err');return null});if(balance===null)return}else{balance=Math.max(0,Math.floor(u.credits+reward))}u.credits=Math.floor(Number(balance)||0);u.lastAd=Date.now();saveDB();closeModal('adModal');renderHeader();updateAdButton();toast(`За рекламу: +${reward} кр.`,'ok')};
+$('#adClaim').onclick=async()=>{const u=user();if(!u)return;const reward=120+Math.floor(Math.random()*181);const cloud=window.CYBERDROP_CLOUD;let balance=null;if(cloud&&cloud.enabled&&cloud.userId&&typeof cloud.changeCredits==='function'){balance=await cloud.changeCredits(reward).catch(err=>{console.warn('COMPDROP ad reward:',err);toast('Не удалось начислить награду в облаке','err');return null});if(balance===null)return}else{balance=Math.max(0,Math.floor(u.credits+reward))}u.credits=Math.floor(Number(balance)||0);u.lastAd=Date.now();saveDB();closeModal('adModal');renderHeader();updateAdButton();toast(`За рекламу: +${reward} кр.`,'ok')};
 $('#copyRef').onclick=async()=>{if(!requireAuth())return;try{await navigator.clipboard.writeText(user().refCode);toast('Реферальный код скопирован','ok')}catch{toast('Код: '+user().refCode)}};
 function applyRef(code){const u=user();if(!u||u.usedRef)return false;code=String(code||'').trim().toUpperCase();const ownerName=Object.keys(db.users).find(n=>n!==currentUser&&db.users[n].refCode===code);if(!ownerName)return false;u.usedRef=true;u.credits+=400;db.users[ownerName].credits+=800;db.users[ownerName].refCount=(db.users[ownerName].refCount||0)+1;db.users[ownerName].refEarned=(db.users[ownerName].refEarned||0)+800;saveDB();renderHeader();renderEarn();toast('Код активирован: +400 кр.','ok');return true}
 $('#applyRef').onclick=()=>{if(!requireAuth())return;if(!applyRef($('#refInput').value)){toast('Код не найден или уже использован','err')}else{renderProfile()}};
@@ -2232,7 +2232,7 @@ $('#authForm').addEventListener('submit',async e=>{
 /* ==================== BADGES / INIT ==================== */
 function renderBadges(){const u=user(),cnt=u?Object.values(u.inventory).reduce((a,b)=>a+b,0):0;$('#invBadge').textContent=cnt;$('#invBadge').style.display=cnt?'inline-block':'none';const issues=u?buildIssues().length:0;$('#buildBadge').style.display=issues?'inline-block':'none'}
 function renderAll(){renderHeader();renderCases();renderInventory();renderBuild();renderEarn();renderProfile();renderBadges();renderHackGrid()}
-try{renderAll();}catch(err){console.error('CYBERDROP boot error:',err);document.body.setAttribute('data-app-error','1');}
+try{renderAll();}catch(err){console.error('COMPDROP boot error:',err);document.body.setAttribute('data-app-error','1');}
 </script>
 
 <script>
@@ -2438,9 +2438,9 @@ setInterval(renderProGameGates,800);
 (function(){
   try {
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-      window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(err){ console.warn('CYBERDROP SW:', err); }); });
+      window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(err){ console.warn('COMPDROP SW:', err); }); });
     }
-  } catch(e) { console.warn('CYBERDROP SW init:', e); }
+  } catch(e) { console.warn('COMPDROP SW init:', e); }
 })();
 </script>
 
@@ -2475,7 +2475,7 @@ setInterval(renderProGameGates,800);
   if (!ready) {
     cloudAuthReady = true;
     window.CYBERDROP_CLOUD.status = 'local';
-    console.info('CYBERDROP: Supabase is not configured; local mode is active.');
+    console.info('COMPDROP: Supabase is not configured; local mode is active.');
     if (typeof window.renderAll === 'function') window.renderAll();
     return;
   }
@@ -2486,7 +2486,7 @@ setInterval(renderProGameGates,800);
     });
     window.CYBERDROP_CLOUD.client = client;
   } catch (err) {
-    console.error('CYBERDROP Supabase init failed:', err);
+    console.error('COMPDROP Supabase init failed:', err);
     window.CYBERDROP_CLOUD.enabled = false;
     window.CYBERDROP_CLOUD.status = 'init-error';
     cloudAuthReady = true;
@@ -2738,7 +2738,7 @@ setInterval(renderProGameGates,800);
       pushState().catch(function (err) {
         dirty = true;
         window.CYBERDROP_CLOUD.status = 'sync-error';
-        console.warn('CYBERDROP cloud sync:', err);
+        console.warn('COMPDROP cloud sync:', err);
       });
     }, 200);
   }
@@ -2943,7 +2943,7 @@ setInterval(renderProGameGates,800);
           var recoveredAt = await writeCloudState(authUser.id, localSnap, cloud.profile);
           cloud = await readCloudState(authUser.id, authUser);
           if (recoveredAt && !cloud.profile.updated_at) cloud.profile.updated_at = recoveredAt;
-          console.warn('CYBERDROP: recovered local progress for account', authUser.id);
+          console.warn('COMPDROP: recovered local progress for account', authUser.id);
         }
       }
 
@@ -2964,7 +2964,7 @@ setInterval(renderProGameGates,800);
     var msg = (err && err.message) ? err.message : String(err || 'Неизвестная ошибка');
     var errEl = document.querySelector('#authErr');
     if (errEl) errEl.textContent = msg;
-    console.error('CYBERDROP cloud auth:', err);
+    console.error('COMPDROP cloud auth:', err);
   }
 
   async function cloudAuthSubmit() {
@@ -3049,7 +3049,7 @@ setInterval(renderProGameGates,800);
       currentUser=null;db.current=null;SAFE_STORE.set(DBKEY,JSON.stringify(db));
     }
   }).catch(function(err){
-    console.warn('CYBERDROP session restore:',err);
+    console.warn('COMPDROP session restore:',err);
     window.CYBERDROP_CLOUD.status='auth-error';
   }).finally(function(){
     cloudAuthReady=true;
@@ -3059,7 +3059,7 @@ setInterval(renderProGameGates,800);
   client.auth.onAuthStateChange(function(event,session){
     if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED'){
       if(session&&session.user&&!syncing&&!explicitAuthSync){
-        setTimeout(function(){pullState(session.user).catch(function(err){console.warn('CYBERDROP auth sync:',err);});},0);
+        setTimeout(function(){pullState(session.user).catch(function(err){console.warn('COMPDROP auth sync:',err);});},0);
       }
       return;
     }
@@ -3079,15 +3079,15 @@ setInterval(renderProGameGates,800);
       if(res.error||!res.data||!res.data.updated_at)return;
       if(!lastServerUpdatedAt){lastServerUpdatedAt=res.data.updated_at;return;}
       if(String(res.data.updated_at)!==String(lastServerUpdatedAt))await pullState({id:uid,email:(user()&&user().email)||''});
-    }catch(err){console.warn('CYBERDROP remote sync:',err);}
+    }catch(err){console.warn('COMPDROP remote sync:',err);}
   }
   pollingTimer=setInterval(pollRemoteState,2000);
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState==='visible') pollRemoteState();
-    else if(cloudUser() && dirty) flushPendingCloudChanges().catch(function(err){console.warn('CYBERDROP background save:',err);});
+    else if(cloudUser() && dirty) flushPendingCloudChanges().catch(function(err){console.warn('COMPDROP background save:',err);});
   });
   window.addEventListener('pagehide',function(){
-    if(cloudUser() && dirty) flushPendingCloudChanges().catch(function(err){console.warn('CYBERDROP pagehide save:',err);});
+    if(cloudUser() && dirty) flushPendingCloudChanges().catch(function(err){console.warn('COMPDROP pagehide save:',err);});
   });
 })();
 </script>
@@ -3127,7 +3127,7 @@ setInterval(renderProGameGates,800);
     if(typeof requireAuth === 'function' && !requireAuth())return;
     var cloud = window.CYBERDROP_CLOUD;
     if(!cloud || !cloud.enabled || !cloud.client || !cloud.userId){
-      setStatus('Нужен облачный аккаунт','Войди в аккаунт CYBERDROP и попробуй снова. Донат работает только с Supabase-аккаунтом.','error');
+      setStatus('Нужен облачный аккаунт','Войди в аккаунт COMPDROP и попробуй снова. Донат работает только с Supabase-аккаунтом.','error');
       return;
     }
     if(!Object.prototype.hasOwnProperty.call(packageNames,packageCode))return;
@@ -3145,7 +3145,7 @@ setInterval(renderProGameGates,800);
       setStatus('Переход к ЮKassa', 'Сейчас откроется защищённая страница оплаты. Награда будет выдана после подтверждения платежа.', 'pending');
       window.location.assign(data.confirmation_url);
     }catch(err){
-      console.error('CYBERDROP donation start:', err);
+      console.error('COMPDROP donation start:', err);
       var message = err && err.message ? String(err.message) : 'Не удалось создать платёж.';
       if(message.length>180)message='Не удалось создать платёж. Проверь настройки Supabase и ЮKassa.';
       setStatus('Платёж не создан', message, 'error');
@@ -3165,7 +3165,7 @@ setInterval(renderProGameGates,800);
     var cloud = window.CYBERDROP_CLOUD;
     if(!cloud || !cloud.client || !cloud.userId){
       if(attempt < 20){
-        setStatus('Ждём вход в аккаунт','После возврата с ЮKassa восстанавливаем сессию CYBERDROP…','pending');
+        setStatus('Ждём вход в аккаунт','После возврата с ЮKassa восстанавливаем сессию COMPDROP…','pending');
         pollTimer = setTimeout(function(){checkOrder(orderId, attempt+1);},2500);
       }else{
         setStatus('Нужен повторный вход','Войди в тот же аккаунт, с которого оформлялась покупка, затем нажми «Проверить статус».','error');
@@ -3212,7 +3212,7 @@ setInterval(renderProGameGates,800);
         showCheckButton(true);
       }
     }catch(err){
-      console.warn('CYBERDROP donation status:', err);
+      console.warn('COMPDROP donation status:', err);
       setStatus('Не удалось проверить заказ','Проверь, что SQL-миграция выполнена и вошёл в аккаунт. Потом повтори проверку статуса.', 'error');
       showCheckButton(true);
     }
@@ -3258,7 +3258,7 @@ setInterval(renderProGameGates,800);
       }
       return true;
     }catch(err){
-      console.warn('CYBERDROP supporter status:', err);
+      console.warn('COMPDROP supporter status:', err);
       return false;
     }
   }
